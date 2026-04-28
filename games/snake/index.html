@@ -1,1 +1,795 @@
-Test
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grid Viper | DeskArcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --green: #8cff6a;
+      --dark-green: #3f8f36;
+      --red: #ff6b4a;
+      --yellow: #ffd86b;
+      --blue: #7fdcff;
+      --bg: #071106;
+      --panel: rgba(7, 24, 8, 0.94);
+      --text-soft: #b9ffd2;
+      --border-soft: rgba(140,255,106,0.35);
+      --shadow-green: rgba(140,255,106,0.22);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+.logo-img {
+  height: 90px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(140,255,106,0.5));
+  animation: pulseGlow 2.5s infinite ease-in-out;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(140,255,106,0.4)); }
+  50% { filter: drop-shadow(0 0 14px rgba(140,255,106,0.9)); }
+}
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'IBM Plex Mono', Consolas, Monaco, monospace;
+      background:
+        radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 34%),
+        linear-gradient(180deg, #071106 0%, #020502 100%);
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(140,255,106,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(140,255,106,0.05) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+      mask-image: linear-gradient(to bottom, black, transparent 85%);
+    }
+
+    .game-shell {
+      width: min(980px, 100%);
+      border: 1px solid var(--border-soft);
+      background: var(--panel);
+      box-shadow: 0 0 50px rgba(0,0,0,0.65), 0 0 32px var(--shadow-green);
+      border-radius: 22px;
+      padding: 22px;
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      border-bottom: 1px solid var(--border-soft);
+      padding-bottom: 18px;
+      margin-bottom: 18px;
+    }
+
+    .brand-block {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 4rem);
+      line-height: 0.95;
+      letter-spacing: -0.08em;
+      text-transform: uppercase;
+      text-shadow: 0 0 18px rgba(140,255,106,0.38);
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--text-soft);
+      font-size: 0.9rem;
+    }
+
+    .created-by {
+      color: rgba(185,255,210,0.75);
+      font-size: 0.78rem;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 18px;
+    }
+
+    .game-card, .side-card {
+      border: 1px solid var(--border-soft);
+      background: rgba(2, 8, 2, 0.7);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-height: 640px;
+      margin: 0 auto;
+      border: 1px solid rgba(140,255,106,0.45);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: inset 0 0 24px rgba(140,255,106,0.12), 0 0 22px rgba(140,255,106,0.12);
+      background: #020602;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      image-rendering: pixelated;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(2,5,2,0.76);
+      text-align: center;
+      padding: 24px;
+    }
+
+    .overlay.hidden {
+      display: none;
+    }
+
+    .overlay-box {
+      max-width: 420px;
+      border: 1px solid var(--border-soft);
+      background: rgba(7,17,6,0.94);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 0 30px rgba(140,255,106,0.18);
+    }
+
+    .overlay-title {
+      font-size: 1.7rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .overlay-text {
+      color: var(--text-soft);
+      font-size: 0.92rem;
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .stat {
+      border: 1px solid rgba(140,255,106,0.28);
+      border-radius: 14px;
+      padding: 10px;
+      background: rgba(140,255,106,0.05);
+    }
+
+    .stat-label {
+      color: rgba(185,255,210,0.72);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+
+    button, select {
+      font-family: inherit;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid rgba(140,255,106,0.55);
+      background: rgba(140,255,106,0.10);
+      color: var(--green);
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: transform 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    button:hover {
+      background: rgba(140,255,106,0.18);
+      box-shadow: 0 0 16px rgba(140,255,106,0.20);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .secondary-btn {
+      color: var(--text-soft);
+      border-color: rgba(185,255,210,0.28);
+      background: rgba(185,255,210,0.05);
+    }
+
+    .side-card h2 {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .controls-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 9px;
+      color: var(--text-soft);
+      font-size: 0.85rem;
+    }
+
+    .key {
+      display: inline-block;
+      min-width: 32px;
+      text-align: center;
+      border: 1px solid rgba(140,255,106,0.38);
+      border-radius: 8px;
+      padding: 2px 7px;
+      color: var(--green);
+      background: rgba(140,255,106,0.07);
+      margin-right: 5px;
+    }
+
+    .settings {
+      display: grid;
+      gap: 8px;
+      margin: 16px 0;
+    }
+
+    label {
+      color: rgba(185,255,210,0.78);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    select {
+      width: 100%;
+      border: 1px solid rgba(140,255,106,0.32);
+      background: rgba(2,8,2,0.88);
+      color: var(--green);
+      border-radius: 12px;
+      padding: 10px;
+      outline: none;
+    }
+
+    .message {
+      margin-top: 14px;
+      color: var(--yellow);
+      min-height: 22px;
+      font-size: 0.88rem;
+    }
+
+    .patch-notes {
+      margin-top: 16px;
+      color: rgba(185,255,210,0.65);
+      font-size: 0.75rem;
+      line-height: 1.5;
+      border-top: 1px solid rgba(140,255,106,0.18);
+      padding-top: 12px;
+    }
+
+    .mobile-controls {
+      display: none;
+      grid-template-columns: repeat(3, 58px);
+      grid-template-rows: repeat(3, 48px);
+      justify-content: center;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .mobile-controls button {
+      padding: 0;
+      font-size: 1.1rem;
+    }
+
+    .up { grid-column: 2; grid-row: 1; }
+    .left { grid-column: 1; grid-row: 2; }
+    .down { grid-column: 2; grid-row: 2; }
+    .right { grid-column: 3; grid-row: 2; }
+
+    @media (max-width: 860px) {
+      body {
+        padding: 12px;
+        align-items: flex-start;
+      }
+
+      .game-shell {
+        padding: 16px;
+      }
+
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .created-by {
+        text-align: left;
+      }
+
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mobile-controls {
+        display: grid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="game-shell">
+<header>
+  <div class="brand-block">
+    <img src="gridviperlogo.png" alt="Grid Viper Logo" class="logo-img">
+    <div>
+      <h1>Grid Viper</h1>
+      <div class="subtitle">Catch The Node! Dont hit the Grid!</div>
+    </div>
+  </div>
+  <div class="created-by">Created by Jason<br>build v1.0</div>
+</header>
+
+    <section class="main-grid">
+      <div class="game-card">
+        <div class="stat-row">
+          <div class="stat">
+            <div class="stat-label">Score</div>
+            <div class="stat-value" id="score">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Best</div>
+            <div class="stat-value" id="best">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Level</div>
+            <div class="stat-value" id="speed">1</div>
+          </div>
+        </div>
+
+        <div class="canvas-wrap">
+          <canvas id="gameCanvas" width="600" height="600" aria-label="Grid Viper Snake game board"></canvas>
+          <div class="overlay" id="overlay">
+            <div class="overlay-box">
+              <div class="overlay-title" id="overlayTitle">Grid Viper</div>
+              <div class="overlay-text" id="overlayText">Eat the data nodes. Avoid the walls. Do not crash into yourself. Simple game. Brutal when you get cocky.</div>
+              <button id="overlayButton">Start Game</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mobile-controls" aria-label="Mobile controls">
+          <button class="up" data-dir="up">▲</button>
+          <button class="left" data-dir="left">◀</button>
+          <button class="down" data-dir="down">▼</button>
+          <button class="right" data-dir="right">▶</button>
+        </div>
+      </div>
+
+      <aside class="side-card">
+        <h2>Controls</h2>
+        <ul class="controls-list">
+          <li><span class="key">↑</span><span class="key">W</span> Move up</li>
+          <li><span class="key">↓</span><span class="key">S</span> Move down</li>
+          <li><span class="key">←</span><span class="key">A</span> Move left</li>
+          <li><span class="key">→</span><span class="key">D</span> Move right</li>
+          <li><span class="key">Space</span> Pause / resume</li>
+          <li><span class="key">R</span> Restart</li>
+        </ul>
+
+        <div class="settings">
+          <label for="difficulty">Difficulty</label>
+          <select id="difficulty">
+            <option value="easy">Easy</option>
+            <option value="normal" selected>Normal</option>
+            <option value="hard">Hard</option>
+            <option value="chaos">Chaos</option>
+          </select>
+        </div>
+
+        <div class="button-row">
+          <button id="startBtn">Start</button>
+          <button class="secondary-btn" id="pauseBtn">Pause</button>
+          <button class="secondary-btn" id="resetBtn">Reset</button>
+        </div>
+
+        <div class="message" id="message">Ready.</div>
+
+        <div class="patch-notes">
+          <strong>v1.0</strong><br>
+          • Base Game Creation<br>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const scoreEl = document.getElementById('score');
+    const bestEl = document.getElementById('best');
+    const speedEl = document.getElementById('speed');
+    const messageEl = document.getElementById('message');
+    const overlay = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlayTitle');
+    const overlayText = document.getElementById('overlayText');
+    const overlayButton = document.getElementById('overlayButton');
+    const difficultyEl = document.getElementById('difficulty');
+
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const gridSize = 24;
+    const tileCount = canvas.width / gridSize;
+
+    const difficultySettings = {
+      easy: { baseDelay: 145, speedStep: 6, label: 'Easy' },
+      normal: { baseDelay: 115, speedStep: 7, label: 'Normal' },
+      hard: { baseDelay: 90, speedStep: 8, label: 'Hard' },
+      chaos: { baseDelay: 68, speedStep: 9, label: 'Chaos' }
+    };
+
+    let snake;
+    let food;
+    let direction;
+    let nextDirection;
+    let score;
+    let bestScore = Number(localStorage.getItem('gridViperBestScore') || 0);
+    let gameLoop;
+    let running = false;
+    let paused = false;
+    let gameOver = false;
+    let currentDelay = difficultySettings.normal.baseDelay;
+
+    bestEl.textContent = bestScore;
+
+    function resetState() {
+      snake = [
+        { x: 12, y: 12 },
+        { x: 11, y: 12 },
+        { x: 10, y: 12 }
+      ];
+      direction = { x: 1, y: 0 };
+      nextDirection = { x: 1, y: 0 };
+      score = 0;
+      gameOver = false;
+      paused = false;
+      running = false;
+      currentDelay = difficultySettings[difficultyEl.value].baseDelay;
+      food = createFood();
+      updateStats();
+      messageEl.textContent = 'Ready.';
+      draw();
+    }
+
+    function updateStats() {
+      scoreEl.textContent = score;
+      bestEl.textContent = bestScore;
+      const base = difficultySettings[difficultyEl.value].baseDelay;
+      const speedLevel = Math.max(1, Math.round((base - currentDelay) / 12) + 1);
+      speedEl.textContent = speedLevel;
+    }
+
+    function showOverlay(title, text, buttonText) {
+      overlayTitle.textContent = title;
+      overlayText.textContent = text;
+      overlayButton.textContent = buttonText;
+      overlay.classList.remove('hidden');
+    }
+
+    function hideOverlay() {
+      overlay.classList.add('hidden');
+    }
+
+    function startGame() {
+      if (gameOver) resetState();
+      if (running && !paused) return;
+
+      running = true;
+      paused = false;
+      hideOverlay();
+      messageEl.textContent = 'Hunt the data node.';
+      clearTimeout(gameLoop);
+      tick();
+    }
+
+    function pauseGame() {
+      if (!running || gameOver) return;
+      paused = !paused;
+
+      if (paused) {
+        clearTimeout(gameLoop);
+        messageEl.textContent = 'Paused.';
+        showOverlay('Paused', 'Take a breath. Then get back to it.', 'Resume');
+      } else {
+        hideOverlay();
+        messageEl.textContent = 'Back in the grid.';
+        tick();
+      }
+    }
+
+    function restartGame() {
+      clearTimeout(gameLoop);
+      resetState();
+      startGame();
+    }
+
+    function tick() {
+      if (!running || paused || gameOver) return;
+      update();
+      draw();
+      gameLoop = setTimeout(tick, currentDelay);
+    }
+
+    function update() {
+      direction = nextDirection;
+      const head = { ...snake[0] };
+      head.x += direction.x;
+      head.y += direction.y;
+
+      if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+        endGame('Wall hit. The grid wins.');
+        return;
+      }
+
+      if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+        endGame('You ate yourself. Rookie mistake.');
+        return;
+      }
+
+      snake.unshift(head);
+
+      if (head.x === food.x && head.y === food.y) {
+        score += 10;
+        messageEl.textContent = randomEatMessage();
+        food = createFood();
+        increaseSpeed();
+        updateBestScore();
+      } else {
+        snake.pop();
+      }
+
+      updateStats();
+    }
+
+    function increaseSpeed() {
+      const setting = difficultySettings[difficultyEl.value];
+      currentDelay = Math.max(42, currentDelay - setting.speedStep);
+    }
+
+    function updateBestScore() {
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem('gridViperBestScore', String(bestScore));
+      }
+    }
+
+    function endGame(reason) {
+      gameOver = true;
+      running = false;
+      clearTimeout(gameLoop);
+      updateBestScore();
+      updateStats();
+      draw();
+      messageEl.textContent = reason;
+      showOverlay('Game Over', `${reason} Final score: ${score}.`, 'Play Again');
+    }
+
+    function createFood() {
+      let newFood;
+      do {
+        newFood = {
+          x: Math.floor(Math.random() * tileCount),
+          y: Math.floor(Math.random() * tileCount)
+        };
+      } while (snake && snake.some(segment => segment.x === newFood.x && segment.y === newFood.y));
+      return newFood;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBackground();
+      drawFood();
+      drawSnake();
+    }
+
+    function drawBackground() {
+      ctx.fillStyle = '#020602';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = 'rgba(140,255,106,0.065)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= tileCount; i++) {
+        const pos = i * gridSize;
+        ctx.beginPath();
+        ctx.moveTo(pos, 0);
+        ctx.lineTo(pos, canvas.height);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(0, pos);
+        ctx.lineTo(canvas.width, pos);
+        ctx.stroke();
+      }
+    }
+
+    function drawSnake() {
+      snake.forEach((segment, index) => {
+        const px = segment.x * gridSize;
+        const py = segment.y * gridSize;
+        const inset = index === 0 ? 2 : 3;
+
+        ctx.fillStyle = index === 0 ? '#b9ffd2' : '#8cff6a';
+        ctx.shadowColor = '#8cff6a';
+        ctx.shadowBlur = index === 0 ? 18 : 10;
+        roundRect(px + inset, py + inset, gridSize - inset * 2, gridSize - inset * 2, 6);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        if (index === 0) {
+          ctx.fillStyle = '#071106';
+          const eyeSize = 3;
+          const eyeOne = getEyePosition(segment, 1);
+          const eyeTwo = getEyePosition(segment, -1);
+          ctx.fillRect(px + eyeOne.x, py + eyeOne.y, eyeSize, eyeSize);
+          ctx.fillRect(px + eyeTwo.x, py + eyeTwo.y, eyeSize, eyeSize);
+        }
+      });
+    }
+
+    function getEyePosition(segment, side) {
+      if (direction.x !== 0) {
+        return {
+          x: direction.x > 0 ? 16 : 5,
+          y: side > 0 ? 7 : 15
+        };
+      }
+      return {
+        x: side > 0 ? 7 : 15,
+        y: direction.y > 0 ? 16 : 5
+      };
+    }
+
+    function drawFood() {
+      const px = food.x * gridSize;
+      const py = food.y * gridSize;
+      const pulse = Math.sin(Date.now() / 130) * 2;
+
+      ctx.fillStyle = '#ffd86b';
+      ctx.shadowColor = '#ffd86b';
+      ctx.shadowBlur = 18;
+      roundRect(px + 5 - pulse / 2, py + 5 - pulse / 2, 14 + pulse, 14 + pulse, 5);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function changeDirection(newDir) {
+      if (!running && !gameOver) startGame();
+
+      const goingUp = direction.y === -1;
+      const goingDown = direction.y === 1;
+      const goingLeft = direction.x === -1;
+      const goingRight = direction.x === 1;
+
+      if (newDir === 'up' && !goingDown) nextDirection = { x: 0, y: -1 };
+      if (newDir === 'down' && !goingUp) nextDirection = { x: 0, y: 1 };
+      if (newDir === 'left' && !goingRight) nextDirection = { x: -1, y: 0 };
+      if (newDir === 'right' && !goingLeft) nextDirection = { x: 1, y: 0 };
+    }
+
+    function randomEatMessage() {
+      const messages = [
+        'Node consumed.',
+        'Clean bite.',
+        'Nom Nom Nom.',
+        'You are getting longer. That is not always good.',
+        'Nice. Do not get smug.',
+        'Another one down.'
+      ];
+      return messages[Math.floor(Math.random() * messages.length)];
+    }
+
+    document.addEventListener('keydown', (event) => {
+      const key = event.key.toLowerCase();
+
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 'a', 's', 'd'].includes(key)) {
+        event.preventDefault();
+      }
+
+      if (key === 'arrowup' || key === 'w') changeDirection('up');
+      if (key === 'arrowdown' || key === 's') changeDirection('down');
+      if (key === 'arrowleft' || key === 'a') changeDirection('left');
+      if (key === 'arrowright' || key === 'd') changeDirection('right');
+      if (key === ' ') pauseGame();
+      if (key === 'r') restartGame();
+    });
+
+    document.querySelectorAll('[data-dir]').forEach(button => {
+      button.addEventListener('click', () => changeDirection(button.dataset.dir));
+    });
+
+    startBtn.addEventListener('click', startGame);
+    pauseBtn.addEventListener('click', pauseGame);
+    resetBtn.addEventListener('click', () => {
+      clearTimeout(gameLoop);
+      resetState();
+      showOverlay('Grid Viper', 'Eat the data nodes. Avoid the walls. Do not crash into yourself.', 'Start Game');
+    });
+    overlayButton.addEventListener('click', () => {
+      if (paused) {
+        pauseGame();
+      } else {
+        startGame();
+      }
+    });
+
+    difficultyEl.addEventListener('change', () => {
+      clearTimeout(gameLoop);
+      resetState();
+      showOverlay('Difficulty Changed', `${difficultySettings[difficultyEl.value].label} mode loaded. Start when ready.`, 'Start Game');
+    });
+
+    resetState();
+    draw();
+  </script>
+</body>
+</html>
