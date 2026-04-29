@@ -29,26 +29,26 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:24px;
+  padding:12px;
 }
 
-/* --- SHELL --- */
 .game-shell{
   width:min(1100px,100%);
   border:1px solid var(--border-soft);
   background:var(--panel);
   box-shadow:0 0 18px rgba(140,255,106,0.35), inset 0 0 28px rgba(140,255,106,0.08);
   border-radius:22px;
-  padding:18px 20px 24px;
+  padding:12px 18px 16px;
 }
 
-/* --- LOGO --- */
 .logo{
   display:block;
   width:100%;
   max-width:100%;
   height:auto;
-  margin:0 auto 6px;
+  max-height:145px;
+  object-fit:contain;
+  margin:-4px auto 2px;
   filter:
     drop-shadow(0 0 10px rgba(140,255,106,0.45))
     drop-shadow(0 0 24px rgba(140,255,106,0.28));
@@ -74,28 +74,27 @@ body{
   text-align:center;
   color:var(--text-soft);
   font-size:0.95rem;
-  margin-bottom:10px;
+  margin-bottom:6px;
 }
 
 .meta{
   text-align:center;
   font-size:0.8rem;
   color:rgba(185,255,210,0.7);
-  margin-bottom:16px;
+  margin-bottom:10px;
 }
 
-/* --- STATS --- */
 .stats{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:12px;
-  margin-bottom:18px;
+  margin-bottom:12px;
 }
 
 .stat{
   border:1px solid var(--border-soft);
   border-radius:14px;
-  padding:12px;
+  padding:10px;
   background:rgba(0,0,0,0.22);
   text-align:center;
 }
@@ -107,8 +106,8 @@ body{
 }
 
 .stat-value{
-  margin-top:5px;
-  font-size:1.3rem;
+  margin-top:4px;
+  font-size:1.25rem;
   text-shadow:0 0 10px rgba(140,255,106,0.35);
 }
 
@@ -118,7 +117,6 @@ body{
 .status-shock{color:var(--red);}
 .status-clear{color:var(--green);}
 
-/* --- GAME AREA --- */
 .game-area{
   border:1px solid var(--border-soft);
   border-radius:18px;
@@ -138,15 +136,13 @@ canvas{
   cursor:none;
 }
 
-/* --- MESSAGE --- */
 .message{
   text-align:center;
-  margin:14px 0;
+  margin:10px 0;
   color:var(--text-soft);
   font-size:0.95rem;
 }
 
-/* --- CONTROLS --- */
 .controls{
   display:flex;
   justify-content:center;
@@ -154,30 +150,67 @@ canvas{
 }
 
 button{
+  font-family:Consolas, Monaco, monospace;
   border:1px solid var(--green);
   background:rgba(140,255,106,0.08);
   color:var(--green);
   border-radius:999px;
   padding:8px 16px;
   cursor:pointer;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  box-shadow:0 0 12px rgba(140,255,106,0.16);
 }
 
 button:hover,
 button.active{
   background:var(--green);
   color:#061006;
+  box-shadow:0 0 22px rgba(140,255,106,0.45);
 }
 
+.shake{ animation:shake 0.22s linear; }
+.flash-fail{ animation:failFlash 0.3s ease; }
+.flash-win{ animation:winFlash 0.45s ease; }
+
+@keyframes shake{
+  0%,100%{transform:translate(0,0);}
+  20%{transform:translate(-7px,3px);}
+  40%{transform:translate(6px,-3px);}
+  60%{transform:translate(-4px,2px);}
+  80%{transform:translate(4px,-2px);}
+}
+
+@keyframes failFlash{
+  50%{
+    box-shadow:
+      0 0 42px rgba(255,107,74,0.75),
+      inset 0 0 42px rgba(255,107,74,0.25);
+  }
+}
+
+@keyframes winFlash{
+  50%{
+    box-shadow:
+      0 0 48px rgba(140,255,106,0.8),
+      inset 0 0 42px rgba(140,255,106,0.25);
+  }
+}
+
+@media (max-width:700px){
+  .stats{grid-template-columns:1fr;}
+  .game-shell{padding:12px;}
+}
 </style>
 </head>
 
 <body>
-<main class="game-shell">
+<main class="game-shell" id="shell">
 
-<img src="shocklinelogo.png" class="logo">
+<img src="shocklinelogo.png" class="logo" alt="Shockline Logo">
 
 <div class="subtitle">Stay steady. Don’t break the line.</div>
-<div class="meta">Created by Jason / build v1.5</div>
+<div class="meta">Created by Jason / build v1.6</div>
 
 <div class="stats">
   <div class="stat">
@@ -194,12 +227,12 @@ button.active{
   </div>
 </div>
 
-<div class="game-area">
+<div class="game-area" id="gameArea">
   <canvas id="game" width="920" height="430"></canvas>
 </div>
 
 <div class="message" id="message">
-Move into START, then press and hold. Leave START while holding to begin.
+  Move into START, then press and hold. Leave START while holding to begin.
 </div>
 
 <div class="controls">
@@ -211,128 +244,214 @@ Move into START, then press and hold. Leave START while holding to begin.
 </main>
 
 <script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-const statusEl=document.getElementById("status");
-const timeEl=document.getElementById("time");
-const bestEl=document.getElementById("best");
+const shell = document.getElementById("shell");
+const gameArea = document.getElementById("gameArea");
 
-const easyBtn=document.getElementById("easyBtn");
-const normalBtn=document.getElementById("normalBtn");
-const hardBtn=document.getElementById("hardBtn");
+const statusEl = document.getElementById("status");
+const timeEl = document.getElementById("time");
+const bestEl = document.getElementById("best");
+const messageEl = document.getElementById("message");
 
-const path=[
-{x:95,y:215},{x:185,y:135},{x:275,y:285},{x:390,y:145},
-{x:500,y:240},{x:615,y:120},{x:725,y:285},{x:825,y:210}
+const easyBtn = document.getElementById("easyBtn");
+const normalBtn = document.getElementById("normalBtn");
+const hardBtn = document.getElementById("hardBtn");
+
+const path = [
+  {x:95,y:215},
+  {x:185,y:135},
+  {x:275,y:285},
+  {x:390,y:145},
+  {x:500,y:240},
+  {x:615,y:120},
+  {x:725,y:285},
+  {x:825,y:210}
 ];
 
-const startNode={x:65,y:215,r:28};
-const endNode={x:855,y:210,r:28};
+const startNode = {x:65,y:215,r:28};
+const endNode = {x:855,y:210,r:28};
 
-const settings={
-easy:{safe:18,cursor:5},
-normal:{safe:13,cursor:5},
-hard:{safe:8,cursor:5}
+const settings = {
+  easy:{safe:18,cursor:5},
+  normal:{safe:13,cursor:5},
+  hard:{safe:8,cursor:5}
 };
 
-let difficulty="normal";
-let mouse={x:-100,y:-100};
-let gameState="ready";
-let isMouseDown=false;
-let hasLeftStart=false;
-let startTime=0;
+let difficulty = "normal";
+let mouse = {x:-100,y:-100};
+let gameState = "ready";
+let isMouseDown = false;
+let hasLeftStart = false;
+let startTime = 0;
+let elapsed = 0;
 
-let best=localStorage.getItem("shocklineBest");
-if(best) bestEl.textContent=Number(best).toFixed(2)+"s";
+let best = localStorage.getItem("shocklineBest");
+if(best) bestEl.textContent = Number(best).toFixed(2) + "s";
 
-function setStatus(t,c){
-  statusEl.textContent=t;
-  statusEl.className="stat-value "+c;
+function setStatus(text, className){
+  statusEl.textContent = text;
+  statusEl.className = "stat-value " + className;
 }
 
-canvas.addEventListener("mousemove",e=>{
-  const r=canvas.getBoundingClientRect();
-  mouse.x=(e.clientX-r.left)*(canvas.width/r.width);
-  mouse.y=(e.clientY-r.top)*(canvas.height/r.height);
+function getMousePos(e){
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x:(e.clientX - rect.left) * (canvas.width / rect.width),
+    y:(e.clientY - rect.top) * (canvas.height / rect.height)
+  };
+}
+
+canvas.addEventListener("mousemove", e => {
+  mouse = getMousePos(e);
 });
 
-canvas.addEventListener("mousedown",()=>{
-  isMouseDown=true;
-  if(gameState==="ready" && inNode(mouse,startNode)){
-    gameState="playing";
-    hasLeftStart=false;
-    startTime=performance.now();
-    setStatus("Charged","status-charged");
+canvas.addEventListener("mousedown", e => {
+  mouse = getMousePos(e);
+  isMouseDown = true;
+
+  if(gameState === "ready" && inNode(mouse,startNode)){
+    startRun();
   }
 });
 
-window.addEventListener("mouseup",()=>{
-  if(gameState==="playing" && hasLeftStart){
-    fail();
-  }else{
+window.addEventListener("mouseup", () => {
+  if(gameState === "playing" && hasLeftStart){
+    isMouseDown = false;
+    fail("You let go. Shock!");
+    return;
+  }
+
+  if(gameState === "playing" && !hasLeftStart){
     reset();
+    return;
+  }
+
+  isMouseDown = false;
+});
+
+canvas.addEventListener("mouseleave", () => {
+  if(gameState === "playing" && hasLeftStart){
+    fail("You left the board. Shock!");
   }
 });
+
+function startRun(){
+  gameState = "playing";
+  hasLeftStart = false;
+  startTime = performance.now();
+  elapsed = 0;
+  setStatus("Charged","status-charged");
+  messageEl.textContent = "Hold steady. Leave START while holding to activate the line.";
+}
 
 function reset(){
-  gameState="ready";
-  isMouseDown=false;
-  hasLeftStart=false;
+  gameState = "ready";
+  isMouseDown = false;
+  hasLeftStart = false;
+  elapsed = 0;
   setStatus("Ready","status-ready");
-  timeEl.textContent="0.00s";
+  timeEl.textContent = "0.00s";
+  messageEl.textContent = "Move into START, then press and hold. Leave START while holding to begin.";
 }
 
-function fail(){
-  gameState="failed";
+function fail(text){
+  if(gameState !== "playing") return;
+
+  gameState = "failed";
   setStatus("Shock!","status-shock");
-  setTimeout(reset,700);
+  messageEl.textContent = text;
+
+  triggerAnimation(shell,"shake");
+  triggerAnimation(gameArea,"flash-fail");
+
+  setTimeout(reset, 800);
 }
 
 function win(){
-  gameState="won";
+  if(gameState !== "playing") return;
+
+  gameState = "won";
   setStatus("Clear!","status-clear");
-  let t=(performance.now()-startTime)/1000;
-  if(!best || t<best){
-    best=t;
-    localStorage.setItem("shocklineBest",best);
-    bestEl.textContent=best.toFixed(2)+"s";
+  messageEl.textContent = `Clean run. Time: ${elapsed.toFixed(2)}s`;
+
+  triggerAnimation(gameArea,"flash-win");
+
+  if(!best || elapsed < Number(best)){
+    best = elapsed;
+    localStorage.setItem("shocklineBest", best);
+    bestEl.textContent = best.toFixed(2) + "s";
+    messageEl.textContent = `New best! ${elapsed.toFixed(2)}s`;
   }
-  setTimeout(reset,1000);
+
+  setTimeout(reset, 1200);
 }
+
+function triggerAnimation(element,className){
+  element.classList.remove(className);
+  void element.offsetWidth;
+  element.classList.add(className);
+}
+
+function setDifficulty(level){
+  difficulty = level;
+
+  easyBtn.classList.toggle("active", level === "easy");
+  normalBtn.classList.toggle("active", level === "normal");
+  hardBtn.classList.toggle("active", level === "hard");
+
+  reset();
+  messageEl.textContent = `${level.charAt(0).toUpperCase() + level.slice(1)} mode selected. Start from the START node.`;
+}
+
+easyBtn.onclick = () => setDifficulty("easy");
+normalBtn.onclick = () => setDifficulty("normal");
+hardBtn.onclick = () => setDifficulty("hard");
 
 function inNode(p,n){
-  return Math.hypot(p.x-n.x,p.y-n.y)<=n.r;
+  return Math.hypot(p.x - n.x, p.y - n.y) <= n.r;
 }
 
-function dist(p,v,w){
-  const l2=(w.x-v.x)**2+(w.y-v.y)**2;
-  let t=((p.x-v.x)*(w.x-v.x)+(p.y-v.y)*(w.y-v.y))/l2;
-  t=Math.max(0,Math.min(1,t));
-  return Math.hypot(p.x-(v.x+t*(w.x-v.x)),p.y-(v.y+t*(w.y-v.y)));
+function distToSegment(p,v,w){
+  const l2 = (w.x-v.x)**2 + (w.y-v.y)**2;
+
+  if(l2 === 0){
+    return Math.hypot(p.x-v.x, p.y-v.y);
+  }
+
+  let t = ((p.x-v.x)*(w.x-v.x) + (p.y-v.y)*(w.y-v.y)) / l2;
+  t = Math.max(0, Math.min(1, t));
+
+  return Math.hypot(
+    p.x - (v.x + t*(w.x-v.x)),
+    p.y - (v.y + t*(w.y-v.y))
+  );
 }
 
 function distWire(p){
-  let d=9999;
-  for(let i=0;i<path.length-1;i++){
-    d=Math.min(d,dist(p,path[i],path[i+1]));
+  let closest = Infinity;
+
+  for(let i=0; i<path.length-1; i++){
+    closest = Math.min(closest, distToSegment(p,path[i],path[i+1]));
   }
-  return d;
+
+  return closest;
 }
 
 function update(){
-  if(gameState!=="playing") return;
+  if(gameState !== "playing") return;
 
-  let t=(performance.now()-startTime)/1000;
-  timeEl.textContent=t.toFixed(2)+"s";
+  elapsed = (performance.now() - startTime) / 1000;
+  timeEl.textContent = elapsed.toFixed(2) + "s";
 
   if(!inNode(mouse,startNode)){
-    hasLeftStart=true;
+    hasLeftStart = true;
     setStatus("Active","status-active");
   }
 
   if(hasLeftStart && !isMouseDown){
-    fail();
+    fail("You let go. Shock!");
     return;
   }
 
@@ -341,44 +460,132 @@ function update(){
     return;
   }
 
-  if(hasLeftStart && distWire(mouse)>settings[difficulty].safe){
-    fail();
+  if(hasLeftStart && distWire(mouse) > settings[difficulty].safe){
+    fail("You broke the line. Shock!");
   }
+}
+
+function drawGrid(){
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  ctx.strokeStyle = "#8cff6a";
+  ctx.lineWidth = 1;
+
+  for(let x=0; x<=canvas.width; x+=28){
+    ctx.beginPath();
+    ctx.moveTo(x,0);
+    ctx.lineTo(x,canvas.height);
+    ctx.stroke();
+  }
+
+  for(let y=0; y<=canvas.height; y+=28){
+    ctx.beginPath();
+    ctx.moveTo(0,y);
+    ctx.lineTo(canvas.width,y);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function tracePath(){
+  ctx.beginPath();
+  ctx.moveTo(path[0].x,path[0].y);
+  for(let i=1; i<path.length; i++){
+    ctx.lineTo(path[i].x,path[i].y);
+  }
+}
+
+function drawWire(){
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  tracePath();
+  ctx.strokeStyle = "rgba(140,255,106,0.12)";
+  ctx.lineWidth = settings[difficulty].safe * 1.7;
+  ctx.stroke();
+
+  tracePath();
+  ctx.strokeStyle = "#8cff6a";
+  ctx.lineWidth = 6;
+  ctx.shadowBlur = gameState === "playing" && hasLeftStart ? 30 : 24;
+  ctx.shadowColor = "#8cff6a";
+  ctx.stroke();
+
+  tracePath();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = "#d8ffce";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawNode(node,label,color){
+  ctx.save();
+
+  ctx.beginPath();
+  ctx.arc(node.x,node.y,node.r,0,Math.PI*2);
+  ctx.fillStyle = "rgba(0,0,0,0.72)";
+  ctx.fill();
+
+  ctx.shadowBlur = label === "END" && gameState === "playing" ? 34 : 22;
+  ctx.shadowColor = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = color;
+  ctx.font = "bold 13px Consolas, Monaco, monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(label,node.x,node.y);
+
+  ctx.restore();
+}
+
+function drawCursor(){
+  ctx.save();
+
+  ctx.beginPath();
+  ctx.arc(mouse.x,mouse.y,settings[difficulty].cursor,0,Math.PI*2);
+  ctx.fillStyle = "#071106";
+  ctx.fill();
+
+  ctx.shadowBlur = difficulty === "hard" ? 10 : 14;
+  ctx.shadowColor = "#7fdcff";
+  ctx.strokeStyle = "#7fdcff";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawHelpText(){
+  ctx.save();
+
+  ctx.fillStyle = "rgba(185,255,210,0.42)";
+  ctx.font = "11px Consolas, Monaco, monospace";
+  ctx.textAlign = "left";
+  ctx.fillText("HOLD CLICK + TRACE THE LINE",22,28);
+
+  ctx.textAlign = "right";
+  ctx.fillText(`MODE: ${difficulty.toUpperCase()}`,canvas.width-22,28);
+
+  ctx.restore();
 }
 
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  ctx.beginPath();
-  ctx.moveTo(path[0].x,path[0].y);
-  for(let i=1;i<path.length;i++) ctx.lineTo(path[i].x,path[i].y);
-  ctx.strokeStyle="#8cff6a";
-  ctx.lineWidth=6;
-  ctx.shadowBlur=24;
-  ctx.shadowColor="#8cff6a";
-  ctx.stroke();
-  ctx.shadowBlur=0;
-
+  drawGrid();
+  drawHelpText();
+  drawWire();
   drawNode(startNode,"START","#7fdcff");
   drawNode(endNode,"END","#ffd86b");
-
-  ctx.beginPath();
-  ctx.arc(mouse.x,mouse.y,settings[difficulty].cursor,0,Math.PI*2);
-  ctx.strokeStyle="#7fdcff";
-  ctx.stroke();
-}
-
-function drawNode(n,label,color){
-  ctx.beginPath();
-  ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
-  ctx.strokeStyle=color;
-  ctx.stroke();
-
-  ctx.fillStyle=color;
-  ctx.font="12px Consolas";
-  ctx.textAlign="center";
-  ctx.textBaseline="middle";
-  ctx.fillText(label,n.x,n.y);
+  drawCursor();
 }
 
 function loop(){
@@ -387,20 +594,7 @@ function loop(){
   requestAnimationFrame(loop);
 }
 
-function setDifficulty(level) {
-  difficulty = level;
-
-  easyBtn.classList.toggle("active", level === "easy");
-  normalBtn.classList.toggle("active", level === "normal");
-  hardBtn.classList.toggle("active", level === "hard");
-
-  reset();
-}
-
-easyBtn.onclick = () => setDifficulty("easy");
-normalBtn.onclick = () => setDifficulty("normal");
-hardBtn.onclick = () => setDifficulty("hard");
-
+reset();
 loop();
 </script>
 </body>
