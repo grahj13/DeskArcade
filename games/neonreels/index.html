@@ -1,1 +1,887 @@
-test
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NeonReels | DeskArcade</title>
+
+<style>
+:root {
+  --green:#8cff6a;
+  --dark-green:#3f8f36;
+  --red:#ff6b4a;
+  --yellow:#ffd86b;
+  --blue:#7fdcff;
+  --bg:#071106;
+  --panel:rgba(7,24,8,0.94);
+  --text-soft:#b9ffd2;
+  --border-soft:rgba(140,255,106,0.35);
+}
+
+* { box-sizing:border-box; }
+
+body {
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 34%),
+    linear-gradient(180deg,#071106 0%,#020402 100%);
+  color:var(--green);
+  font-family:Consolas, Monaco, monospace;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.arcade {
+  width:100%;
+  max-width:830px;
+  border:1px solid var(--border-soft);
+  background:var(--panel);
+  box-shadow:0 0 35px rgba(140,255,106,0.18);
+  border-radius:18px;
+  padding:22px;
+}
+
+.header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+  margin-bottom:18px;
+}
+
+.logo-wrap {
+  display:flex;
+  align-items:center;
+}
+
+.logo {
+  max-width:280px;
+  height:auto;
+  filter:drop-shadow(0 0 14px rgba(140,255,106,0.35));
+}
+
+.header-actions {
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+
+.return-btn {
+  color:var(--green);
+  text-decoration:none;
+  border:1px solid var(--border-soft);
+  padding:10px 14px;
+  border-radius:12px;
+  background:rgba(140,255,106,0.08);
+  white-space:nowrap;
+}
+
+.return-btn:hover {
+  background:rgba(140,255,106,0.18);
+}
+
+.stats {
+  display:grid;
+  grid-template-columns:repeat(5, 1fr);
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.stat {
+  border:1px solid var(--border-soft);
+  border-radius:14px;
+  padding:12px;
+  background:rgba(0,0,0,0.25);
+  text-align:center;
+}
+
+.stat-label {
+  color:var(--text-soft);
+  font-size:0.75rem;
+  margin-bottom:5px;
+}
+
+.stat-value {
+  font-size:1.25rem;
+  color:var(--yellow);
+}
+
+.jackpot-value {
+  color:var(--yellow);
+  text-shadow:0 0 12px rgba(255,216,107,0.65);
+}
+
+.message {
+  min-height:44px;
+  text-align:center;
+  color:var(--text-soft);
+  margin-bottom:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.machine {
+  border:1px solid var(--border-soft);
+  border-radius:22px;
+  padding:16px;
+  background:
+    radial-gradient(circle at center, rgba(140,255,106,0.09), transparent 60%),
+    rgba(0,0,0,0.34);
+  margin-bottom:16px;
+  box-shadow:inset 0 0 24px rgba(140,255,106,0.08);
+}
+
+.reels {
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:12px;
+}
+
+.reel-wrap {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+}
+
+.reel {
+  width:100%;
+  display:grid;
+  grid-template-rows:repeat(3, 86px);
+  gap:8px;
+  border-radius:16px;
+}
+
+.reel.spinning {
+  filter:blur(0.6px);
+  opacity:0.92;
+}
+
+.reel.stopped {
+  animation:reelStop 0.22s ease-out;
+}
+
+.reel.held,
+.reel.hold-awarded {
+  box-shadow:0 0 18px rgba(127,220,255,0.65);
+}
+
+.reel.nudge-awarded {
+  box-shadow:0 0 20px rgba(255,216,107,0.75);
+}
+
+.symbol {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:2.7rem;
+  border:1px solid rgba(140,255,106,0.34);
+  border-radius:16px;
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,0.08), transparent 35%),
+    linear-gradient(180deg, rgba(140,255,106,0.16), rgba(0,0,0,0.55));
+  box-shadow:
+    inset 0 0 18px rgba(140,255,106,0.1),
+    0 0 12px rgba(140,255,106,0.08);
+}
+
+.symbol.jackpot-symbol {
+  border-color:rgba(255,216,107,0.45);
+  text-shadow:0 0 14px rgba(255,216,107,0.75);
+}
+
+.symbol.win {
+  border-color:var(--yellow);
+  animation:winPulse 0.7s ease-in-out infinite alternate;
+  box-shadow:
+    0 0 18px rgba(255,216,107,0.7),
+    inset 0 0 18px rgba(255,216,107,0.22);
+}
+
+.controls {
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:16px;
+}
+
+button, select {
+  font-family:inherit;
+  border:1px solid var(--border-soft);
+  border-radius:12px;
+  background:#061006;
+  color:var(--green);
+  padding:12px 16px;
+  font-size:1rem;
+}
+
+button { cursor:pointer; }
+
+button:hover {
+  background:rgba(140,255,106,0.18);
+}
+
+button:disabled {
+  opacity:0.35;
+  cursor:not-allowed;
+}
+
+select {
+  appearance:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+  min-width:90px;
+  cursor:pointer;
+  background:
+    linear-gradient(180deg, rgba(140,255,106,0.16), rgba(0,0,0,0.45)),
+    #061006;
+}
+
+select option {
+  background:#061006;
+  color:var(--green);
+}
+
+label {
+  color:var(--text-soft);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.spin-btn {
+  min-width:140px;
+  color:#061006;
+  background:var(--green);
+  font-weight:bold;
+  box-shadow:0 0 18px rgba(140,255,106,0.45);
+}
+
+.hold-btn,
+.nudge-btn {
+  min-width:88px;
+  text-align:center;
+  padding:7px 10px;
+  font-size:0.78rem;
+  border-radius:10px;
+  opacity:0.85;
+}
+
+.hold-btn {
+  margin-top:4px;
+}
+
+.nudge-btn {
+  margin-top:-3px;
+}
+
+.hold-btn.active {
+  border-color:var(--blue);
+  color:var(--blue);
+  box-shadow:0 0 14px rgba(127,220,255,0.45);
+}
+
+.hold-btn:disabled,
+.nudge-btn:disabled {
+  opacity:0.22;
+}
+
+.hold-btn.active {
+  border-color:var(--blue);
+  color:var(--blue);
+  box-shadow:0 0 14px rgba(127,220,255,0.45);
+}
+
+
+.nudge-alert {
+  color:var(--yellow);
+  font-size:1.15rem;
+  text-shadow:0 0 12px rgba(255,216,107,0.8);
+}
+
+.hold-alert {
+  color:var(--blue);
+  font-size:1.15rem;
+  text-shadow:0 0 12px rgba(127,220,255,0.8);
+}
+
+.win-alert {
+  color:var(--green);
+  font-size:1.15rem;
+  text-shadow:0 0 12px rgba(140,255,106,0.8);
+}
+
+.big-win-alert {
+  color:var(--yellow);
+  font-size:1.25rem;
+  text-shadow:0 0 16px rgba(255,216,107,0.95);
+  animation:messagePulse 0.8s ease-in-out infinite alternate;
+}
+
+.jackpot-alert {
+  color:var(--yellow);
+  font-size:1.35rem;
+  text-shadow:0 0 18px rgba(255,216,107,1);
+  animation:messagePulse 0.65s ease-in-out infinite alternate;
+}
+
+.paytable {
+  border-top:1px solid var(--border-soft);
+  padding-top:14px;
+  color:var(--text-soft);
+  font-size:0.9rem;
+}
+
+.paytable-title {
+  color:var(--green);
+  margin-bottom:8px;
+}
+
+.footer {
+  margin-top:16px;
+  text-align:center;
+  color:var(--text-soft);
+  font-size:0.8rem;
+}
+
+@keyframes winPulse {
+  from {
+    transform:scale(1);
+    box-shadow:
+      0 0 14px rgba(255,216,107,0.55),
+      inset 0 0 14px rgba(255,216,107,0.18);
+  }
+  to {
+    transform:scale(1.04);
+    box-shadow:
+      0 0 28px rgba(255,216,107,0.9),
+      inset 0 0 24px rgba(255,216,107,0.28);
+  }
+}
+
+@keyframes messagePulse {
+  from { transform:scale(1); }
+  to { transform:scale(1.05); }
+}
+
+@keyframes reelStop {
+  0% { transform:translateY(-4px); }
+  60% { transform:translateY(3px); }
+  100% { transform:translateY(0); }
+}
+
+@media (max-width:700px) {
+  .header {
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .header-actions {
+    flex-wrap:wrap;
+  }
+
+  .stats {
+    grid-template-columns:1fr 1fr;
+  }
+
+  .reel {
+    grid-template-rows:repeat(3, 68px);
+  }
+
+  .symbol {
+    font-size:2rem;
+  }
+}
+</style>
+</head>
+
+<body>
+  <main class="arcade">
+    <div class="header">
+<div class="logo-wrap">
+  <img src="neonreellogo.png" alt="NeonReels Logo" class="logo">
+</div>
+
+      <div class="header-actions">
+        <button id="resetBtn">Reset</button>
+        <a class="return-btn" href="../../index.html">Return to Arcade</a>
+      </div>
+    </div>
+
+    <section class="stats">
+      <div class="stat">
+        <div class="stat-label">Balance</div>
+        <div class="stat-value" id="balance">£100</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Bet</div>
+        <div class="stat-value" id="betDisplay">£1</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Last Win</div>
+        <div class="stat-value" id="lastWin">£0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Nudges</div>
+        <div class="stat-value" id="nudges">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Jackpot</div>
+        <div class="stat-value jackpot-value" id="jackpot">£50</div>
+      </div>
+    </section>
+
+    <div class="message" id="message">Start with £100. Pick your bet and spin.</div>
+
+    <section class="machine">
+      <div class="reels" id="reels"></div>
+    </section>
+
+    <section class="controls">
+      <label>
+        Bet:
+        <select id="betSelect">
+          <option value="1">£1</option>
+          <option value="2">£2</option>
+          <option value="5">£5</option>
+          <option value="10">£10</option>
+        </select>
+      </label>
+
+      <button class="spin-btn" id="spinBtn">SPIN</button>
+    </section>
+
+    <section class="paytable">
+      <div class="paytable-title">Paytable — 3 matching symbols on any active line</div>
+      🍒 Cherry = 2x &nbsp;|&nbsp;
+      🍋 Lemon = 3x &nbsp;|&nbsp;
+      🔔 Bell = 5x &nbsp;|&nbsp;
+      ⭐ Star = 8x &nbsp;|&nbsp;
+      💎 Diamond = 12x &nbsp;|&nbsp;
+      7️⃣ Seven = 20x<br>
+      👑 💰 🏆 Jackpot symbols = any 3 on a line wins the progressive jackpot
+    </section>
+
+    <div class="footer">Created by Jason / build v1.4</div>
+  </main>
+
+<script>
+const JACKPOT_SEED = 50;
+const BIG_WIN_MULTIPLIER = 10;
+
+const symbols = [
+  { icon: "🍒", mult: 2, weight: 30, jackpot: false },
+  { icon: "🍋", mult: 3, weight: 25, jackpot: false },
+  { icon: "🔔", mult: 5, weight: 18, jackpot: false },
+  { icon: "⭐", mult: 8, weight: 12, jackpot: false },
+  { icon: "💎", mult: 12, weight: 8, jackpot: false },
+  { icon: "7️⃣", mult: 20, weight: 4, jackpot: false },
+
+  { icon: "👑", mult: 0, weight: 1.2, jackpot: true },
+  { icon: "💰", mult: 0, weight: 1.2, jackpot: true },
+  { icon: "🏆", mult: 0, weight: 1.2, jackpot: true }
+];
+
+const paylines = [
+  [[0,0],[0,1],[0,2]],
+  [[1,0],[1,1],[1,2]],
+  [[2,0],[2,1],[2,2]],
+  [[0,0],[1,1],[2,2]],
+  [[2,0],[1,1],[0,2]]
+];
+
+let balance = 100;
+let jackpot = JACKPOT_SEED;
+let grid = [];
+let held = [false,false,false];
+let holdsAvailable = false;
+let nudges = 0;
+let lastBet = 1;
+let paidLines = new Set();
+let reelState = "";
+let spinningReels = [false,false,false];
+let stoppedReels = [false,false,false];
+
+const reelsEl = document.getElementById("reels");
+const balanceEl = document.getElementById("balance");
+const betDisplayEl = document.getElementById("betDisplay");
+const lastWinEl = document.getElementById("lastWin");
+const nudgesEl = document.getElementById("nudges");
+const jackpotEl = document.getElementById("jackpot");
+const messageEl = document.getElementById("message");
+const betSelect = document.getElementById("betSelect");
+const spinBtn = document.getElementById("spinBtn");
+const resetBtn = document.getElementById("resetBtn");
+
+function weightedSymbol(){
+  const total = symbols.reduce((sum, symbol) => sum + symbol.weight, 0);
+  let roll = Math.random() * total;
+
+  for(const symbol of symbols){
+    roll -= symbol.weight;
+    if(roll <= 0) return symbol;
+  }
+
+  return symbols[0];
+}
+
+function generateGrid(){
+  return Array.from({length:3},() =>
+    Array.from({length:3},() => weightedSymbol())
+  );
+}
+
+function generateReelColumn(){
+  return [weightedSymbol(), weightedSymbol(), weightedSymbol()];
+}
+
+function spinGrid(finalGrid){
+  const newGrid = generateGrid();
+
+  for(let c = 0; c < 3; c++){
+    if(stoppedReels[c]){
+      for(let r = 0; r < 3; r++){
+        newGrid[r][c] = finalGrid[r][c];
+      }
+    } else if(held[c]){
+      for(let r = 0; r < 3; r++){
+        newGrid[r][c] = grid[r][c];
+      }
+    }
+  }
+
+  return newGrid;
+}
+
+function draw(winCells=[]){
+  reelsEl.innerHTML = "";
+
+  for(let c = 0; c < 3; c++){
+    const wrap = document.createElement("div");
+    wrap.className = "reel-wrap";
+
+    const reel = document.createElement("div");
+    reel.className = "reel";
+
+    if(held[c]) reel.classList.add("held");
+    if(reelState === "hold") reel.classList.add("hold-awarded");
+    if(reelState === "nudge") reel.classList.add("nudge-awarded");
+    if(spinningReels[c]) reel.classList.add("spinning");
+    if(stoppedReels[c]) reel.classList.add("stopped");
+
+    for(let r = 0; r < 3; r++){
+      const cell = document.createElement("div");
+      cell.className = "symbol";
+
+      if(grid[r][c].jackpot) cell.classList.add("jackpot-symbol");
+
+      if(winCells.some(([rr,cc]) => rr === r && cc === c)){
+        cell.classList.add("win");
+      }
+
+      cell.textContent = grid[r][c].icon;
+      reel.appendChild(cell);
+    }
+
+    const holdBtn = document.createElement("button");
+    holdBtn.className = "hold-btn";
+	holdBtn.textContent = held[c] ? "HELD" : "HOLD";
+
+    if(held[c]) holdBtn.classList.add("active");
+
+    holdBtn.disabled = !holdsAvailable || nudges > 0 || spinningReels.some(Boolean);
+
+    holdBtn.onclick = () => {
+      held[c] = !held[c];
+      draw();
+      updateUI();
+    };
+
+    const nudgeBtn = document.createElement("button");
+    nudgeBtn.className = "nudge-btn";
+    nudgeBtn.textContent = "NUDGE";
+    nudgeBtn.disabled = nudges <= 0 || spinningReels.some(Boolean);
+
+    nudgeBtn.onclick = () => {
+      nudgeDown(c);
+    };
+
+    wrap.appendChild(reel);
+    wrap.appendChild(holdBtn);
+    wrap.appendChild(nudgeBtn);
+    reelsEl.appendChild(wrap);
+  }
+}
+
+function checkWins(){
+  let total = 0;
+  let cells = [];
+  let lines = 0;
+  let jackpotWon = false;
+  let jackpotAmount = 0;
+
+  paylines.forEach((line, i) => {
+    if(paidLines.has(i)) return;
+
+    const [a,b,c] = line;
+
+    const first = grid[a[0]][a[1]];
+    const second = grid[b[0]][b[1]];
+    const third = grid[c[0]][c[1]];
+
+    const jackpotLine = first.jackpot && second.jackpot && third.jackpot;
+    const normalLine =
+      first.icon === second.icon &&
+      second.icon === third.icon &&
+      !first.jackpot;
+
+    if(jackpotLine){
+      jackpotWon = true;
+      jackpotAmount += jackpot;
+      lines++;
+      cells.push(...line);
+      paidLines.add(i);
+    } else if(normalLine){
+      total += lastBet * first.mult;
+      lines++;
+      cells.push(...line);
+      paidLines.add(i);
+    }
+  });
+
+  return { total, cells, lines, jackpotWon, jackpotAmount };
+}
+
+function awardNudges(){
+  const r = Math.random();
+
+  if(r < 0.03) return 3;
+  if(r < 0.10) return 2;
+  if(r < 0.25) return 1;
+
+  return 0;
+}
+
+function awardHold(){
+  return Math.random() < 0.25;
+}
+
+function updateUI(){
+  const bet = Number(betSelect.value);
+
+  balanceEl.textContent = `£${balance}`;
+  betDisplayEl.textContent = `£${bet}`;
+  nudgesEl.textContent = nudges;
+  jackpotEl.textContent = `£${jackpot}`;
+
+  spinBtn.disabled = balance < bet || spinningReels.some(Boolean);
+  betSelect.disabled = holdsAvailable || held.some(v=>v) || nudges > 0 || spinningReels.some(Boolean);
+}
+
+function resolveSpinResult(usedHold){
+  const result = checkWins();
+
+  if(usedHold){
+    held = [false,false,false];
+  }
+
+  if(result.jackpotWon){
+    const totalPaid = result.jackpotAmount + result.total;
+    balance += totalPaid;
+    lastWinEl.textContent = `£${totalPaid}`;
+    messageEl.innerHTML = `<span class="jackpot-alert">JACKPOT! £${result.jackpotAmount}</span>`;
+    jackpot = JACKPOT_SEED;
+    holdsAvailable = false;
+    reelState = "";
+  } else if(result.total > 0){
+    balance += result.total;
+    jackpot += result.total;
+    lastWinEl.textContent = `£${result.total}`;
+
+    if(result.total >= lastBet * BIG_WIN_MULTIPLIER){
+      messageEl.innerHTML = `<span class="big-win-alert">BIG WIN! £${result.total}</span>`;
+    } else {
+      messageEl.innerHTML = `<span class="win-alert">WIN! ${result.lines} line(s) £${result.total}</span>`;
+    }
+
+    holdsAvailable = false;
+    reelState = "";
+  } else {
+    nudges = awardNudges();
+
+    if(nudges > 0){
+      messageEl.innerHTML = `<span class="nudge-alert">NUDGE AWARDED: ${nudges}</span>`;
+      reelState = "nudge";
+    } else if(!usedHold && awardHold()){
+      messageEl.innerHTML = `<span class="hold-alert">HOLD AWARDED</span>`;
+      holdsAvailable = true;
+      reelState = "hold";
+    } else {
+      messageEl.textContent = "No win.";
+      reelState = "";
+    }
+  }
+
+  spinningReels = [false,false,false];
+  stoppedReels = [false,false,false];
+
+  draw(result.cells);
+  updateUI();
+}
+
+function spin(){
+  const bet = Number(betSelect.value);
+  if(balance < bet || spinningReels.some(Boolean)) return;
+
+  const usedHold = held.some(v=>v);
+
+  balance -= bet;
+  jackpot += 1;
+  lastBet = bet;
+  nudges = 0;
+  holdsAvailable = false;
+  reelState = "";
+  paidLines.clear();
+
+  lastWinEl.textContent = "£0";
+  messageEl.textContent = "Spinning...";
+
+  spinningReels = [true,true,true];
+  stoppedReels = [false,false,false];
+
+  const finalGrid = generateGrid();
+
+  for(let c = 0; c < 3; c++){
+    if(held[c]){
+      for(let r = 0; r < 3; r++){
+        finalGrid[r][c] = grid[r][c];
+      }
+    }
+  }
+
+  let ticks = 0;
+
+  const spinTimer = setInterval(() => {
+    ticks++;
+
+    if(ticks === 10){
+      stoppedReels[0] = true;
+      spinningReels[0] = false;
+    }
+
+    if(ticks === 15){
+      stoppedReels[1] = true;
+      spinningReels[1] = false;
+    }
+
+    if(ticks === 20){
+      stoppedReels[2] = true;
+      spinningReels[2] = false;
+    }
+
+    grid = spinGrid(finalGrid);
+    draw();
+
+    if(ticks >= 22){
+      clearInterval(spinTimer);
+      grid = finalGrid;
+      draw();
+      resolveSpinResult(usedHold);
+    }
+  }, 80);
+
+  updateUI();
+}
+
+function nudgeDown(col){
+  if(nudges <= 0 || spinningReels.some(Boolean)) return;
+
+  const column = [grid[0][col], grid[1][col], grid[2][col]];
+
+  column.unshift(column.pop());
+
+  grid[0][col] = column[0];
+  grid[1][col] = column[1];
+  grid[2][col] = column[2];
+
+  nudges--;
+
+  const result = checkWins();
+
+  if(result.jackpotWon){
+    const totalPaid = result.jackpotAmount + result.total;
+    balance += totalPaid;
+    lastWinEl.textContent = `£${totalPaid}`;
+    messageEl.innerHTML = `<span class="jackpot-alert">NUDGE JACKPOT! £${result.jackpotAmount}</span>`;
+    jackpot = JACKPOT_SEED;
+    holdsAvailable = false;
+    held = [false,false,false];
+    reelState = "";
+    draw(result.cells);
+  } else if(result.total > 0){
+    balance += result.total;
+    jackpot += result.total;
+    lastWinEl.textContent = `£${result.total}`;
+
+    if(result.total >= lastBet * BIG_WIN_MULTIPLIER){
+      messageEl.innerHTML = `<span class="big-win-alert">NUDGE BIG WIN! £${result.total}</span>`;
+    } else {
+      messageEl.innerHTML = `<span class="win-alert">NUDGE WIN £${result.total}</span>`;
+    }
+
+    holdsAvailable = false;
+    held = [false,false,false];
+    reelState = "";
+    draw(result.cells);
+  } else {
+    if(nudges > 0){
+      messageEl.innerHTML = `<span class="nudge-alert">${nudges} nudge(s) left</span>`;
+      reelState = "nudge";
+    } else {
+      messageEl.textContent = "No nudges left.";
+      reelState = "";
+    }
+
+    draw();
+  }
+
+  updateUI();
+}
+
+function reset(){
+  balance = 100;
+  jackpot = JACKPOT_SEED;
+  held = [false,false,false];
+  holdsAvailable = false;
+  nudges = 0;
+  reelState = "";
+  paidLines.clear();
+  spinningReels = [false,false,false];
+  stoppedReels = [false,false,false];
+
+  grid = generateGrid();
+  draw();
+
+  lastWinEl.textContent = "£0";
+  messageEl.textContent = "Reset. Try not to lose it all.";
+
+  updateUI();
+}
+
+betSelect.addEventListener("change", updateUI);
+spinBtn.addEventListener("click", spin);
+resetBtn.addEventListener("click", reset);
+
+grid = generateGrid();
+draw();
+updateUI();
+</script>
+</body>
+</html>
