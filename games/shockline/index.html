@@ -1,1 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shockline</title>
 
+<style>
+:root {
+  --green:#8cff6a;
+  --red:#ff6b4a;
+  --yellow:#ffd86b;
+  --blue:#7fdcff;
+  --panel:rgba(7,24,8,0.94);
+  --text-soft:#b9ffd2;
+  --border-soft:rgba(140,255,106,0.35);
+}
+
+* { box-sizing:border-box; }
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 34%),
+    linear-gradient(180deg,#071106 0%,#020402 100%);
+  color:var(--green);
+  font-family:Consolas, Monaco, monospace;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+
+/* --- SHELL --- */
+.game-shell{
+  width:min(1100px,100%);
+  border:1px solid var(--border-soft);
+  background:var(--panel);
+  box-shadow:0 0 18px rgba(140,255,106,0.35), inset 0 0 28px rgba(140,255,106,0.08);
+  border-radius:22px;
+  padding:18px 20px 24px;
+}
+
+/* --- LOGO --- */
+.logo{
+  display:block;
+  width:100%;
+  max-width:100%;
+  height:auto;
+  margin:0 auto 6px;
+  filter:
+    drop-shadow(0 0 10px rgba(140,255,106,0.45))
+    drop-shadow(0 0 24px rgba(140,255,106,0.28));
+  animation:logoPulse 3.2s ease-in-out infinite;
+}
+
+@keyframes logoPulse{
+  0%,100%{
+    filter:
+      drop-shadow(0 0 8px rgba(140,255,106,0.35))
+      drop-shadow(0 0 18px rgba(140,255,106,0.22));
+    transform:scale(1);
+  }
+  50%{
+    filter:
+      drop-shadow(0 0 14px rgba(140,255,106,0.65))
+      drop-shadow(0 0 34px rgba(140,255,106,0.42));
+    transform:scale(1.015);
+  }
+}
+
+.subtitle{
+  text-align:center;
+  color:var(--text-soft);
+  font-size:0.95rem;
+  margin-bottom:10px;
+}
+
+.meta{
+  text-align:center;
+  font-size:0.8rem;
+  color:rgba(185,255,210,0.7);
+  margin-bottom:16px;
+}
+
+/* --- STATS --- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-bottom:18px;
+}
+
+.stat{
+  border:1px solid var(--border-soft);
+  border-radius:14px;
+  padding:12px;
+  background:rgba(0,0,0,0.22);
+  text-align:center;
+}
+
+.stat-label{
+  font-size:0.7rem;
+  color:rgba(185,255,210,0.7);
+  letter-spacing:0.12em;
+}
+
+.stat-value{
+  margin-top:5px;
+  font-size:1.3rem;
+  text-shadow:0 0 10px rgba(140,255,106,0.35);
+}
+
+.status-ready{color:var(--green);}
+.status-charged{color:var(--blue);}
+.status-active{color:var(--yellow);}
+.status-shock{color:var(--red);}
+.status-clear{color:var(--green);}
+
+/* --- GAME AREA --- */
+.game-area{
+  border:1px solid var(--border-soft);
+  border-radius:18px;
+  background:
+    linear-gradient(rgba(140,255,106,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(140,255,106,0.05) 1px, transparent 1px),
+    rgba(0,0,0,0.38);
+  background-size:28px 28px;
+  overflow:hidden;
+  box-shadow:inset 0 0 32px rgba(0,0,0,0.6);
+}
+
+canvas{
+  display:block;
+  width:100%;
+  height:auto;
+  cursor:none;
+}
+
+/* --- MESSAGE --- */
+.message{
+  text-align:center;
+  margin:14px 0;
+  color:var(--text-soft);
+  font-size:0.95rem;
+}
+
+/* --- CONTROLS --- */
+.controls{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+}
+
+button{
+  border:1px solid var(--green);
+  background:rgba(140,255,106,0.08);
+  color:var(--green);
+  border-radius:999px;
+  padding:8px 16px;
+  cursor:pointer;
+}
+
+button:hover,
+button.active{
+  background:var(--green);
+  color:#061006;
+}
+
+</style>
+</head>
+
+<body>
+<main class="game-shell">
+
+<img src="shocklinelogo.png" class="logo">
+
+<div class="subtitle">Stay steady. Don’t break the line.</div>
+<div class="meta">Created by Jason / build v1.5</div>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-label">STATUS</div>
+    <div class="stat-value status-ready" id="status">Ready</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">TIME</div>
+    <div class="stat-value" id="time">0.00s</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">BEST</div>
+    <div class="stat-value" id="best">--</div>
+  </div>
+</div>
+
+<div class="game-area">
+  <canvas id="game" width="920" height="430"></canvas>
+</div>
+
+<div class="message" id="message">
+Move into START, then press and hold. Leave START while holding to begin.
+</div>
+
+<div class="controls">
+  <button id="easyBtn">Easy</button>
+  <button id="normalBtn" class="active">Normal</button>
+  <button id="hardBtn">Hard</button>
+</div>
+
+</main>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+const statusEl=document.getElementById("status");
+const timeEl=document.getElementById("time");
+const bestEl=document.getElementById("best");
+
+const easyBtn=document.getElementById("easyBtn");
+const normalBtn=document.getElementById("normalBtn");
+const hardBtn=document.getElementById("hardBtn");
+
+const path=[
+{x:95,y:215},{x:185,y:135},{x:275,y:285},{x:390,y:145},
+{x:500,y:240},{x:615,y:120},{x:725,y:285},{x:825,y:210}
+];
+
+const startNode={x:65,y:215,r:28};
+const endNode={x:855,y:210,r:28};
+
+const settings={
+easy:{safe:18,cursor:5},
+normal:{safe:13,cursor:5},
+hard:{safe:8,cursor:5}
+};
+
+let difficulty="normal";
+let mouse={x:-100,y:-100};
+let gameState="ready";
+let isMouseDown=false;
+let hasLeftStart=false;
+let startTime=0;
+
+let best=localStorage.getItem("shocklineBest");
+if(best) bestEl.textContent=Number(best).toFixed(2)+"s";
+
+function setStatus(t,c){
+  statusEl.textContent=t;
+  statusEl.className="stat-value "+c;
+}
+
+canvas.addEventListener("mousemove",e=>{
+  const r=canvas.getBoundingClientRect();
+  mouse.x=(e.clientX-r.left)*(canvas.width/r.width);
+  mouse.y=(e.clientY-r.top)*(canvas.height/r.height);
+});
+
+canvas.addEventListener("mousedown",()=>{
+  isMouseDown=true;
+  if(gameState==="ready" && inNode(mouse,startNode)){
+    gameState="playing";
+    hasLeftStart=false;
+    startTime=performance.now();
+    setStatus("Charged","status-charged");
+  }
+});
+
+window.addEventListener("mouseup",()=>{
+  if(gameState==="playing" && hasLeftStart){
+    fail();
+  }else{
+    reset();
+  }
+});
+
+function reset(){
+  gameState="ready";
+  isMouseDown=false;
+  hasLeftStart=false;
+  setStatus("Ready","status-ready");
+  timeEl.textContent="0.00s";
+}
+
+function fail(){
+  gameState="failed";
+  setStatus("Shock!","status-shock");
+  setTimeout(reset,700);
+}
+
+function win(){
+  gameState="won";
+  setStatus("Clear!","status-clear");
+  let t=(performance.now()-startTime)/1000;
+  if(!best || t<best){
+    best=t;
+    localStorage.setItem("shocklineBest",best);
+    bestEl.textContent=best.toFixed(2)+"s";
+  }
+  setTimeout(reset,1000);
+}
+
+function inNode(p,n){
+  return Math.hypot(p.x-n.x,p.y-n.y)<=n.r;
+}
+
+function dist(p,v,w){
+  const l2=(w.x-v.x)**2+(w.y-v.y)**2;
+  let t=((p.x-v.x)*(w.x-v.x)+(p.y-v.y)*(w.y-v.y))/l2;
+  t=Math.max(0,Math.min(1,t));
+  return Math.hypot(p.x-(v.x+t*(w.x-v.x)),p.y-(v.y+t*(w.y-v.y)));
+}
+
+function distWire(p){
+  let d=9999;
+  for(let i=0;i<path.length-1;i++){
+    d=Math.min(d,dist(p,path[i],path[i+1]));
+  }
+  return d;
+}
+
+function update(){
+  if(gameState!=="playing") return;
+
+  let t=(performance.now()-startTime)/1000;
+  timeEl.textContent=t.toFixed(2)+"s";
+
+  if(!inNode(mouse,startNode)){
+    hasLeftStart=true;
+    setStatus("Active","status-active");
+  }
+
+  if(hasLeftStart && !isMouseDown){
+    fail();
+    return;
+  }
+
+  if(hasLeftStart && inNode(mouse,endNode)){
+    win();
+    return;
+  }
+
+  if(hasLeftStart && distWire(mouse)>settings[difficulty].safe){
+    fail();
+  }
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  ctx.beginPath();
+  ctx.moveTo(path[0].x,path[0].y);
+  for(let i=1;i<path.length;i++) ctx.lineTo(path[i].x,path[i].y);
+  ctx.strokeStyle="#8cff6a";
+  ctx.lineWidth=6;
+  ctx.shadowBlur=24;
+  ctx.shadowColor="#8cff6a";
+  ctx.stroke();
+  ctx.shadowBlur=0;
+
+  drawNode(startNode,"START","#7fdcff");
+  drawNode(endNode,"END","#ffd86b");
+
+  ctx.beginPath();
+  ctx.arc(mouse.x,mouse.y,settings[difficulty].cursor,0,Math.PI*2);
+  ctx.strokeStyle="#7fdcff";
+  ctx.stroke();
+}
+
+function drawNode(n,label,color){
+  ctx.beginPath();
+  ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+  ctx.strokeStyle=color;
+  ctx.stroke();
+
+  ctx.fillStyle=color;
+  ctx.font="12px Consolas";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.fillText(label,n.x,n.y);
+}
+
+function loop(){
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+easyBtn.onclick=()=>difficulty="easy";
+normalBtn.onclick=()=>difficulty="normal";
+hardBtn.onclick=()=>difficulty="hard";
+
+loop();
+</script>
+</body>
+</html>
