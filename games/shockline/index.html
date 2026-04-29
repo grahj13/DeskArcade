@@ -178,7 +178,7 @@ button.active{
 
 .shake{ animation:shake 0.22s linear; }
 .flash-fail{ animation:failFlash 0.3s ease; }
-.flash-win{ animation:winFlash 0.45s ease; }
+.flash-win{ animation:winFlash 0.65s ease; }
 
 @keyframes shake{
   0%,100%{transform:translate(0,0);}
@@ -197,10 +197,15 @@ button.active{
 }
 
 @keyframes winFlash{
-  50%{
+  30%{
     box-shadow:
-      0 0 48px rgba(140,255,106,0.8),
-      inset 0 0 42px rgba(140,255,106,0.25);
+      0 0 70px rgba(140,255,106,0.95),
+      inset 0 0 58px rgba(140,255,106,0.35);
+  }
+  65%{
+    box-shadow:
+      0 0 42px rgba(255,216,107,0.75),
+      inset 0 0 46px rgba(255,216,107,0.22);
   }
 }
 
@@ -223,7 +228,7 @@ button.active{
 <img src="shocklinelogo.png" class="logo" alt="Shockline Logo">
 
 <div class="subtitle">Stay steady. Don’t break the line.</div>
-<div class="meta">Created by Jason / build v1.7</div>
+<div class="meta">Created by Jason / build v1.2</div>
 
 <div class="stats">
   <div class="stat">
@@ -301,6 +306,16 @@ let hasLeftStart = false;
 let startTime = 0;
 let elapsed = 0;
 let best = null;
+let progress = 0;
+
+const segmentLengths = [];
+let totalPathLength = 0;
+
+for(let i=0; i<path.length-1; i++){
+  const len = Math.hypot(path[i+1].x-path[i].x, path[i+1].y-path[i].y);
+  segmentLengths.push(len);
+  totalPathLength += len;
+}
 
 function getBestKey(){
   return `shocklineBest_${difficulty}`;
@@ -364,6 +379,7 @@ function startRun(){
   hasLeftStart = false;
   startTime = performance.now();
   elapsed = 0;
+  progress = 0;
   setStatus("Charged","status-charged");
   messageEl.classList.remove("shock-message");
   messageEl.textContent = "Hold steady. Leave START while holding to activate the line.";
@@ -374,6 +390,7 @@ function reset(){
   isMouseDown = false;
   hasLeftStart = false;
   elapsed = 0;
+  progress = 0;
   setStatus("Ready","status-ready");
   timeEl.textContent = "0.00s";
   messageEl.classList.remove("shock-message");
@@ -403,6 +420,7 @@ function win(){
   if(gameState !== "playing") return;
 
   gameState = "won";
+  progress = 1;
   setStatus("Clear!","status-clear");
   messageEl.textContent = `Clean run. Time: ${elapsed.toFixed(2)}s`;
 
@@ -444,30 +462,41 @@ function inNode(p,n){
   return Math.hypot(p.x - n.x, p.y - n.y) <= n.r;
 }
 
-function distToSegment(p,v,w){
-  const l2 = (w.x-v.x)**2 + (w.y-v.y)**2;
-
-  if(l2 === 0){
-    return Math.hypot(p.x-v.x, p.y-v.y);
-  }
-
-  let t = ((p.x-v.x)*(w.x-v.x) + (p.y-v.y)*(w.y-v.y)) / l2;
-  t = Math.max(0, Math.min(1, t));
-
-  return Math.hypot(
-    p.x - (v.x + t*(w.x-v.x)),
-    p.y - (v.y + t*(w.y-v.y))
-  );
-}
-
-function distWire(p){
+function closestPathInfo(p){
   let closest = Infinity;
+  let distanceAlong = 0;
+  let travelledBefore = 0;
 
   for(let i=0; i<path.length-1; i++){
-    closest = Math.min(closest, distToSegment(p,path[i],path[i+1]));
+    const v = path[i];
+    const w = path[i+1];
+    const l2 = (w.x-v.x)**2 + (w.y-v.y)**2;
+
+    let t = 0;
+    if(l2 !== 0){
+      t = ((p.x-v.x)*(w.x-v.x) + (p.y-v.y)*(w.y-v.y)) / l2;
+      t = Math.max(0, Math.min(1, t));
+    }
+
+    const projected = {
+      x: v.x + t*(w.x-v.x),
+      y: v.y + t*(w.y-v.y)
+    };
+
+    const d = Math.hypot(p.x-projected.x, p.y-projected.y);
+
+    if(d < closest){
+      closest = d;
+      distanceAlong = travelledBefore + segmentLengths[i] * t;
+    }
+
+    travelledBefore += segmentLengths[i];
   }
 
-  return closest;
+  return {
+    distance: closest,
+    progress: Math.max(0, Math.min(1, distanceAlong / totalPathLength))
+  };
 }
 
 function update(){
@@ -475,6 +504,9 @@ function update(){
 
   elapsed = (performance.now() - startTime) / 1000;
   timeEl.textContent = elapsed.toFixed(2) + "s";
+
+  const pathInfo = closestPathInfo(mouse);
+  progress = hasLeftStart ? pathInfo.progress : 0;
 
   if(!inNode(mouse,startNode)){
     hasLeftStart = true;
@@ -491,7 +523,7 @@ function update(){
     return;
   }
 
-  if(hasLeftStart && distWire(mouse) > settings[difficulty].safe){
+  if(hasLeftStart && pathInfo.distance > settings[difficulty].safe){
     fail("You broke the line. Shock!");
   }
 }
@@ -534,29 +566,31 @@ function drawWire(){
     hard: 14
   };
 
-  const glowStrength = {
+  const baseGlow = {
     easy: 34,
     normal: 24,
     hard: 14
   };
+
+  const chargeBoost = hasLeftStart ? progress * 26 : 0;
+  const activePulse = gameState === "playing" && hasLeftStart ? Math.sin(performance.now() / 120) * 3 : 0;
+  const glowStrength = baseGlow[difficulty] + chargeBoost + activePulse;
 
   ctx.save();
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
   tracePath();
-  ctx.strokeStyle = "rgba(140,255,106,0.14)";
+  ctx.strokeStyle = `rgba(140,255,106,${0.10 + progress * 0.10})`;
   ctx.lineWidth = safeGlowWidth[difficulty];
-  ctx.shadowBlur = glowStrength[difficulty];
+  ctx.shadowBlur = glowStrength;
   ctx.shadowColor = "#8cff6a";
   ctx.stroke();
 
   tracePath();
   ctx.strokeStyle = "#8cff6a";
   ctx.lineWidth = 6;
-  ctx.shadowBlur = gameState === "playing" && hasLeftStart
-    ? glowStrength[difficulty] + 10
-    : glowStrength[difficulty];
+  ctx.shadowBlur = glowStrength + 4;
   ctx.shadowColor = "#8cff6a";
   ctx.stroke();
 
@@ -572,15 +606,22 @@ function drawWire(){
 function drawNode(node,label,color){
   ctx.save();
 
+  const distanceToEnd = Math.hypot(mouse.x - endNode.x, mouse.y - endNode.y);
+  const nearEndBoost = label === "END"
+    ? Math.max(0, 1 - distanceToEnd / 180) * 34
+    : 0;
+
+  const progressBoost = label === "END" ? progress * 16 : 0;
+
   ctx.beginPath();
   ctx.arc(node.x,node.y,node.r,0,Math.PI*2);
   ctx.fillStyle = "rgba(0,0,0,0.72)";
   ctx.fill();
 
-  ctx.shadowBlur = label === "END" && gameState === "playing" ? 34 : 22;
+  ctx.shadowBlur = 22 + nearEndBoost + progressBoost;
   ctx.shadowColor = color;
   ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
+  ctx.lineWidth = label === "END" && nearEndBoost > 0 ? 4 : 3;
   ctx.stroke();
 
   ctx.shadowBlur = 0;
