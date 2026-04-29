@@ -387,9 +387,19 @@ function loop(){
   requestAnimationFrame(loop);
 }
 
-easyBtn.onclick=()=>difficulty="easy";
-normalBtn.onclick=()=>difficulty="normal";
-hardBtn.onclick=()=>difficulty="hard";
+function setDifficulty(level) {
+  difficulty = level;
+
+  easyBtn.classList.toggle("active", level === "easy");
+  normalBtn.classList.toggle("active", level === "normal");
+  hardBtn.classList.toggle("active", level === "hard");
+
+  reset();
+}
+
+easyBtn.onclick = () => setDifficulty("easy");
+normalBtn.onclick = () => setDifficulty("normal");
+hardBtn.onclick = () => setDifficulty("hard");
 
 loop();
 </script>
