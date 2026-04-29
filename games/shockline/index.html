@@ -171,6 +171,21 @@ button{
 
 button:hover,
 button.active{
+  .home-controls {
+  margin-top: 10px;
+}
+
+#homeBtn {
+  border-color: var(--blue);
+  color: var(--blue);
+  box-shadow: 0 0 12px rgba(127,220,255,0.25);
+}
+
+#homeBtn:hover {
+  background: var(--blue);
+  color: #061006;
+  box-shadow: 0 0 22px rgba(127,220,255,0.55);
+}
   background:var(--green);
   color:#061006;
   box-shadow:0 0 22px rgba(140,255,106,0.45);
@@ -259,6 +274,10 @@ button.active{
   <button id="hardBtn">Hard</button>
 </div>
 
+<div class="controls home-controls">
+  <button id="homeBtn">Arcade</button>
+</div>
+
 </main>
 
 <script>
@@ -277,6 +296,7 @@ const messageEl = document.getElementById("message");
 const easyBtn = document.getElementById("easyBtn");
 const normalBtn = document.getElementById("normalBtn");
 const hardBtn = document.getElementById("hardBtn");
+  const homeBtn = document.getElementById("homeBtn");
 
 const path = [
   {x:95,y:215},
@@ -459,6 +479,10 @@ easyBtn.onclick = () => setDifficulty("easy");
 normalBtn.onclick = () => setDifficulty("normal");
 hardBtn.onclick = () => setDifficulty("hard");
 
+homeBtn.onclick = () => {
+  window.location.href = "../../index.html";
+};
+  
 function inNode(p,n){
   return Math.hypot(p.x - n.x, p.y - n.y) <= n.r;
 }
