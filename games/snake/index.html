@@ -26,18 +26,18 @@
       box-sizing: border-box;
     }
 
-.logo-img {
-  height: 90px;
-  width: auto;
-  object-fit: contain;
-  filter: drop-shadow(0 0 6px rgba(140,255,106,0.5));
-  animation: pulseGlow 2.5s infinite ease-in-out;
-}
+    .logo-img {
+      height: 110px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 0 6px rgba(140,255,106,0.5));
+      animation: pulseGlow 2.5s infinite ease-in-out;
+    }
 
-@keyframes pulseGlow {
-  0%, 100% { filter: drop-shadow(0 0 6px rgba(140,255,106,0.4)); }
-  50% { filter: drop-shadow(0 0 14px rgba(140,255,106,0.9)); }
-}
+    @keyframes pulseGlow {
+      0%, 100% { filter: drop-shadow(0 0 6px rgba(140,255,106,0.4)); }
+      50% { filter: drop-shadow(0 0 14px rgba(140,255,106,0.9)); }
+    }
 
     body {
       margin: 0;
@@ -91,6 +91,7 @@
       display: flex;
       align-items: center;
       gap: 14px;
+      flex: 1;
     }
 
     h1 {
@@ -139,6 +140,19 @@
       overflow: hidden;
       box-shadow: inset 0 0 24px rgba(140,255,106,0.12), 0 0 22px rgba(140,255,106,0.12);
       background: #020602;
+    }
+
+    .canvas-wrap.shake {
+      animation: screenShake 0.28s ease-in-out;
+    }
+
+    @keyframes screenShake {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-6px, 3px); }
+      40% { transform: translate(6px, -3px); }
+      60% { transform: translate(-4px, -2px); }
+      80% { transform: translate(4px, 2px); }
+      100% { transform: translate(0, 0); }
     }
 
     canvas {
@@ -197,6 +211,19 @@
       border-radius: 14px;
       padding: 10px;
       background: rgba(140,255,106,0.05);
+    }
+
+    .stat.level-flash {
+      animation: levelFlash 0.45s ease-in-out;
+    }
+
+    @keyframes levelFlash {
+      0% { box-shadow: 0 0 0 rgba(255,216,107,0); }
+      50% {
+        border-color: rgba(255,216,107,0.95);
+        box-shadow: 0 0 22px rgba(255,216,107,0.65);
+      }
+      100% { box-shadow: 0 0 0 rgba(255,216,107,0); }
     }
 
     .stat-label {
@@ -350,6 +377,10 @@
         flex-direction: column;
       }
 
+      .logo-img {
+        height: 86px;
+      }
+
       .created-by {
         text-align: left;
       }
@@ -366,16 +397,12 @@
 </head>
 <body>
   <main class="game-shell">
-<header>
-  <div class="brand-block">
-    <img src="gridviperlogo.png" alt="Grid Viper Logo" class="logo-img">
-    <div>
-      <h1>Grid Viper</h1>
-      <div class="subtitle">Catch The Node! Dont hit the Grid!</div>
-    </div>
-  </div>
-  <div class="created-by">Created by Jason<br>build v1.0</div>
-</header>
+    <header>
+      <div class="brand-block">
+        <img src="gridviperlogo.png" alt="Grid Viper Logo" class="logo-img">
+      </div>
+      <div class="created-by">Created by Jason<br>build v1.0</div>
+    </header>
 
     <section class="main-grid">
       <div class="game-card">
@@ -443,7 +470,9 @@
         <div class="message" id="message">Ready.</div>
 
         <div class="patch-notes">
-          <strong>v1.0</strong><br>
+          <strong>v1.1</strong><br>
+          • Added death screen shake<br>
+          • Added level-up flash<br>
           • Base Game Creation<br>
         </div>
       </aside>
@@ -463,6 +492,8 @@
     const overlayText = document.getElementById('overlayText');
     const overlayButton = document.getElementById('overlayButton');
     const difficultyEl = document.getElementById('difficulty');
+    const canvasWrap = document.querySelector('.canvas-wrap');
+    const levelStat = speedEl.closest('.stat');
 
     const startBtn = document.getElementById('startBtn');
     const pauseBtn = document.getElementById('pauseBtn');
@@ -489,6 +520,7 @@
     let paused = false;
     let gameOver = false;
     let currentDelay = difficultySettings.normal.baseDelay;
+    let lastDisplayedLevel = 1;
 
     bestEl.textContent = bestScore;
 
@@ -501,6 +533,7 @@
       direction = { x: 1, y: 0 };
       nextDirection = { x: 1, y: 0 };
       score = 0;
+      lastDisplayedLevel = 1;
       gameOver = false;
       paused = false;
       running = false;
@@ -514,9 +547,29 @@
     function updateStats() {
       scoreEl.textContent = score;
       bestEl.textContent = bestScore;
+
       const base = difficultySettings[difficultyEl.value].baseDelay;
       const speedLevel = Math.max(1, Math.round((base - currentDelay) / 12) + 1);
+
       speedEl.textContent = speedLevel;
+
+      if (speedLevel > lastDisplayedLevel) {
+        lastDisplayedLevel = speedLevel;
+        messageEl.textContent = `LEVEL ${speedLevel}`;
+        flashLevel();
+      }
+    }
+
+    function flashLevel() {
+      levelStat.classList.remove('level-flash');
+      void levelStat.offsetWidth;
+      levelStat.classList.add('level-flash');
+    }
+
+    function shakeScreen() {
+      canvasWrap.classList.remove('shake');
+      void canvasWrap.offsetWidth;
+      canvasWrap.classList.add('shake');
     }
 
     function showOverlay(title, text, buttonText) {
@@ -617,6 +670,7 @@
       gameOver = true;
       running = false;
       clearTimeout(gameLoop);
+      shakeScreen();
       updateBestScore();
       updateStats();
       draw();
