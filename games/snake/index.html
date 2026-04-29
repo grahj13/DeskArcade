@@ -62,19 +62,22 @@
         linear-gradient(180deg, #071106 0%, #020502 100%);
     }
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: 'IBM Plex Mono', Consolas, Monaco, monospace;
-      background:
-        radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 34%),
-        linear-gradient(180deg, #071106 0%, #020502 100%);
-      color: var(--green);
-      padding: 16px;
-      display: flex;
+body {
+  margin: 0;
+  height: 100vh;
+  font-family: 'IBM Plex Mono', Consolas, Monaco, monospace;
+  background:
+    radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 34%),
+    linear-gradient(180deg, #071106 0%, #020502 100%);
+  color: var(--green);
+
+  display: flex;
   justify-content: center;
-      overflow-x: hidden;
-    }
+  align-items: center;
+
+  padding: 16px;
+  overflow: hidden;
+}
 
     body::before {
       content: "";
@@ -88,18 +91,12 @@
       mask-image: linear-gradient(to bottom, black, transparent 85%);
     }
 
-    .game-shell {
-      width: min(980px, 100%);
-      margin: 0 auto;
-      border: 1px solid var(--border-soft);
-      background: var(--panel);
-      box-shadow: 0 0 50px rgba(0,0,0,0.65), 0 0 32px var(--shadow-green);
-      border-radius: 22px;
-      padding: 22px;
-      position: relative;
-      z-index: 1;
-    }
-
+.game-shell {
+  width: min(980px, 100%);
+  max-height: 100%;
+  overflow: hidden;
+}
+    
     header {
       display: flex;
       align-items: center;
