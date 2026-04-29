@@ -70,7 +70,9 @@
         radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 34%),
         linear-gradient(180deg, #071106 0%, #020502 100%);
       color: var(--green);
-      padding: 24px;
+      padding: 16px;
+      display: flex;
+  justify-content: center;
       overflow-x: hidden;
     }
 
@@ -397,8 +399,9 @@
       }
 
       .game-shell {
-        padding: 16px;
-      }
+  width: min(980px, 100%);
+  margin: auto;
+}
 
       header {
         align-items: flex-start;
@@ -444,7 +447,7 @@
             <div class="stat-value" id="best">0</div>
           </div>
           <div class="stat">
-            <div class="stat-label">Level</div>
+            <div class="stat-label">Speed</div>
             <div class="stat-value" id="speed">1</div>
           </div>
         </div>
