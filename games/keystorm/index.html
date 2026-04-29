@@ -771,9 +771,10 @@
         </div>
       </div>
 
-      <div class="button-row">
-        <button id="startButton">Start Run</button>
-      </div>
+<div class="button-row">
+  <button id="startButton">Start Run</button>
+  <button id="homeButtonMenu" class="secondary">Return to Arcade</button>
+</div>>
 
       <div class="menu-info">
         <div class="info-card">
@@ -801,7 +802,7 @@
       <div class="button-row">
         <button id="resumeButton">Resume</button>
         <button id="quitButton" class="secondary">Quit to Menu</button>
-	    <button id="homeButton" class="secondary">Return to Home</button>
+	    <button id="homeButton" class="secondary">Return to Arcade</button>
       </div>
     </div>
   </div>
@@ -813,7 +814,7 @@
       <div class="button-row">
         <button id="restartButton">Play Again</button>
         <button id="menuButton" class="secondary">Main Menu</button>
-		<button id="homeButton2" class="secondary">Return to Home</button>
+		<button id="homeButton2" class="secondary">Return to Arcade</button>
       </div>
     </div>
   </div>
@@ -1411,7 +1412,11 @@
     document.getElementById("restartButton").addEventListener("click", startGame);
     document.getElementById("menuButton").addEventListener("click", quitToMenu);
 
-	  const homeUrl = "../index.html"; // change this if your hub path is different
+const homeUrl = "../../index.html";
+
+document.getElementById("homeButtonMenu").addEventListener("click", () => {
+  window.location.href = homeUrl;
+});
 
 document.getElementById("homeButton").addEventListener("click", () => {
   window.location.href = homeUrl;
