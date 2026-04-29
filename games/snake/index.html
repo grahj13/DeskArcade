@@ -54,8 +54,6 @@
                 drop-shadow(0 0 22px rgba(140,255,106,0.6));
       }
     }
-      50% { filter: drop-shadow(0 0 14px rgba(140,255,106,0.9)); }
-    }
 
     html {
       min-height: 100%;
@@ -500,7 +498,11 @@
         <div class="message" id="message">Ready.</div>
 
         <div class="patch-notes">
-          <strong>v1.0</strong><br>
+          <strong>v1.3</strong><br>
+          • Balanced level progression<br>
+          • Enhanced logo header<br>
+          • Added death screen shake<br>
+          • Added level-up flash<br>
           • Base Game Creation<br>
         </div>
       </aside>
@@ -531,10 +533,10 @@
     const tileCount = canvas.width / gridSize;
 
     const difficultySettings = {
-      easy: { baseDelay: 145, speedStep: 6, label: 'Easy' },
-      normal: { baseDelay: 115, speedStep: 7, label: 'Normal' },
-      hard: { baseDelay: 90, speedStep: 8, label: 'Hard' },
-      chaos: { baseDelay: 68, speedStep: 9, label: 'Chaos' }
+      easy: { baseDelay: 155, speedStep: 2, label: 'Easy' },
+      normal: { baseDelay: 125, speedStep: 3, label: 'Normal' },
+      hard: { baseDelay: 100, speedStep: 4, label: 'Hard' },
+      chaos: { baseDelay: 78, speedStep: 5, label: 'Chaos' }
     };
 
     let snake;
@@ -684,7 +686,7 @@
 
     function increaseSpeed() {
       const setting = difficultySettings[difficultyEl.value];
-      currentDelay = Math.max(42, currentDelay - setting.speedStep);
+      currentDelay = Math.max(55, currentDelay - setting.speedStep);
     }
 
     function updateBestScore() {
