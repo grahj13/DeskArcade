@@ -1,1 +1,1416 @@
-Test
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KeyStorm</title>
+  <style>
+    :root {
+      --green: #00ff66;
+      --dark-green: #007a33;
+      --red: #ff3b3b;
+      --yellow: #ffd447;
+      --blue: #00d9ff;
+      --bg: #020403;
+      --panel: rgba(0, 30, 12, 0.9);
+    }
+	  
+@keyframes logoGlow {
+  0%, 100% {
+    filter:
+      drop-shadow(0 0 10px rgba(0,255,102,0.5))
+      drop-shadow(0 0 20px rgba(0,255,102,0.3));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 18px rgba(0,255,102,0.8))
+      drop-shadow(0 0 30px rgba(0,255,102,0.5));
+  }
+}
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at center, #062010 0%, #020403 55%, #000 100%);
+      color: var(--green);
+      font-family: Consolas, Monaco, monospace;
+      overflow: hidden;
+      height: 100vh;
+      user-select: none;
+    }
+
+    #game {
+      position: relative;
+      width: min(900px, 100vw);
+      height: 100vh;
+      margin: 0 auto;
+      overflow: hidden;
+      border-left: 1px solid rgba(0,255,102,0.15);
+      border-right: 1px solid rgba(0,255,102,0.15);
+      transition: background 0.3s ease;
+    }
+
+    #game.powerup-active {
+      background: radial-gradient(circle at center, rgba(0,120,255,0.15), rgba(0,0,0,0.9));
+    }
+
+    #hud {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      width: auto;
+      display: grid;
+      grid-template-columns: 180px minmax(320px, 1fr) 360px 260px 130px;
+      align-items: stretch;
+      gap: 0;
+      background: rgba(0, 0, 0, 0.62);
+      border: 1px solid rgba(0,255,102,0.35);
+      border-radius: 10px;
+      box-shadow: 0 0 18px rgba(0,255,102,0.12), inset 0 0 18px rgba(0,255,102,0.05);
+      z-index: 5;
+      font-size: 18px;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .hud-group {
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      white-space: nowrap;
+      min-width: 0;
+      padding: 12px 18px;
+      border-right: 1px solid rgba(0,255,102,0.18);
+    }
+
+    .hud-score {
+      justify-content: flex-start;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+    }
+
+    .hud-stats {
+      justify-content: center;
+      gap: 28px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .hud-banks {
+      justify-content: center;
+      gap: 18px;
+    }
+
+    .hud-highscore {
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .hud-pause {
+      justify-content: center;
+      border-right: none;
+      font-size: 16px;
+    }
+
+    .hud-left {
+      justify-content: flex-start;
+    }
+
+    .hud-center {
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .hud-right {
+      justify-content: flex-end;
+      font-size: 16px;
+    }
+
+    .bank {
+      display: inline-block;
+      min-width: 145px;
+      text-align: center;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(0,255,102,0.35);
+      box-shadow: 0 0 12px rgba(0,255,102,0.16);
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .freeze-bank {
+      color: var(--blue);
+      border-color: rgba(0,217,255,0.6);
+      text-shadow: 0 0 10px rgba(0,217,255,0.8);
+    }
+
+    .wipe-bank {
+      color: var(--yellow);
+      border-color: rgba(255,212,71,0.6);
+      text-shadow: 0 0 10px rgba(255,212,71,0.8);
+    }
+
+    #score {
+      display: inline-block;
+      min-width: 110px;
+      font-size: 34px;
+      color: var(--green);
+      text-align: left;
+      text-shadow: 0 0 12px rgba(0,255,102,0.9), 0 0 25px rgba(0,255,102,0.6);
+    }
+
+    #scoreLabel {
+      font-size: 14px;
+      opacity: 0.7;
+      letter-spacing: 1px;
+    }
+
+    #powerupStatus {
+      position: fixed;
+      top: 72px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      color: var(--blue);
+      text-shadow: 0 0 12px rgba(0,217,255,0.9);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 8;
+      pointer-events: none;
+    }
+
+    #powerupStatus.active {
+      opacity: 1;
+    }
+
+    #inputBar {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 320px;
+      max-width: 90vw;
+      text-align: center;
+      font-size: 30px;
+      color: var(--green);
+      border: 1px solid var(--dark-green);
+      background: rgba(0, 0, 0, 0.72);
+      padding: 12px 18px;
+      border-radius: 12px;
+      box-shadow: 0 0 18px rgba(0, 255, 102, 0.15);
+      z-index: 6;
+    }
+
+    #inputText.empty {
+      opacity: 0.45;
+    }
+
+    .enemy {
+      position: absolute;
+      font-size: 24px;
+      padding: 6px 12px;
+      border: 1px solid rgba(0, 255, 102, 0.65);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.66);
+      text-shadow: 0 0 10px rgba(0, 255, 102, 0.85);
+      box-shadow: 0 0 16px rgba(0, 255, 102, 0.26), inset 0 0 12px rgba(0,255,102,0.06);
+      white-space: nowrap;
+    }
+
+    .powerup {
+      color: var(--blue);
+      border-color: var(--blue);
+      text-shadow: 0 0 14px rgba(0, 217, 255, 0.95);
+      box-shadow: 0 0 22px rgba(0, 217, 255, 0.45), inset 0 0 14px rgba(0,217,255,0.12);
+    }
+
+    .enemy.targeted {
+      color: var(--yellow);
+      border-color: var(--yellow);
+      text-shadow: 0 0 12px rgba(255, 212, 71, 0.8);
+    }
+
+    .enemy.danger {
+      color: var(--red);
+      border-color: var(--red);
+      text-shadow: 0 0 12px rgba(255, 59, 59, 0.8);
+    }
+
+    #deadline {
+      position: absolute;
+      bottom: 55px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(to right, transparent, var(--red), transparent);
+      box-shadow: 0 0 12px rgba(255, 59, 59, 0.8);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    #deadlineLabel {
+      position: absolute;
+      bottom: 58px;
+      right: 10px;
+      font-size: 12px;
+      color: var(--red);
+      opacity: 0.7;
+      letter-spacing: 1px;
+      text-shadow: 0 0 8px rgba(255,59,59,0.8);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    #waveBanner {
+      position: fixed;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 42px;
+      opacity: 0;
+      z-index: 10;
+      pointer-events: none;
+      text-shadow: 0 0 20px rgba(0, 255, 102, 0.8);
+      transition: opacity 0.35s ease;
+    }
+
+    #waveBanner.show {
+      opacity: 1;
+    }
+
+    #sidePanel {
+      position: fixed;
+      left: 16px;
+      top: 115px;
+      width: 230px;
+      color: var(--green);
+      font-size: 13px;
+      opacity: 0.94;
+      z-index: 4;
+    }
+
+    #notesPanel {
+      position: fixed;
+      right: 16px;
+      bottom: 24px;
+      width: 250px;
+      color: var(--green);
+      font-size: 12px;
+      opacity: 0.9;
+      z-index: 4;
+    }
+
+    .side-section,
+    #notesContent {
+      margin-bottom: 20px;
+      padding: 14px 16px;
+      border: 1px solid rgba(0,255,102,0.38);
+      border-radius: 10px;
+      background: rgba(0,0,0,0.52);
+      box-shadow: 0 0 18px rgba(0,255,102,0.12), inset 0 0 14px rgba(0,255,102,0.05);
+    }
+
+
+    .side-section,
+    #notesContent {
+      margin-bottom: 20px;
+      padding: 14px 16px;
+      border: 1px solid rgba(0,255,102,0.38);
+      border-radius: 10px;
+      background: rgba(0,0,0,0.52);
+      box-shadow: 0 0 18px rgba(0,255,102,0.12), inset 0 0 14px rgba(0,255,102,0.05);
+    }
+
+    .side-title,
+    .notes-header {
+      font-size: 18px;
+      margin-bottom: 12px;
+      opacity: 0.95;
+      letter-spacing: 1px;
+      font-weight: 700;
+      text-shadow: 0 0 10px rgba(0,255,102,0.8);
+    }
+
+    .side-text,
+    #notesContent {
+      line-height: 1.7;
+    }
+
+    .keycap {
+      display: inline-block;
+      min-width: 30px;
+      padding: 2px 6px;
+      margin-right: 6px;
+      text-align: center;
+      border: 1px solid var(--green);
+      border-radius: 5px;
+      background: rgba(0,0,0,0.6);
+      box-shadow: 0 0 8px rgba(0,255,102,0.25);
+    }
+
+    .power-list {
+      margin: 8px 0 0;
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .power-list li {
+      margin: 6px 0;
+    }
+
+    .life-text {
+      color: var(--red);
+      text-shadow: 0 0 8px rgba(255,59,59,0.7);
+    }
+
+    .freeze-text {
+      color: var(--blue);
+      text-shadow: 0 0 8px rgba(0,217,255,0.7);
+    }
+
+    .wipe-text {
+      color: var(--yellow);
+      text-shadow: 0 0 8px rgba(255,212,71,0.7);
+    }
+
+    .screen {
+      position: fixed;
+      inset: 0;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.78);
+      z-index: 20;
+      padding: 24px;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .panel {
+      width: min(760px, 94vw);
+      background: linear-gradient(180deg, rgba(0, 34, 14, 0.94), rgba(0, 10, 5, 0.94));
+      border: 1px solid rgba(0,255,102,0.55);
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(0, 255, 102, 0.22), inset 0 0 22px rgba(0,255,102,0.06);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent, rgba(0,255,102,0.07), transparent);
+      transform: translateX(-100%);
+      animation: panelSweep 5s infinite;
+      pointer-events: none;
+    }
+
+    @keyframes panelSweep {
+      0%, 45% { transform: translateX(-100%); }
+      65%, 100% { transform: translateX(100%); }
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 58px;
+      letter-spacing: 4px;
+      line-height: 1;
+      text-shadow: 0 0 12px rgba(0,255,102,0.9), 0 0 30px rgba(0,255,102,0.45);
+    }
+
+    .menu-title-wrap {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 14px;
+    }
+
+.logo {
+  width: 380px;
+  max-width: 100%;
+  display: block;
+  margin: 0 auto 8px;
+
+  animation: logoGlow 3s ease-in-out infinite;
+}
+	  
+	  
+    .version-badge {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 4px 10px;
+      border: 1px solid rgba(0,217,255,0.55);
+      border-radius: 999px;
+      color: var(--blue);
+      font-size: 12px;
+      letter-spacing: 1px;
+      background: rgba(0,0,0,0.35);
+      box-shadow: 0 0 12px rgba(0,217,255,0.16);
+    }
+
+    .tagline {
+      margin: 12px auto 0;
+      max-width: 560px;
+      color: #b9ffd2;
+      font-size: 15px;
+      opacity: 0.92;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 32px;
+    }
+
+    p {
+      line-height: 1.5;
+      color: #b9ffd2;
+    }
+
+    .settings {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 24px;
+      text-align: left;
+      position: relative;
+      z-index: 1;
+    }
+
+    .setting-card {
+      padding: 14px;
+      border: 1px solid rgba(0,255,102,0.28);
+      border-radius: 12px;
+      background: rgba(0,0,0,0.32);
+      box-shadow: 0 0 18px rgba(0,255,102,0.1), inset 0 0 12px rgba(0,255,102,0.04);
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      color: #b9ffd2;
+      font-size: 14px;
+    }
+
+    select {
+      font-family: inherit;
+      font-size: 16px;
+      padding: 9px;
+      border-radius: 8px;
+      border: 1px solid var(--dark-green);
+      color: var(--green);
+      background: #001507;
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 22px;
+    }
+
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 18px;
+      color: #001f0c;
+      background: var(--green);
+      border: none;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-weight: 700;
+      box-shadow: 0 0 18px rgba(0,255,102,0.28);
+    }
+
+    #startButton {
+      min-width: 220px;
+      font-size: 22px;
+      letter-spacing: 2px;
+      padding: 15px 28px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      box-shadow: 0 0 22px rgba(0,255,102,0.38), inset 0 0 12px rgba(255,255,255,0.22);
+    }
+
+    button.secondary {
+      color: var(--green);
+      background: transparent;
+      border: 1px solid var(--green);
+    }
+
+    button:hover {
+      filter: brightness(1.15);
+    }
+
+    .small {
+      font-size: 14px;
+      opacity: 0.82;
+    }
+
+    .menu-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 20px;
+      text-align: left;
+      position: relative;
+      z-index: 1;
+    }
+
+    .info-card {
+      border: 1px solid rgba(0,255,102,0.28);
+      border-radius: 12px;
+      padding: 14px;
+      background: rgba(0,0,0,0.28);
+      box-shadow: 0 0 16px rgba(0,255,102,0.08), inset 0 0 12px rgba(0,255,102,0.04);
+    }
+
+    .info-card strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--green);
+      letter-spacing: 1px;
+      font-size: 13px;
+    }
+
+    .info-card p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1200px) {
+      #sidePanel,
+      #notesPanel {
+        display: none;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      #hud {
+        grid-template-columns: 140px 1fr 260px;
+      }
+
+      .hud-highscore,
+      .hud-pause {
+        display: none;
+      }
+
+      .hud-stats {
+        gap: 14px;
+        font-size: 15px;
+      }
+
+      .bank {
+        min-width: 112px;
+        font-size: 14px;
+        padding: 8px 10px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      #hud {
+        grid-template-columns: 1fr;
+        font-size: 13px;
+        align-items: flex-start;
+      }
+
+      .hud-group {
+        justify-content: center;
+        flex-wrap: wrap;
+        border-right: none;
+        border-bottom: 1px solid rgba(0,255,102,0.14);
+      }
+
+      .hud-score {
+        align-items: center;
+      }
+
+      #score {
+        font-size: 26px;
+        min-width: 80px;
+        text-align: center;
+      }
+
+      .bank {
+        min-width: 95px;
+        padding: 6px 8px;
+      }
+
+      .settings,
+      .menu-info {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 36px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+
+	  
+    <div id="hud">
+      <div class="hud-group hud-score">
+        <span id="scoreLabel">SCORE</span>
+        <strong id="score">0</strong>
+      </div>
+
+      <div class="hud-group hud-stats">
+        <span>WAVE: <strong id="wave">1</strong></span>
+        <span>LIVES: <strong id="lives">1</strong></span>
+        <span>STREAK: <strong id="streak">0</strong></span>
+      </div>
+
+      <div class="hud-group hud-banks">
+        <span class="bank freeze-bank">FREEZE: <strong id="freezeBank">0</strong></span>
+        <span class="bank wipe-bank">WIPE: <strong id="wipeBank">0</strong></span>
+      </div>
+
+      <div class="hud-group hud-highscore">
+        <span>HIGH SCORE: <strong id="highScore">0</strong></span>
+      </div>
+
+      <div class="hud-group hud-pause">
+        <span>ESC = PAUSE</span>
+      </div>
+    </div>
+
+    <div id="waveBanner">Wave 1</div>
+    <div id="powerupStatus"></div>
+
+    <div id="inputBar">
+      <span id="inputText" class="empty">Type target...</span>
+    </div>
+
+    <div id="deadline"></div>
+    <div id="deadlineLabel">DEAD LINE</div>
+  </div>
+
+  <div id="sidePanel">
+    <div class="side-section">
+      <div class="side-title">CONTROLS</div>
+      <div class="side-text">
+        <span class="keycap">TYPE</span> Target text<br>
+        <span class="keycap">⌫</span> Delete<br>
+        <span class="keycap">ENTER</span> Clear<br>
+        <span class="keycap">ESC</span> Pause<br>
+        <span class="keycap">[</span> Use Freeze<br>
+        <span class="keycap">]</span> Use Wipe
+      </div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-title">POWER-UPS</div>
+      <div class="side-text">
+        Blue targets = optional
+        <ul class="power-list">
+          <li class="life-text">• LIFE — instant +1 life</li>
+          <li class="freeze-text">• FREEZE — bank it, press [</li>
+          <li class="wipe-text">• WIPE — bank it, press ]</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="notesPanel">
+    <div class="notes-header">PATCH NOTES</div>
+    <div id="notesContent">
+		2.1 - UI & QOL Updates<br>
+        2.0 - Rebrand & Added Words / Mixed modes<br>
+        1.3 - Easy mode balanced, freeze fixed, scoring updated<br>
+        1.2 - Added Power-ups<br>
+        1.1 - Added Accuracy & Streaks<br>
+        1.0 - Game Release
+      </div>
+  </div>
+
+  <div id="menuScreen" class="screen active">
+    <div class="panel">
+<div class="menu-title-wrap">
+  <img src="keystorm-logo.png" class="logo" alt="KeyStorm Logo">
+  <div class="version-badge">VERSION 2.1</div>
+  <p class="tagline">Lock in, clear targets, build streaks. don’t hit the deadline</p>
+</div>
+
+      <div class="settings">
+        <div class="setting-card">
+          <label>
+            Mode
+            <select id="gameMode">
+              <option value="numbers" selected>Numbers</option>
+              <option value="words">Words</option>
+              <option value="mixed">Mixed</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="setting-card">
+          <label>
+            Difficulty
+            <select id="difficulty">
+              <option value="easy">Easy</option>
+              <option value="normal" selected>Normal</option>
+              <option value="hard">Hard</option>
+              <option value="jill">Jill Mode</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button id="startButton">Start Run</button>
+      </div>
+
+      <div class="menu-info">
+        <div class="info-card">
+          <strong>MODES</strong>
+          <p>Numbers = keypad practice.<br>Words = typing practice.<br>Mixed = both under pressure.</p>
+        </div>
+
+        <div class="info-card">
+          <strong>POWER-UPS</strong>
+          <p>Blue targets are optional.<br>
+		  LIFE triggers instantly.<br>
+		  FREEZE and WIPE are banked — press [ or ] to use them.</p>
+        </div>
+      </div>
+
+      <p class="small" style="margin-top:14px;">Green targets crossing the red line cost 1 life.</p>
+      <p class="small" style="margin-top:12px; opacity:0.6; position:relative; z-index:1;">Created by Jason</p>
+    </div>
+  </div>
+
+  <div id="pauseScreen" class="screen">
+    <div class="panel">
+      <h2>Paused</h2>
+      <p>No shame in pausing. Shame is not coming back.</p>
+      <div class="button-row">
+        <button id="resumeButton">Resume</button>
+        <button id="quitButton" class="secondary">Quit to Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="gameOverScreen" class="screen">
+    <div class="panel">
+      <h2>Game Over</h2>
+      <p id="finalStats"></p>
+      <div class="button-row">
+        <button id="restartButton">Play Again</button>
+        <button id="menuButton" class="secondary">Main Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const game = document.getElementById("game");
+    const scoreEl = document.getElementById("score");
+    const waveEl = document.getElementById("wave");
+    const livesEl = document.getElementById("lives");
+    const streakEl = document.getElementById("streak");
+    const freezeBankEl = document.getElementById("freezeBank");
+    const wipeBankEl = document.getElementById("wipeBank");
+    const highScoreEl = document.getElementById("highScore");
+    const inputTextEl = document.getElementById("inputText");
+    const waveBannerEl = document.getElementById("waveBanner");
+    const powerupStatusEl = document.getElementById("powerupStatus");
+
+    const menuScreen = document.getElementById("menuScreen");
+    const pauseScreen = document.getElementById("pauseScreen");
+    const gameOverScreen = document.getElementById("gameOverScreen");
+    const finalStatsEl = document.getElementById("finalStats");
+    const gameModeEl = document.getElementById("gameMode");
+    const difficultyEl = document.getElementById("difficulty");
+
+    const difficultySettings = {
+      easy: {
+        baseSpeed: 0.22,
+        spawnInterval: 2400,
+        speedPerWave: 0.05,
+        spawnReductionPerWave: 45,
+        minSpawnInterval: 950,
+        scoreMultiplier: 1
+      },
+      normal: {
+        baseSpeed: 0.5,
+        spawnInterval: 1500,
+        speedPerWave: 0.12,
+        spawnReductionPerWave: 90,
+        minSpawnInterval: 500,
+        scoreMultiplier: 1.5
+      },
+      hard: {
+        baseSpeed: 0.7,
+        spawnInterval: 1150,
+        speedPerWave: 0.17,
+        spawnReductionPerWave: 110,
+        minSpawnInterval: 380,
+        scoreMultiplier: 2
+      },
+      jill: {
+        baseSpeed: 1.1,
+        spawnInterval: 800,
+        speedPerWave: 0.25,
+        spawnReductionPerWave: 130,
+        minSpawnInterval: 220,
+        scoreMultiplier: 3
+      }
+    };
+
+    const wordPools = {
+      short: `
+        able acid acre aged also apex arch area atom aura auto axis bake bald ball bank barn base bath beam bear beat bend best bill bird bite blue boat bold bond bone book boom boot boss bowl bulk burn busy cafe cake calm card care case cash cast cave chat chip city clan clay clip clue code cold core cost crew crop dark data dawn deal deck deep dial diet dish door dose draw drop drum dual duck dusk duty each earn easy echo edge edit exit face fact fair fall farm fast fear feed file film find fire firm fish flag flat flex flow food form free frog fuel full fund gain game gate gift goal gold good grid grip grow half hand hard harm head heat hero hide hill hint hire hold hope host hour idea item join jump jury keep kind king kite knee land last late lead left lens life lift line link list load loan lock long loop mail main make mark mask math meal mean meet menu mind mode moon move name near neat need news next note open pace pack page pair park pass path peak plan play plot plug poll pool post pull push race rate read real rent rest rich ride ring risk road role room rule safe sale save scan seat seed send ship shop show sign site size slow snow soft soil sold sort spot star stay step stop sync tail take task team term test text thin time tool town tree true tune type unit user vast view vote wage wait walk wall wave weak wear week west wide wild wind wire wise word work yard year zone
+      `.trim().split(/\s+/),
+
+      medium: `
+        account action active advice agency amount annual answer backup balance benefit billing browser budget button camera cancel career centre chance change charge client coffee column commit common company contact control cookie credit custom damage demand design device direct engine estate export factor filter finance folder format frozen future growth handle income input inside invoice issue laptop launch leader letter linked login market member memory method mobile modern module monitor normal number office online option output packet payment people policy portal profit project prompt public query record refund remote repair report request result review router salary screen search sector secure server service shared signal simple status stream submit supply system target ticket update upload vendor window worker workflow written access alert branch bridge bright buffer burden campus carbon carrier central channel chapter charity circuit climate closure command compare connect console content context convert council country crystal culture current decimal deliver desktop digital display domain driver effort email enable ending feature finance focused gateway graphic holiday identify import include instant journal justice keyword landing legal library license manager meeting message migrate network object package pattern pending percent pointer printer process product profile program publish quality receipt recovery release remark replace respect restart revenue scanner section session setting shortage sidebar silence storage support surface switch tablet template testing thermal traffic trigger upload urgent version virtual volume voucher weather website welcome wireless wrapper
+      `.trim().split(/\s+/),
+
+      long: `
+        accuracy accountant adjustment advantage algorithm analysis analytics apartment approval archive argument assessment attention automation behaviour benchmark calculation campaign catalogue checklist collaboration collection commercial compliance compression confidence connection controller conversion dashboard database deadline decision delivery department deployment detection developer direction discovery document education emergency encryption engagement equipment escalation estimate evaluation evidence executive forecast framework frequency function hardware highlight identity improvement incident inclusion indicator influence inspection insurance interface inventory investment keyboard knowledge leadership management marketing migration milestone monitoring opportunity organisation permission platform priority procedure processing production programme protection reception recovery reference reporting resource response retention roadmap schedule security selection solution spreadsheet strategy structure submission supplier training transaction transfer tutorial validation workflow workplace accessibility administration application architecture authentication calculation capability categorisation certification configuration confirmation coordination corporation credential definition dependency development distribution documentation environment expectation experiment generation governance historical implementation information infrastructure integration interaction investigation maintenance measurement notification optimisation orientation performance perspective preparation presentation productivity qualification recognition recommendation reconciliation recruitment relationship replication requirement resolution restriction simulation specification stakeholder subscription synchronisation technology transformation troubleshooting verification visualisation vulnerability workstation
+      `.trim().split(/\s+/)
+    };
+
+    const wordBags = {
+      short: [],
+      medium: [],
+      long: [],
+      mixedEarly: [],
+      mixedMid: [],
+      mixedLate: [],
+      power: []
+    };
+
+    let enemies = [];
+    let input = "";
+    let score = 0;
+    let wave = 1;
+    let lives = 1;
+    let streak = 0;
+    let bestStreak = 0;
+    let successfulHits = 0;
+    let missedEnemies = 0;
+    let destroyedThisWave = 0;
+    let enemiesNeededForNextWave = 8;
+    let speed = 0.5;
+    let spawnInterval = 1500;
+    let spawnTimer = null;
+    let animationId = null;
+    let gameState = "menu";
+    let settings = difficultySettings.normal;
+    let selectedMode = "numbers";
+    let selectedDifficulty = "normal";
+    let powerupSpawnedThisWave = false;
+    let powerupVisualTimer = null;
+    let freezeTimer = null;
+    let gameFrozen = false;
+    let freezeBank = 0;
+    let wipeBank = 0;
+
+    let highScore = Number(localStorage.getItem("keyStormHighScore") || 0);
+    highScoreEl.textContent = highScore;
+
+    function updateDifficultyOptions() {
+      const jillOption = difficultyEl.querySelector('option[value="jill"]');
+
+      if (gameModeEl.value === "numbers") {
+        jillOption.hidden = false;
+        jillOption.disabled = false;
+        jillOption.textContent = "Jill Mode";
+      } else {
+        jillOption.hidden = true;
+        jillOption.disabled = true;
+        if (difficultyEl.value === "jill") difficultyEl.value = "normal";
+      }
+    }
+
+    function randomNumberString() {
+      const minLength = Math.min(3 + Math.floor((wave - 1) / 3), 7);
+      const maxExtra = Math.min(2 + Math.floor(wave / 4), 5);
+      const length = minLength + Math.floor(Math.random() * maxExtra);
+      let value = "";
+
+      for (let i = 0; i < length; i++) {
+        value += Math.floor(Math.random() * 10);
+      }
+
+      return value;
+    }
+
+    function randomPowerupString() {
+      const length = 6 + Math.floor(Math.random() * 4);
+      let value = "";
+
+      for (let i = 0; i < length; i++) {
+        value += Math.floor(Math.random() * 10);
+      }
+
+      return value;
+    }
+
+    function randomPowerupWord() {
+      return getFromWordBag("power", wordPools.medium.concat(wordPools.long));
+    }
+
+    function shuffleArray(items) {
+      const copy = [...items];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function getFromWordBag(bagName, sourceWords) {
+      if (!wordBags[bagName] || wordBags[bagName].length === 0) {
+        wordBags[bagName] = shuffleArray(sourceWords);
+      }
+      return wordBags[bagName].pop();
+    }
+
+    function randomWord() {
+      if (wave < 4) {
+        return getFromWordBag("short", wordPools.short);
+      }
+
+      if (wave >= 4 && wave < 8) {
+        return getFromWordBag("mixedMid", wordPools.short.concat(wordPools.medium));
+      }
+
+      return getFromWordBag("mixedLate", wordPools.medium.concat(wordPools.long));
+    }
+
+    function randomTargetString() {
+      if (selectedMode === "numbers") return randomNumberString();
+      if (selectedMode === "words") return randomWord();
+
+      const wordChance = wave < 4 ? 0.35 : 0.5;
+      return Math.random() < wordChance ? randomWord() : randomNumberString();
+    }
+
+    function spawnEnemy() {
+      if (gameState !== "playing" || gameFrozen) return;
+
+      const powerupChance = selectedDifficulty === "jill" ? 0.35 : 0.12;
+      const isPowerup = !powerupSpawnedThisWave && Math.random() < powerupChance;
+      const el = document.createElement("div");
+      const safeTopGap = 60;
+      const gameRect = game.getBoundingClientRect();
+      const maxLeft = Math.max(gameRect.width - 190, 20);
+
+      let text = "";
+      let type = "enemy";
+      let power = null;
+
+      if (isPowerup) {
+        const powerTypes = selectedDifficulty === "jill"
+          ? ["LIFE", "LIFE", "LIFE", "FREEZE", "WIPE"]
+          : ["LIFE", "FREEZE", "WIPE"];
+
+        power = powerTypes[Math.floor(Math.random() * powerTypes.length)];
+        powerupSpawnedThisWave = true;
+        type = "powerup";
+        if (selectedMode === "numbers") {
+          text = randomPowerupString();
+        } else if (selectedMode === "words") {
+          text = randomPowerupWord();
+        } else {
+          text = Math.random() < 0.5 ? randomPowerupString() : randomPowerupWord();
+        }
+        el.className = "enemy powerup";
+      } else {
+        text = randomTargetString();
+        el.className = "enemy";
+      }
+
+      el.textContent = text;
+      el.style.left = Math.random() * maxLeft + "px";
+      el.style.top = safeTopGap + "px";
+      game.appendChild(el);
+
+      enemies.push({
+        el,
+        text,
+        type,
+        power,
+        x: parseFloat(el.style.left),
+        y: safeTopGap,
+        frozen: false,
+        zigzag: selectedDifficulty === "jill" && selectedMode === "numbers" && type === "enemy",
+        zigzagAngle: Math.random() * Math.PI * 2,
+        zigzagSpeed: 0.04 + Math.random() * 0.04,
+        zigzagAmount: 1.2 + Math.random() * 1.8,
+        speedMultiplier: type === "powerup" ? 1.45 : 0.85 + Math.random() * 0.35
+      });
+    }
+
+    function updateHud() {
+      scoreEl.textContent = score;
+      waveEl.textContent = wave;
+      livesEl.textContent = lives;
+      streakEl.textContent = streak;
+      freezeBankEl.textContent = freezeBank;
+      wipeBankEl.textContent = wipeBank;
+      highScoreEl.textContent = highScore;
+      inputTextEl.textContent = input || "Type target...";
+      inputTextEl.classList.toggle("empty", input.length === 0);
+    }
+
+    function updateEnemyStyles() {
+      enemies.forEach(enemy => {
+        enemy.el.classList.toggle("targeted", input.length > 0 && enemy.text.startsWith(input));
+        enemy.el.classList.toggle("danger", enemy.type === "enemy" && enemy.y > window.innerHeight * 0.72);
+      });
+    }
+
+    function showWaveBanner(message) {
+      waveBannerEl.textContent = message || `Wave ${wave}`;
+      waveBannerEl.classList.add("show");
+      setTimeout(() => waveBannerEl.classList.remove("show"), 900);
+    }
+
+    function triggerPowerupVisual(message, duration) {
+      clearTimeout(powerupVisualTimer);
+      powerupStatusEl.textContent = message;
+      powerupStatusEl.classList.add("active");
+      game.classList.add("powerup-active");
+
+      powerupVisualTimer = setTimeout(() => {
+        powerupStatusEl.classList.remove("active");
+        game.classList.remove("powerup-active");
+      }, duration);
+    }
+
+    function activatePowerup(power) {
+      if (power === "LIFE") {
+        lives = Math.min(lives + 1, 5);
+        triggerPowerupVisual("+1 LIFE ACTIVE", 1500);
+      }
+
+      if (power === "FREEZE") {
+        freezeBank = Math.min(freezeBank + 1, 3);
+        triggerPowerupVisual("FREEZE BANKED", 1500);
+      }
+
+      if (power === "WIPE") {
+        wipeBank = Math.min(wipeBank + 1, 2);
+        triggerPowerupVisual("WIPE BANKED", 1500);
+      }
+    }
+
+    function useFreeze() {
+      if (freezeBank <= 0 || gameState !== "playing" || gameFrozen) return;
+
+      freezeBank--;
+      gameFrozen = true;
+      enemies.forEach(enemy => {
+        if (enemy.type === "enemy") enemy.frozen = true;
+      });
+
+      triggerPowerupVisual("FREEZE ACTIVE", 5000);
+      clearTimeout(freezeTimer);
+
+      freezeTimer = setTimeout(() => {
+        gameFrozen = false;
+        enemies.forEach(enemy => enemy.frozen = false);
+      }, 5000);
+
+      updateHud();
+    }
+
+    function useWipe() {
+      if (wipeBank <= 0 || gameState !== "playing") return;
+
+      wipeBank--;
+      let wiped = 0;
+
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        if (enemies[i].type === "enemy") {
+          enemies[i].el.remove();
+          enemies.splice(i, 1);
+          wiped++;
+        }
+      }
+
+      score += Math.round(wiped * 15 * settings.scoreMultiplier);
+      triggerPowerupVisual("WIPE USED", 1500);
+      updateHud();
+    }
+
+    function checkInputMatch() {
+      const matchIndex = enemies.findIndex(enemy => enemy.text === input);
+      if (matchIndex === -1) return;
+
+      const enemy = enemies[matchIndex];
+
+      if (enemy.type === "powerup") {
+        activatePowerup(enemy.power);
+        score += Math.round(50 * settings.scoreMultiplier);
+      } else {
+        score += Math.round((enemy.text.length * 10 + wave * 5) * settings.scoreMultiplier);
+        streak++;
+        successfulHits++;
+        bestStreak = Math.max(bestStreak, streak);
+
+        if (streak > 0 && streak % 5 === 0) {
+          const streakBonus = Math.round(streak * 5 * settings.scoreMultiplier);
+          score += streakBonus;
+          showWaveBanner(`STREAK x${streak}`);
+        }
+
+        destroyedThisWave++;
+      }
+
+      enemy.el.remove();
+      enemies.splice(matchIndex, 1);
+      input = "";
+
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem("keyStormHighScore", String(highScore));
+      }
+
+      if (destroyedThisWave >= enemiesNeededForNextWave) {
+        nextWave();
+      }
+    }
+
+    function nextWave() {
+      wave++;
+      destroyedThisWave = 0;
+      powerupSpawnedThisWave = false;
+      enemiesNeededForNextWave = 8 + wave * 2;
+      speed = settings.baseSpeed + (wave - 1) * settings.speedPerWave;
+      spawnInterval = Math.max(
+        settings.minSpawnInterval,
+        settings.spawnInterval - (wave - 1) * settings.spawnReductionPerWave
+      );
+
+      resetSpawnTimer();
+      showWaveBanner();
+    }
+
+    function loseLife(enemyIndex) {
+      const enemy = enemies[enemyIndex];
+      enemy.el.remove();
+      enemies.splice(enemyIndex, 1);
+
+      missedEnemies++;
+      streak = 0;
+      lives--;
+      input = "";
+
+      if (lives <= 0) {
+        endGame();
+      }
+    }
+
+    function update() {
+      if (gameState !== "playing") return;
+
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const enemy = enemies[i];
+
+        if (!enemy.frozen) {
+          enemy.y += speed * enemy.speedMultiplier;
+
+          if (enemy.zigzag) {
+            const gameRect = game.getBoundingClientRect();
+            const enemyWidth = enemy.el.offsetWidth || 80;
+            const maxX = Math.max(gameRect.width - enemyWidth, 0);
+            enemy.zigzagAngle += enemy.zigzagSpeed;
+            enemy.x += Math.sin(enemy.zigzagAngle) * enemy.zigzagAmount;
+            enemy.x = Math.max(0, Math.min(maxX, enemy.x));
+            enemy.el.style.left = enemy.x + "px";
+          }
+        }
+
+        enemy.el.style.top = enemy.y + "px";
+
+        if (enemy.y > window.innerHeight - 55) {
+          if (enemy.type === "powerup") {
+            enemy.el.remove();
+            enemies.splice(i, 1);
+          } else {
+            loseLife(i);
+          }
+        }
+      }
+
+      checkInputMatch();
+      updateEnemyStyles();
+      updateHud();
+      animationId = requestAnimationFrame(update);
+    }
+
+    function resetSpawnTimer() {
+      clearInterval(spawnTimer);
+      spawnTimer = setInterval(() => {
+        if (!gameFrozen) spawnEnemy();
+      }, spawnInterval);
+    }
+
+    function clearEnemies() {
+      enemies.forEach(enemy => enemy.el.remove());
+      enemies = [];
+    }
+
+    function hideAllScreens() {
+      menuScreen.classList.remove("active");
+      pauseScreen.classList.remove("active");
+      gameOverScreen.classList.remove("active");
+    }
+
+    function startGame() {
+      selectedMode = gameModeEl.value;
+      selectedDifficulty = difficultyEl.value;
+
+      if (selectedMode !== "numbers" && selectedDifficulty === "jill") {
+        selectedDifficulty = "normal";
+        difficultyEl.value = "normal";
+      }
+
+      settings = difficultySettings[selectedDifficulty] || difficultySettings.normal;
+      lives = 1;
+      score = 0;
+      wave = 1;
+      input = "";
+      streak = 0;
+      bestStreak = 0;
+      successfulHits = 0;
+      missedEnemies = 0;
+      destroyedThisWave = 0;
+      powerupSpawnedThisWave = false;
+      gameFrozen = false;
+      freezeBank = 0;
+      wipeBank = 0;
+      enemiesNeededForNextWave = 8;
+      speed = settings.baseSpeed;
+      spawnInterval = settings.spawnInterval;
+      gameState = "playing";
+
+      clearInterval(spawnTimer);
+      clearTimeout(powerupVisualTimer);
+      clearTimeout(freezeTimer);
+      powerupStatusEl.classList.remove("active");
+      game.classList.remove("powerup-active");
+      clearEnemies();
+      hideAllScreens();
+      updateHud();
+      showWaveBanner("Wave 1");
+      resetSpawnTimer();
+      spawnEnemy();
+
+      cancelAnimationFrame(animationId);
+      animationId = requestAnimationFrame(update);
+    }
+
+    function pauseGame() {
+      if (gameState !== "playing") return;
+      gameState = "paused";
+      clearInterval(spawnTimer);
+      cancelAnimationFrame(animationId);
+      pauseScreen.classList.add("active");
+    }
+
+    function resumeGame() {
+      if (gameState !== "paused") return;
+      gameState = "playing";
+      pauseScreen.classList.remove("active");
+      resetSpawnTimer();
+      animationId = requestAnimationFrame(update);
+    }
+
+    function endGame() {
+      gameState = "gameover";
+      clearInterval(spawnTimer);
+      cancelAnimationFrame(animationId);
+      clearTimeout(freezeTimer);
+      gameFrozen = false;
+      clearEnemies();
+
+      const totalOutcomes = successfulHits + missedEnemies;
+      const accuracy = totalOutcomes === 0 ? 100 : Math.round((successfulHits / totalOutcomes) * 100);
+
+      finalStatsEl.innerHTML = `Mode: <strong>${selectedMode.toUpperCase()}</strong><br>Difficulty: <strong>${selectedDifficulty.toUpperCase()}</strong><br>Final Score: <strong>${score}</strong><br>Wave Reached: <strong>${wave}</strong><br>Best Streak: <strong>${bestStreak}</strong><br>Accuracy: <strong>${accuracy}%</strong><br>High Score: <strong>${highScore}</strong>`;
+      gameOverScreen.classList.add("active");
+      updateHud();
+    }
+
+    function quitToMenu() {
+      gameState = "menu";
+      clearInterval(spawnTimer);
+      cancelAnimationFrame(animationId);
+      clearTimeout(powerupVisualTimer);
+      clearTimeout(freezeTimer);
+      gameFrozen = false;
+      clearEnemies();
+      input = "";
+      powerupStatusEl.classList.remove("active");
+      game.classList.remove("powerup-active");
+      hideAllScreens();
+      menuScreen.classList.add("active");
+      updateHud();
+    }
+
+    document.addEventListener("keydown", (event) => {
+      const key = event.key.toLowerCase();
+
+      if (event.key === "Escape") {
+        if (gameState === "playing") pauseGame();
+        else if (gameState === "paused") resumeGame();
+        return;
+      }
+
+      if (key === "[" || key === "{") {
+        useFreeze();
+        return;
+      }
+
+      if (key === "]" || key === "}") {
+        useWipe();
+        return;
+      }
+
+      if (gameState !== "playing") return;
+
+      if (/^[a-z0-9]$/.test(key)) {
+        input += key;
+      } else if (event.key === "Backspace") {
+        event.preventDefault();
+        input = input.slice(0, -1);
+      } else if (event.key === "Enter" || event.key === "Escape") {
+        input = "";
+      }
+
+      checkInputMatch();
+      updateEnemyStyles();
+      updateHud();
+    });
+
+    gameModeEl.addEventListener("change", updateDifficultyOptions);
+    document.getElementById("startButton").addEventListener("click", startGame);
+    document.getElementById("resumeButton").addEventListener("click", resumeGame);
+    document.getElementById("quitButton").addEventListener("click", quitToMenu);
+    document.getElementById("restartButton").addEventListener("click", startGame);
+    document.getElementById("menuButton").addEventListener("click", quitToMenu);
+
+    updateDifficultyOptions();
+    updateHud();
+  </script>
+</body>
+</html>
