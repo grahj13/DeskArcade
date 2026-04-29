@@ -27,12 +27,10 @@
     }
 
     .logo-img {
-      height: 140px;
-      width: auto;
-      object-fit: contain;
-      filter: drop-shadow(0 0 10px rgba(140,255,106,0.7));
-      animation: pulseGlow 2.5s infinite ease-in-out;
-    }
+  height: 120px;
+  filter: grayscale(1) brightness(1.5) contrast(1.2)
+          drop-shadow(0 0 10px rgba(140,255,106,0.8));
+}
 
     @keyframes pulseGlow {
       0%, 100% { filter: drop-shadow(0 0 6px rgba(140,255,106,0.4)); }
