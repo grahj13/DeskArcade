@@ -422,7 +422,8 @@ function win(){
   gameState = "won";
   progress = 1;
   setStatus("Clear!","status-clear");
-  messageEl.textContent = `Clean run. Time: ${elapsed.toFixed(2)}s`;
+  timeEl.textContent = elapsed.toFixed(2) + "s";
+messageEl.textContent = `Finished! Time: ${elapsed.toFixed(2)}s`;
 
   triggerAnimation(gameArea,"flash-win");
 
@@ -430,10 +431,10 @@ function win(){
     best = elapsed;
     localStorage.setItem(getBestKey(), best);
     bestEl.textContent = best.toFixed(2) + "s";
-    messageEl.textContent = `New ${difficulty} best! ${elapsed.toFixed(2)}s`;
+messageEl.textContent = `New ${difficulty} best! ${elapsed.toFixed(2)}s`;
   }
 
-  setTimeout(reset, 1200);
+  setTimeout(reset, 3000);
 }
 
 function triggerAnimation(element,className){
@@ -502,8 +503,11 @@ function closestPathInfo(p){
 function update(){
   if(gameState !== "playing") return;
 
-  elapsed = (performance.now() - startTime) / 1000;
+elapsed = (performance.now() - startTime) / 1000;
+
+if (gameState === "playing") {
   timeEl.textContent = elapsed.toFixed(2) + "s";
+}
 
   const pathInfo = closestPathInfo(mouse);
   progress = hasLeftStart ? pathInfo.progress : 0;
