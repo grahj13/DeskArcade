@@ -27,7 +27,7 @@
     }
 
     .logo-img {
-      height: 105px;
+      height: 92px;
       width: auto;
       max-width: 620px;
       display: block;
@@ -62,22 +62,20 @@
         linear-gradient(180deg, #071106 0%, #020502 100%);
     }
 
-body {
-  margin: 0;
-  height: 100vh;
-  font-family: 'IBM Plex Mono', Consolas, Monaco, monospace;
-  background:
-    radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 34%),
-    linear-gradient(180deg, #071106 0%, #020502 100%);
-  color: var(--green);
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  padding: 16px;
-  overflow: hidden;
-}
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'IBM Plex Mono', Consolas, Monaco, monospace;
+      background:
+        radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 34%),
+        linear-gradient(180deg, #071106 0%, #020502 100%);
+      color: var(--green);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 16px;
+      overflow-x: hidden;
+    }
 
     body::before {
       content: "";
@@ -91,20 +89,26 @@ body {
       mask-image: linear-gradient(to bottom, black, transparent 85%);
     }
 
-.game-shell {
-  width: min(980px, 100%);
-  max-height: 100%;
-  overflow: hidden;
-}
-    
+    .game-shell {
+      width: min(980px, 100%);
+      margin: 0 auto;
+      border: 1px solid var(--border-soft);
+      background: var(--panel);
+      box-shadow: 0 0 50px rgba(0,0,0,0.65), 0 0 32px var(--shadow-green);
+      border-radius: 22px;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 18px;
       border-bottom: 1px solid var(--border-soft);
-      padding-bottom: 18px;
-      margin-bottom: 18px;
+      padding-bottom: 14px;
+      margin-bottom: 14px;
     }
 
     .brand-block {
@@ -153,14 +157,14 @@ body {
       border: 1px solid var(--border-soft);
       background: rgba(2, 8, 2, 0.7);
       border-radius: 18px;
-      padding: 16px;
+      padding: 14px;
     }
 
     .canvas-wrap {
       position: relative;
       width: 100%;
       aspect-ratio: 1 / 1;
-      max-height: 640px;
+      max-height: 540px;
       margin: 0 auto;
       border: 1px solid rgba(140,255,106,0.45);
       border-radius: 16px;
@@ -396,9 +400,8 @@ body {
       }
 
       .game-shell {
-  width: min(980px, 100%);
-  margin: auto;
-}
+        padding: 16px;
+      }
 
       header {
         align-items: flex-start;
@@ -498,11 +501,13 @@ body {
         <div class="message" id="message">Ready.</div>
 
         <div class="patch-notes">
-          <strong>v1.3</strong><br>
-          • Balanced level progression<br>
+          <strong>v1.4</strong><br>
+          • Renamed Level to Speed<br>
+          • Tightened page layout<br>
+          • Balanced speed progression<br>
           • Enhanced logo header<br>
           • Added death screen shake<br>
-          • Added level-up flash<br>
+          • Added speed flash<br>
           • Base Game Creation<br>
         </div>
       </aside>
@@ -585,7 +590,7 @@ body {
 
       if (speedLevel > lastDisplayedLevel) {
         lastDisplayedLevel = speedLevel;
-        messageEl.textContent = `LEVEL ${speedLevel}`;
+        messageEl.textContent = `SPEED ${speedLevel}`;
         flashLevel();
       }
     }
