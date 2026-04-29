@@ -27,16 +27,34 @@
     }
 
     .logo-img {
-      height: 90px;
-      width: 100%;
-      max-width: 520px;
-      object-fit: contain;
+      height: 110px;
+      width: auto;
+      max-width: 100%;
       display: block;
-      filter: drop-shadow(0 0 10px rgba(140,255,106,0.7));
+
+      /* base glow */
+      filter: drop-shadow(0 0 6px rgba(140,255,106,0.5))
+              drop-shadow(0 0 14px rgba(140,255,106,0.35));
+
+      /* subtle pulse */
+      animation: logoGlow 3s ease-in-out infinite;
     }
 
     @keyframes pulseGlow {
       0%, 100% { filter: drop-shadow(0 0 6px rgba(140,255,106,0.4)); }
+      50% { filter: drop-shadow(0 0 14px rgba(140,255,106,0.9)); }
+    }
+
+    @keyframes logoGlow {
+      0%, 100% {
+        filter: drop-shadow(0 0 6px rgba(140,255,106,0.4))
+                drop-shadow(0 0 12px rgba(140,255,106,0.25));
+      }
+      50% {
+        filter: drop-shadow(0 0 10px rgba(140,255,106,0.8))
+                drop-shadow(0 0 22px rgba(140,255,106,0.6));
+      }
+    }
       50% { filter: drop-shadow(0 0 14px rgba(140,255,106,0.9)); }
     }
 
