@@ -45,7 +45,6 @@ body{
   display:block;
   width:100%;
   max-width:100%;
-  height:auto;
   max-height:145px;
   object-fit:contain;
   margin:-4px auto 2px;
@@ -143,6 +142,14 @@ canvas{
   font-size:0.95rem;
 }
 
+.message.shock-message{
+  color:var(--red);
+  text-shadow:
+    0 0 8px rgba(255,107,74,0.85),
+    0 0 22px rgba(255,107,74,0.55);
+  animation:shockTextPulse 0.28s ease;
+}
+
 .controls{
   display:flex;
   justify-content:center;
@@ -197,6 +204,12 @@ button.active{
   }
 }
 
+@keyframes shockTextPulse{
+  0%{transform:scale(1);}
+  45%{transform:scale(1.08);}
+  100%{transform:scale(1);}
+}
+
 @media (max-width:700px){
   .stats{grid-template-columns:1fr;}
   .game-shell{padding:12px;}
@@ -210,7 +223,7 @@ button.active{
 <img src="shocklinelogo.png" class="logo" alt="Shockline Logo">
 
 <div class="subtitle">Stay steady. Don’t break the line.</div>
-<div class="meta">Created by Jason / build v1.6</div>
+<div class="meta">Created by Jason / build v1.7</div>
 
 <div class="stats">
   <div class="stat">
@@ -222,7 +235,7 @@ button.active{
     <div class="stat-value" id="time">0.00s</div>
   </div>
   <div class="stat">
-    <div class="stat-label">BEST</div>
+    <div class="stat-label" id="bestLabel">BEST NORMAL</div>
     <div class="stat-value" id="best">--</div>
   </div>
 </div>
@@ -253,6 +266,7 @@ const gameArea = document.getElementById("gameArea");
 const statusEl = document.getElementById("status");
 const timeEl = document.getElementById("time");
 const bestEl = document.getElementById("best");
+const bestLabelEl = document.getElementById("bestLabel");
 const messageEl = document.getElementById("message");
 
 const easyBtn = document.getElementById("easyBtn");
@@ -286,9 +300,17 @@ let isMouseDown = false;
 let hasLeftStart = false;
 let startTime = 0;
 let elapsed = 0;
+let best = null;
 
-let best = localStorage.getItem("shocklineBest");
-if(best) bestEl.textContent = Number(best).toFixed(2) + "s";
+function getBestKey(){
+  return `shocklineBest_${difficulty}`;
+}
+
+function loadBestForDifficulty(){
+  best = localStorage.getItem(getBestKey());
+  bestLabelEl.textContent = `BEST ${difficulty.toUpperCase()}`;
+  bestEl.textContent = best ? Number(best).toFixed(2) + "s" : "--";
+}
 
 function setStatus(text, className){
   statusEl.textContent = text;
@@ -343,6 +365,7 @@ function startRun(){
   startTime = performance.now();
   elapsed = 0;
   setStatus("Charged","status-charged");
+  messageEl.classList.remove("shock-message");
   messageEl.textContent = "Hold steady. Leave START while holding to activate the line.";
 }
 
@@ -353,6 +376,7 @@ function reset(){
   elapsed = 0;
   setStatus("Ready","status-ready");
   timeEl.textContent = "0.00s";
+  messageEl.classList.remove("shock-message");
   messageEl.textContent = "Move into START, then press and hold. Leave START while holding to begin.";
 }
 
@@ -362,11 +386,17 @@ function fail(text){
   gameState = "failed";
   setStatus("Shock!","status-shock");
   messageEl.textContent = text;
+  messageEl.classList.remove("shock-message");
+  void messageEl.offsetWidth;
+  messageEl.classList.add("shock-message");
 
   triggerAnimation(shell,"shake");
   triggerAnimation(gameArea,"flash-fail");
 
-  setTimeout(reset, 800);
+  setTimeout(() => {
+    messageEl.classList.remove("shock-message");
+    reset();
+  }, 800);
 }
 
 function win(){
@@ -380,9 +410,9 @@ function win(){
 
   if(!best || elapsed < Number(best)){
     best = elapsed;
-    localStorage.setItem("shocklineBest", best);
+    localStorage.setItem(getBestKey(), best);
     bestEl.textContent = best.toFixed(2) + "s";
-    messageEl.textContent = `New best! ${elapsed.toFixed(2)}s`;
+    messageEl.textContent = `New ${difficulty} best! ${elapsed.toFixed(2)}s`;
   }
 
   setTimeout(reset, 1200);
@@ -401,6 +431,7 @@ function setDifficulty(level){
   normalBtn.classList.toggle("active", level === "normal");
   hardBtn.classList.toggle("active", level === "hard");
 
+  loadBestForDifficulty();
   reset();
   messageEl.textContent = `${level.charAt(0).toUpperCase() + level.slice(1)} mode selected. Start from the START node.`;
 }
@@ -497,19 +528,35 @@ function tracePath(){
 }
 
 function drawWire(){
+  const safeGlowWidth = {
+    easy: 36,
+    normal: 24,
+    hard: 14
+  };
+
+  const glowStrength = {
+    easy: 34,
+    normal: 24,
+    hard: 14
+  };
+
   ctx.save();
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
   tracePath();
-  ctx.strokeStyle = "rgba(140,255,106,0.12)";
-  ctx.lineWidth = settings[difficulty].safe * 1.7;
+  ctx.strokeStyle = "rgba(140,255,106,0.14)";
+  ctx.lineWidth = safeGlowWidth[difficulty];
+  ctx.shadowBlur = glowStrength[difficulty];
+  ctx.shadowColor = "#8cff6a";
   ctx.stroke();
 
   tracePath();
   ctx.strokeStyle = "#8cff6a";
   ctx.lineWidth = 6;
-  ctx.shadowBlur = gameState === "playing" && hasLeftStart ? 30 : 24;
+  ctx.shadowBlur = gameState === "playing" && hasLeftStart
+    ? glowStrength[difficulty] + 10
+    : glowStrength[difficulty];
   ctx.shadowColor = "#8cff6a";
   ctx.stroke();
 
@@ -567,12 +614,12 @@ function drawHelpText(){
   ctx.save();
 
   ctx.fillStyle = "rgba(185,255,210,0.42)";
-  ctx.font = "11px Consolas, Monaco, monospace";
+  ctx.font = "bold 11px Consolas, Monaco, monospace";
   ctx.textAlign = "left";
-  ctx.fillText("HOLD CLICK + TRACE THE LINE",22,28);
+  ctx.fillText("HOLD CLICK + TRACE THE LINE", 34, 28);
 
   ctx.textAlign = "right";
-  ctx.fillText(`MODE: ${difficulty.toUpperCase()}`,canvas.width-22,28);
+  ctx.fillText(`MODE: ${difficulty.toUpperCase()}`, canvas.width - 34, 28);
 
   ctx.restore();
 }
@@ -594,6 +641,7 @@ function loop(){
   requestAnimationFrame(loop);
 }
 
+loadBestForDifficulty();
 reset();
 loop();
 </script>
