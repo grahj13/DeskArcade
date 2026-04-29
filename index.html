@@ -1,15 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Arcade Hub</title>
+  <meta charset="UTF-8">
+  <title>DeskArcade</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      background: #071106;
+      color: #8cff6a;
+      font-family: 'IBM Plex Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 48px;
+      margin-bottom: 30px;
+      text-shadow: 0 0 10px rgba(140,255,106,0.6);
+    }
+
+    .game-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    a {
+      display: block;
+      padding: 12px 24px;
+      border: 1px solid #8cff6a;
+      color: #8cff6a;
+      text-decoration: none;
+      font-size: 18px;
+      transition: 0.2s;
+    }
+
+    a:hover {
+      background: #8cff6a;
+      color: #061206;
+      box-shadow: 0 0 12px rgba(140,255,106,0.5);
+    }
+  </style>
 </head>
+
 <body>
 
-  <h1>🎮 Arcade</h1>
+  <h1>🎮 DeskArcade</h1>
 
-  <P><a href="games/keystorm/index.html">Play KeyStorm</a></P>
-  <P></P><a href="games/snake/index.html">Play Snake</a></P>
-  <P></P><a href="games/shockline/index.html">Play Shockline</a></P>
+  <div class="game-list">
+    <a href="games/keystorm/index.html">KeyStorm</a>
+    <a href="games/snake/index.html">Grid Viper</a>
+    <a href="games/shockline/index.html">Shockline</a>
+  </div>
 
 </body>
 </html>
