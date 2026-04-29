@@ -801,6 +801,7 @@
       <div class="button-row">
         <button id="resumeButton">Resume</button>
         <button id="quitButton" class="secondary">Quit to Menu</button>
+	    <button id="homeButton" class="secondary">Return to Home</button>
       </div>
     </div>
   </div>
@@ -812,6 +813,7 @@
       <div class="button-row">
         <button id="restartButton">Play Again</button>
         <button id="menuButton" class="secondary">Main Menu</button>
+		<button id="homeButton2" class="secondary">Return to Home</button>
       </div>
     </div>
   </div>
@@ -1408,6 +1410,16 @@
     document.getElementById("quitButton").addEventListener("click", quitToMenu);
     document.getElementById("restartButton").addEventListener("click", startGame);
     document.getElementById("menuButton").addEventListener("click", quitToMenu);
+
+	  const homeUrl = "../index.html"; // change this if your hub path is different
+
+document.getElementById("homeButton").addEventListener("click", () => {
+  window.location.href = homeUrl;
+});
+
+document.getElementById("homeButton2").addEventListener("click", () => {
+  window.location.href = homeUrl;
+});
 
     updateDifficultyOptions();
     updateHud();
