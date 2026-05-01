@@ -61,8 +61,10 @@ body {
   display:block;
   justify-self:center;
   filter:
-    drop-shadow(0 0 10px rgba(140,255,106,0.45))
-    drop-shadow(0 0 18px rgba(255,216,107,0.25));
+    drop-shadow(0 0 8px rgba(140,255,106,0.55))
+    drop-shadow(0 0 18px rgba(140,255,106,0.5))
+    drop-shadow(0 0 34px rgba(140,255,106,0.34))
+    drop-shadow(0 0 14px rgba(255,216,107,0.22));
 }
 
 .arcade-link {
@@ -703,6 +705,21 @@ function drawBackground() {
   }
 }
 
+function roundRect(ctx, x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  ctx.lineTo(x + r, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
 function drawCars() {
   cars.forEach(car => {
     const row = getScreenRow(car.worldY);
@@ -710,6 +727,8 @@ function drawCars() {
     if (row < -1 || row > ROWS) return;
 
     const y = row * TILE + TILE * 0.24;
+    const carHeight = car.height;
+    const bodyRadius = 6;
 
     let fill = "#ff6b4a";
     let glow = "rgba(255,107,74,0.55)";
@@ -724,14 +743,98 @@ function drawCars() {
       glow = "rgba(127,220,255,0.5)";
     }
 
+    ctx.save();
+
+    // glow
     ctx.shadowColor = glow;
     ctx.shadowBlur = 14;
+
+    // main body
     ctx.fillStyle = fill;
-    ctx.fillRect(car.x, y, car.width, car.height);
+    roundRect(ctx, car.x, y, car.width, carHeight, bodyRadius);
+    ctx.fill();
 
     ctx.shadowBlur = 0;
-    ctx.fillStyle = "rgba(0,0,0,0.35)";
-    ctx.fillRect(car.x + 8, y + 7, car.width - 16, car.height - 14);
+
+    // darker inner body
+    ctx.fillStyle = "rgba(0,0,0,0.22)";
+    roundRect(
+      ctx,
+      car.x + 4,
+      y + 4,
+      car.width - 8,
+      carHeight - 8,
+      Math.max(2, bodyRadius - 2)
+    );
+    ctx.fill();
+
+    // windshield / cabin
+    const cabinWidth = car.width * 0.34;
+    const cabinHeight = carHeight * 0.38;
+    const cabinX = car.direction === 1
+      ? car.x + car.width * 0.5
+      : car.x + car.width * 0.16;
+    const cabinY = y + carHeight * 0.16;
+
+    ctx.fillStyle = "rgba(220,245,255,0.85)";
+    roundRect(ctx, cabinX, cabinY, cabinWidth, cabinHeight, 3);
+    ctx.fill();
+
+    // roof line
+    ctx.fillStyle = "rgba(255,255,255,0.16)";
+    roundRect(
+      ctx,
+      car.x + 6,
+      y + 5,
+      car.width - 12,
+      Math.max(4, carHeight * 0.12),
+      3
+    );
+    ctx.fill();
+
+    // headlights
+    ctx.fillStyle = car.color === "yellow"
+      ? "rgba(255,250,210,0.95)"
+      : "rgba(255,245,200,0.95)";
+
+    if (car.direction === 1) {
+      roundRect(ctx, car.x + car.width - 5, y + 6, 3, 6, 1.5);
+      ctx.fill();
+      roundRect(ctx, car.x + car.width - 5, y + carHeight - 12, 3, 6, 1.5);
+      ctx.fill();
+    } else {
+      roundRect(ctx, car.x + 2, y + 6, 3, 6, 1.5);
+      ctx.fill();
+      roundRect(ctx, car.x + 2, y + carHeight - 12, 3, 6, 1.5);
+      ctx.fill();
+    }
+
+    // tail lights
+    ctx.fillStyle = "rgba(255,70,70,0.8)";
+    if (car.direction === 1) {
+      roundRect(ctx, car.x + 2, y + 7, 2.5, 5, 1);
+      ctx.fill();
+      roundRect(ctx, car.x + 2, y + carHeight - 12, 2.5, 5, 1);
+      ctx.fill();
+    } else {
+      roundRect(ctx, car.x + car.width - 4.5, y + 7, 2.5, 5, 1);
+      ctx.fill();
+      roundRect(ctx, car.x + car.width - 4.5, y + carHeight - 12, 2.5, 5, 1);
+      ctx.fill();
+    }
+
+    // wheels
+    ctx.fillStyle = "#111";
+    roundRect(ctx, car.x + 7, y - 1, 8, 3, 1.5);
+    ctx.fill();
+    roundRect(ctx, car.x + car.width - 15, y - 1, 8, 3, 1.5);
+    ctx.fill();
+    roundRect(ctx, car.x + 7, y + carHeight - 2, 8, 3, 1.5);
+    ctx.fill();
+    roundRect(ctx, car.x + car.width - 15, y + carHeight - 2, 8, 3, 1.5);
+    ctx.fill();
+
+    ctx.restore();
   });
 }
 
