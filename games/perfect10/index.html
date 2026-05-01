@@ -1,1 +1,429 @@
 
+<!-- Perfect 10 | DeskArcade -->
+<!-- Save as: games/perfect10/index.html -->
+<!-- Logo must be: perfect10logo.png -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Perfect 10 | DeskArcade</title>
+
+<style>
+:root {
+  --green:#8cff6a;
+  --red:#ff6b4a;
+  --yellow:#ffd86b;
+  --bg:#020402;
+  --panel:rgba(7,24,8,0.94);
+  --text-soft:#b9ffd2;
+  --border-soft:rgba(140,255,106,0.35);
+}
+
+* { box-sizing:border-box; }
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 34%),
+    linear-gradient(180deg,#071106 0%,#020402 100%);
+  color:var(--green);
+  font-family:Consolas, Monaco, monospace;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+
+.game-shell{
+  width:100%;
+  max-width:720px;
+  border:1px solid var(--border-soft);
+  background:var(--panel);
+  border-radius:22px;
+  padding:24px;
+  box-shadow:
+    0 0 28px rgba(140,255,106,0.16),
+    inset 0 0 22px rgba(140,255,106,0.06);
+}
+
+.top-bar{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:16px;
+}
+
+.arcade-btn, .reset-btn{
+  border:1px solid var(--border-soft);
+  background:rgba(140,255,106,0.08);
+  color:var(--green);
+  padding:10px 14px;
+  border-radius:999px;
+  font-weight:700;
+  text-decoration:none;
+  cursor:pointer;
+  font-family:inherit;
+}
+
+.logo-wrap{
+  text-align:center;
+  margin:10px 0 20px;
+}
+
+.logo{
+  max-width:520px;
+  width:92%;
+  filter:
+    drop-shadow(0 0 12px rgba(140,255,106,0.6))
+    drop-shadow(0 0 24px rgba(140,255,106,0.3));
+}
+
+.display-panel{
+  border:1px solid var(--border-soft);
+  border-radius:18px;
+  padding:24px;
+  text-align:center;
+  background:rgba(0,0,0,0.28);
+  margin-bottom:18px;
+}
+
+.status{
+  color:var(--text-soft);
+  margin-bottom:10px;
+}
+
+.result-time{
+  font-size:3.8rem;
+  font-weight:900;
+  margin-bottom:6px;
+}
+
+.result-detail{
+  min-height:22px;
+  font-weight:700;
+}
+
+.new-best{
+  min-height:24px;
+  margin-top:8px;
+  font-weight:900;
+  color:var(--yellow);
+}
+
+.main-button{
+  width:100%;
+  border:0;
+  border-radius:20px;
+  padding:22px;
+  font-size:2rem;
+  font-weight:900;
+  cursor:pointer;
+  color:#061006;
+  background:linear-gradient(180deg,#b9ff9f,#8cff6a);
+  margin-bottom:16px;
+}
+
+.main-button.stop{
+  background:linear-gradient(180deg,#ff9a84,#ff6b4a);
+}
+
+.main-button:disabled{
+  opacity:0.65;
+  cursor:not-allowed;
+}
+
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
+
+.stat-card{
+  border:1px solid var(--border-soft);
+  border-radius:14px;
+  padding:14px;
+  text-align:center;
+}
+
+.stat-label{
+  color:var(--text-soft);
+  font-size:0.8rem;
+}
+
+.stat-value{
+  font-size:1.2rem;
+  font-weight:900;
+}
+
+.history{
+  margin-top:18px;
+  border:1px solid var(--border-soft);
+  border-radius:16px;
+  padding:14px;
+}
+
+.history-title{
+  color:var(--text-soft);
+  margin-bottom:10px;
+  font-weight:700;
+}
+
+.history-list{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.history-pill{
+  border:1px solid rgba(140,255,106,0.3);
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:0.85rem;
+}
+
+.good { color:var(--green); }
+.ok { color:var(--yellow); }
+.bad { color:var(--red); }
+
+.perfect-hit {
+  animation: perfectHit 0.75s ease;
+}
+
+@keyframes perfectHit {
+  0% { transform:scale(1); }
+  35% {
+    transform:scale(1.12);
+    text-shadow:
+      0 0 18px rgba(140,255,106,0.9),
+      0 0 34px rgba(140,255,106,0.55);
+  }
+  100% { transform:scale(1); }
+}
+
+.footer{
+  text-align:center;
+  margin-top:18px;
+  font-size:0.8rem;
+  color:rgba(185,255,210,0.7);
+}
+</style>
+</head>
+
+<body>
+
+<main class="game-shell">
+
+  <div class="top-bar">
+    <a href="../../index.html" class="arcade-btn">← Return to Arcade</a>
+    <button class="reset-btn" id="resetBtn">Reset</button>
+  </div>
+
+  <div class="logo-wrap">
+    <img src="perfect10logo.png" alt="Perfect 10 Logo" class="logo">
+  </div>
+
+  <section class="display-panel">
+    <div class="status" id="status">Ready when you are</div>
+    <div class="result-time" id="time">10.00</div>
+    <div class="result-detail" id="detail">Target</div>
+    <div class="new-best" id="newBest"></div>
+  </section>
+
+  <button class="main-button" id="btn">START</button>
+
+  <section class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Best</div>
+      <div class="stat-value" id="best">--</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Streak</div>
+      <div class="stat-value" id="streak">0</div>
+    </div>
+  </section>
+
+  <section class="history">
+    <div class="history-title">Last 5</div>
+    <div class="history-list" id="history"></div>
+  </section>
+
+  <div class="footer">Created by Jason / build v1.1</div>
+
+</main>
+
+<script>
+let running = false;
+let locked = false;
+let start = 0;
+let bestDiff = null;
+let bestTime = null;
+let streak = 0;
+let history = [];
+
+const btn = document.getElementById("btn");
+const resetBtn = document.getElementById("resetBtn");
+const status = document.getElementById("status");
+const timeEl = document.getElementById("time");
+const detail = document.getElementById("detail");
+const newBest = document.getElementById("newBest");
+const bestEl = document.getElementById("best");
+const streakEl = document.getElementById("streak");
+const historyEl = document.getElementById("history");
+
+btn.addEventListener("click", handleButton);
+resetBtn.addEventListener("click", resetGame);
+
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space") {
+    e.preventDefault();
+    handleButton();
+  }
+});
+
+function handleButton() {
+  if (locked) return;
+
+  if (!running) {
+    startGame();
+  } else {
+    stopGame();
+  }
+}
+
+function startGame() {
+  running = true;
+  start = performance.now();
+
+  btn.textContent = "STOP";
+  btn.classList.add("stop");
+
+  status.textContent = "Counting...";
+  timeEl.textContent = "??.??";
+  detail.textContent = "";
+  newBest.textContent = "";
+}
+
+function stopGame() {
+  const t = (performance.now() - start) / 1000;
+  const diff = Math.abs(t - 10);
+  const earlyLate = t < 10 ? "E" : "L";
+
+  running = false;
+  locked = true;
+  btn.disabled = true;
+
+  setTimeout(() => {
+    locked = false;
+    btn.disabled = false;
+  }, 400);
+
+  btn.textContent = "START";
+  btn.classList.remove("stop");
+
+  timeEl.textContent = t.toFixed(2) + "s";
+
+  let cls = "bad";
+  let message = "";
+
+  if (t.toFixed(2) === "10.00") {
+    cls = "good";
+    message = "PERFECT 10";
+    streak++;
+  } else if (diff <= 0.10) {
+    cls = "good";
+    message = "Elite";
+    streak++;
+  } else if (diff <= 0.30) {
+    cls = "ok";
+    message = "Close";
+    streak = 0;
+  } else if (diff <= 0.75) {
+    cls = "bad";
+    message = "Rough";
+    streak = 0;
+  } else {
+    cls = "bad";
+    message = "Shocking";
+    streak = 0;
+  }
+
+  detail.className = "result-detail " + cls;
+  detail.textContent = `${message} — ${diff.toFixed(2)}s ${t < 10 ? "early" : "late"}`;
+
+  let isNewBest = false;
+
+  if (bestDiff === null || diff < bestDiff) {
+    bestDiff = diff;
+    bestTime = t;
+    isNewBest = true;
+  }
+
+  bestEl.textContent = bestTime.toFixed(2) + "s";
+  streakEl.textContent = streak;
+
+  newBest.textContent = isNewBest ? "NEW BEST!" : "";
+
+  history.unshift({
+    time: t.toFixed(2),
+    marker: earlyLate
+  });
+
+  history = history.slice(0, 5);
+  updateHistory();
+
+  timeEl.classList.remove("perfect-hit");
+  void timeEl.offsetWidth;
+
+  if (diff <= 0.10) {
+    timeEl.classList.add("perfect-hit");
+  }
+}
+
+function updateHistory() {
+  historyEl.innerHTML = "";
+
+  if (history.length === 0) {
+    historyEl.innerHTML = '<span class="history-pill">No attempts yet</span>';
+    return;
+  }
+
+  history.forEach(item => {
+    const el = document.createElement("span");
+    el.className = "history-pill";
+    el.textContent = `${item.time}s ${item.marker}`;
+    historyEl.appendChild(el);
+  });
+}
+
+function resetGame() {
+  running = false;
+  locked = false;
+  start = 0;
+  bestDiff = null;
+  bestTime = null;
+  streak = 0;
+  history = [];
+
+  btn.disabled = false;
+  btn.textContent = "START";
+  btn.classList.remove("stop");
+
+  status.textContent = "Ready when you are";
+  timeEl.textContent = "10.00";
+  detail.textContent = "Target";
+  detail.className = "result-detail";
+  newBest.textContent = "";
+  bestEl.textContent = "--";
+  streakEl.textContent = "0";
+
+  updateHistory();
+}
+
+updateHistory();
+</script>
+
+</body>
+</html>
