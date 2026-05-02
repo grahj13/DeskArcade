@@ -1,1 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fracture | DeskArcade</title>
 
+<style>
+:root {
+  --green:#8cff6a;
+  --red:#ff6b4a;
+  --yellow:#ffd86b;
+  --blue:#7fdcff;
+  --purple:#c77dff;
+  --bg:#020402;
+  --panel:rgba(7,24,8,0.94);
+  --text-soft:#b9ffd2;
+  --border-soft:rgba(140,255,106,0.35);
+}
+
+* { box-sizing:border-box; }
+
+body {
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 34%),
+    linear-gradient(180deg,#071106 0%,#020402 100%);
+  color:var(--green);
+  font-family:Consolas, Monaco, monospace;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  overflow:hidden;
+  padding-top:16px;
+}
+
+.arcade-wrap {
+  width:min(1080px, 96vw);
+  padding:8px 14px 10px;
+}
+
+.top-bar {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:8px;
+  padding:0 4px;
+}
+
+.game-logo {
+  max-width:330px;
+  width:100%;
+  height:auto;
+  display:block;
+  filter:
+    drop-shadow(0 0 8px rgba(140,255,106,0.55))
+    drop-shadow(0 0 18px rgba(140,255,106,0.28));
+}
+
+.btn {
+  border:1px solid var(--border-soft);
+  background:rgba(0,0,0,0.35);
+  color:var(--green);
+  padding:9px 13px;
+  border-radius:12px;
+  font-family:inherit;
+  cursor:pointer;
+  text-decoration:none;
+  box-shadow:0 0 12px rgba(140,255,106,0.14);
+}
+
+.btn:hover {
+  background:rgba(140,255,106,0.12);
+  box-shadow:0 0 18px rgba(140,255,106,0.3);
+}
+
+.game-shell {
+  border:1px solid var(--border-soft);
+  background:var(--panel);
+  border-radius:20px;
+  padding:10px;
+  box-shadow:
+    0 0 24px rgba(140,255,106,0.14),
+    inset 0 0 20px rgba(140,255,106,0.05);
+}
+
+.hud {
+  display:grid;
+  grid-template-columns:repeat(5, 1fr);
+  gap:8px;
+  margin-bottom:8px;
+}
+
+.hud-card {
+  border:1px solid rgba(140,255,106,0.25);
+  background:rgba(0,0,0,0.28);
+  border-radius:13px;
+  padding:8px;
+  text-align:center;
+}
+
+.hud-card span {
+  display:block;
+  font-size:10px;
+  color:var(--text-soft);
+  margin-bottom:3px;
+}
+
+.hud-card strong {
+  font-size:17px;
+}
+
+.canvas-wrap {
+  position:relative;
+  border:1px solid rgba(140,255,106,0.32);
+  border-radius:16px;
+  overflow:hidden;
+  background:
+    linear-gradient(rgba(140,255,106,0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(140,255,106,0.045) 1px, transparent 1px),
+    radial-gradient(circle at center, rgba(140,255,106,0.08), transparent 55%),
+    #020402;
+  background-size:32px 32px, 32px 32px, auto, auto;
+}
+
+.canvas-wrap.shake {
+  animation:screenShake 0.16s ease-in-out;
+}
+
+.canvas-wrap.danger {
+  animation:dangerPulse 0.8s ease-in-out infinite;
+}
+
+@keyframes screenShake {
+  0%, 100% { transform:translate(0,0); }
+  25% { transform:translate(-3px,2px); }
+  50% { transform:translate(3px,-2px); }
+  75% { transform:translate(-2px,-1px); }
+}
+
+@keyframes dangerPulse {
+  0%, 100% { box-shadow:0 0 18px rgba(255,107,74,0.18); }
+  50% { box-shadow:0 0 36px rgba(255,107,74,0.42); }
+}
+
+canvas {
+  display:block;
+  width:100%;
+  height:auto;
+}
+
+.overlay {
+  position:absolute;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,0.72);
+  text-align:center;
+  padding:20px;
+}
+
+.overlay.hidden {
+  display:none;
+}
+
+.overlay-box {
+  border:1px solid var(--border-soft);
+  background:rgba(4,15,5,0.96);
+  border-radius:20px;
+  padding:24px;
+  max-width:500px;
+  box-shadow:0 0 32px rgba(140,255,106,0.26);
+}
+
+.overlay-box h2 {
+  margin:0 0 10px;
+  font-size:32px;
+  text-transform:uppercase;
+  letter-spacing:3px;
+  text-shadow:0 0 18px rgba(140,255,106,0.8);
+}
+
+.overlay-box p {
+  color:var(--text-soft);
+  line-height:1.45;
+}
+
+.controls {
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+
+.footer-note {
+  margin-top:7px;
+  text-align:center;
+  color:rgba(185,255,210,0.7);
+  font-size:12px;
+}
+
+.power-note {
+  min-height:16px;
+  margin-top:7px;
+  text-align:center;
+  color:var(--yellow);
+  text-shadow:0 0 10px rgba(255,216,107,0.45);
+  font-size:13px;
+}
+
+@media (max-width:700px) {
+  body {
+    overflow:auto;
+    padding-top:10px;
+  }
+
+  .hud {
+    grid-template-columns:repeat(2, 1fr);
+  }
+
+  .top-bar {
+    align-items:flex-start;
+  }
+
+  .game-logo {
+    max-width:260px;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="arcade-wrap">
+  <div class="top-bar">
+    <div class="title-block">
+      <img class="game-logo" src="fracturelogo.png" alt="Fracture logo">
+    </div>
+    <a class="btn" href="index.html">Return to Arcade</a>
+  </div>
+
+  <div class="game-shell">
+    <div class="hud">
+      <div class="hud-card"><span>Score</span><strong id="score">0</strong></div>
+      <div class="hud-card"><span>Lives</span><strong id="lives">3</strong></div>
+      <div class="hud-card"><span>Level</span><strong id="level">1</strong></div>
+      <div class="hud-card"><span>Balls</span><strong id="balls">0</strong></div>
+      <div class="hud-card"><span>Power</span><strong id="power">None</strong></div>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="game" width="1000" height="540"></canvas>
+
+      <div id="overlay" class="overlay">
+        <div class="overlay-box">
+          <h2 id="overlayTitle">Fracture</h2>
+          <p id="overlayText">
+            Use the left and right arrow keys to move the paddle. Break every breakable block to clear the level.
+          </p>
+          <div class="controls">
+            <button class="btn" id="startBtn">Start Game</button>
+            <a class="btn" href="index.html">Return to Arcade</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="power-note" id="message"></div>
+    <div class="footer-note">Created by Jason / build v1.5</div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const canvasWrap = document.querySelector(".canvas-wrap");
+
+const scoreEl = document.getElementById("score");
+const livesEl = document.getElementById("lives");
+const levelEl = document.getElementById("level");
+const ballsEl = document.getElementById("balls");
+const powerEl = document.getElementById("power");
+const messageEl = document.getElementById("message");
+
+const overlay = document.getElementById("overlay");
+const overlayTitle = document.getElementById("overlayTitle");
+const overlayText = document.getElementById("overlayText");
+const startBtn = document.getElementById("startBtn");
+
+let keys = {};
+let score = 0;
+let lives = 3;
+let level = 1;
+let running = false;
+let levelReady = false;
+let animationId = null;
+let lastBrickWarningShown = false;
+
+const paddle = {
+  x: canvas.width / 2 - 70,
+  y: canvas.height - 44,
+  w: 140,
+  baseW: 140,
+  h: 14,
+  speed: 15
+};
+
+let balls = [];
+let bricks = [];
+let powerups = [];
+let particles = [];
+
+let powerState = {
+  wide:false,
+  slow:false,
+  multi:false
+};
+
+let powerTimers = {
+  wide:null,
+  slow:null,
+  multi:null
+};
+
+const levels = [
+  { rows:4, cols:9, speed:4.3, strong:0.00, explosive:0.00, speedBrick:0.00, solid:0.00 },
+  { rows:5, cols:10, speed:4.6, strong:0.04, explosive:0.015, speedBrick:0.015, solid:0.00 },
+  { rows:6, cols:11, speed:4.95, strong:0.10, explosive:0.05, speedBrick:0.04, solid:0.025 },
+  { rows:7, cols:12, speed:5.3, strong:0.15, explosive:0.08, speedBrick:0.07, solid:0.05 },
+  { rows:7, cols:13, speed:5.7, strong:0.20, explosive:0.11, speedBrick:0.10, solid:0.075 }
+];
+
+const powerTypes = [
+  { name:"WIDE", color:"#7fdcff" },
+  { name:"SLOW", color:"#ffd86b" },
+  { name:"LIFE", color:"#8cff6a" },
+  { name:"MULTI", color:"#c77dff" }
+];
+
+document.addEventListener("keydown", e => {
+  keys[e.key] = true;
+
+  if (["ArrowLeft", "ArrowRight", " "].includes(e.key)) {
+    e.preventDefault();
+  }
+});
+
+document.addEventListener("keyup", e => {
+  keys[e.key] = false;
+});
+
+startBtn.addEventListener("click", () => {
+  if (!running && !levelReady) {
+    startGame();
+    return;
+  }
+
+  if (levelReady) {
+    beginLevel();
+  }
+});
+
+function startGame() {
+  score = 0;
+  lives = 3;
+  level = 1;
+  running = true;
+  levelReady = true;
+  clearAllPowers();
+  prepareLevel();
+  showLevelIntro();
+  updateHud();
+  gameLoop();
+}
+
+function prepareLevel() {
+  paddle.x = canvas.width / 2 - paddle.w / 2;
+  powerups = [];
+  particles = [];
+  balls = [];
+  lastBrickWarningShown = false;
+  canvasWrap.classList.remove("danger");
+  createBricks();
+  updateHud();
+  draw();
+}
+
+function showLevelIntro() {
+  overlayTitle.textContent = level === 1 ? "Ready?" : `Level ${level}`;
+  overlayText.textContent =
+    level === 1
+      ? "Use the arrow keys to move. Break every block. No panic, just control."
+      : `Level ${level} starts faster. Score: ${score}. Keep it clean.`;
+  startBtn.textContent = level === 1 ? "Start Level 1" : `Start Level ${level}`;
+  overlay.classList.remove("hidden");
+}
+
+function beginLevel() {
+  levelReady = false;
+  overlay.classList.add("hidden");
+  spawnBall();
+
+  if (level === 1) {
+    showMessage("Level 1 — warm up");
+  } else {
+    showMessage(`Level ${level} — speed increased`);
+  }
+
+  updateHud();
+}
+
+function getLevelConfig() {
+  return levels[Math.min(level - 1, levels.length - 1)];
+}
+
+function spawnBall(extra = false) {
+  const config = getLevelConfig();
+  const speed = powerState.slow ? config.speed * 0.72 : config.speed;
+  const dir = extra ? (Math.random() > 0.5 ? 1 : -1) : 1;
+
+  balls.push({
+    x: paddle.x + paddle.w / 2,
+    y: paddle.y - 18,
+    r: 8,
+    dx: speed * (extra ? 0.85 : 0.65) * dir,
+    dy: -speed
+  });
+}
+
+function createBricks() {
+  bricks = [];
+
+  const config = getLevelConfig();
+  const gap = 10;
+  const top = 58;
+  const side = 52;
+  const brickW = (canvas.width - side * 2 - gap * (config.cols - 1)) / config.cols;
+  const brickH = 24;
+
+  let specialCount = 0;
+  const maxSpecials = level === 1 ? 0 : level === 2 ? 1 : Infinity;
+
+  for (let r = 0; r < config.rows; r++) {
+    for (let c = 0; c < config.cols; c++) {
+      let type = "normal";
+      let hp = 1;
+
+      if (specialCount < maxSpecials) {
+        const roll = Math.random();
+
+        if (roll < config.solid) {
+          type = "solid";
+          hp = Infinity;
+          specialCount++;
+        } else if (roll < config.solid + config.explosive) {
+          type = "explosive";
+          specialCount++;
+        } else if (roll < config.solid + config.explosive + config.speedBrick) {
+          type = "speed";
+          specialCount++;
+        } else if (roll < config.solid + config.explosive + config.speedBrick + config.strong) {
+          type = "strong";
+          hp = 2;
+          specialCount++;
+        }
+      }
+
+      bricks.push({
+        x: side + c * (brickW + gap),
+        y: top + r * (brickH + gap),
+        w: brickW,
+        h: brickH,
+        hp,
+        maxHp: hp,
+        type,
+        alive: true
+      });
+    }
+  }
+
+  ensureBreakableBricks();
+}
+
+function ensureBreakableBricks() {
+  const breakable = bricks.filter(b => b.type !== "solid");
+  if (breakable.length > 0) return;
+
+  const brick = bricks[Math.floor(Math.random() * bricks.length)];
+  brick.type = "normal";
+  brick.hp = 1;
+  brick.maxHp = 1;
+}
+
+function gameLoop() {
+  update();
+  draw();
+
+  if (running) {
+    animationId = requestAnimationFrame(gameLoop);
+  }
+}
+
+function update() {
+  if (levelReady) return;
+
+  if (keys.ArrowLeft) paddle.x -= paddle.speed;
+  if (keys.ArrowRight) paddle.x += paddle.speed;
+
+  paddle.x = Math.max(0, Math.min(canvas.width - paddle.w, paddle.x));
+
+  updateBalls();
+  updatePowerups();
+  updateParticles();
+  checkTension();
+
+  if (getBreakableRemaining() === 0) {
+    completeLevel();
+  }
+}
+
+function updateBalls() {
+  balls.forEach(ball => {
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+
+    if (ball.x - ball.r <= 0 || ball.x + ball.r >= canvas.width) {
+      ball.dx *= -1;
+      ball.x = Math.max(ball.r, Math.min(canvas.width - ball.r, ball.x));
+    }
+
+    if (ball.y - ball.r <= 0) {
+      ball.dy *= -1;
+      ball.y = ball.r;
+    }
+
+    if (
+      ball.y + ball.r >= paddle.y &&
+      ball.y - ball.r <= paddle.y + paddle.h &&
+      ball.x >= paddle.x &&
+      ball.x <= paddle.x + paddle.w &&
+      ball.dy > 0
+    ) {
+      const hit = (ball.x - (paddle.x + paddle.w / 2)) / (paddle.w / 2);
+      const edgeHit = Math.abs(hit) > 0.78;
+
+      ball.dx = hit * 7.2;
+      ball.dy = -Math.abs(ball.dy);
+
+      if (!powerState.slow) {
+        ball.dx *= 1.004;
+        ball.dy *= 1.004;
+      }
+
+      ball.y = paddle.y - ball.r;
+
+      if (edgeHit) {
+        showMessage("Clutch save!");
+        makeParticles(ball.x, ball.y, "#ffd86b", 14);
+      }
+    }
+
+    bricks.forEach(brick => {
+      if (!brick.alive) return;
+
+      if (
+        ball.x + ball.r > brick.x &&
+        ball.x - ball.r < brick.x + brick.w &&
+        ball.y + ball.r > brick.y &&
+        ball.y - ball.r < brick.y + brick.h
+      ) {
+        ball.dy *= -1;
+        handleBrickHit(brick, ball);
+      }
+    });
+  });
+
+  balls = balls.filter(ball => ball.y - ball.r < canvas.height + 40);
+
+  if (balls.length === 0) {
+    lives--;
+    updateHud();
+
+    if (lives <= 0) {
+      endGame();
+    } else {
+      spawnBall();
+      showMessage(lives === 1 ? "Last life. No messing about." : "Ball lost. Focus up.");
+    }
+  }
+}
+
+function handleBrickHit(brick, ball) {
+  if (brick.type === "solid") {
+    score += 2;
+    screenShake();
+    makeParticles(brick.x + brick.w / 2, brick.y + brick.h / 2, "#8a8a8a", 5);
+    updateHud();
+    return;
+  }
+
+  brick.hp--;
+  score += 10;
+
+  makeParticles(
+    brick.x + brick.w / 2,
+    brick.y + brick.h / 2,
+    getBrickColor(brick),
+    brick.type === "explosive" ? 14 : 8
+  );
+
+  if (brick.type === "speed") {
+    speedUpBall(ball, 1.08);
+    showMessage("Speed brick!");
+  }
+
+  if (brick.type === "strong" && brick.hp === 1) {
+    showMessage("Strong brick cracked!");
+  }
+
+  if (brick.hp <= 0) {
+    brick.alive = false;
+    score += 20;
+
+    if (brick.type === "explosive") {
+      explodeBrick(brick);
+      showMessage("Bomb brick!");
+    }
+
+    screenShake();
+
+    if (Math.random() < 0.07) {
+      dropPowerup(brick.x + brick.w / 2, brick.y + brick.h / 2);
+    }
+  }
+
+  updateHud();
+}
+
+function explodeBrick(sourceBrick) {
+  bricks.forEach(brick => {
+    if (!brick.alive || brick.type === "solid" || brick === sourceBrick) return;
+
+    const dx = Math.abs((brick.x + brick.w / 2) - (sourceBrick.x + sourceBrick.w / 2));
+    const dy = Math.abs((brick.y + brick.h / 2) - (sourceBrick.y + sourceBrick.h / 2));
+
+    if (dx < sourceBrick.w * 1.55 && dy < sourceBrick.h * 1.9) {
+      brick.alive = false;
+      score += 12;
+      makeParticles(brick.x + brick.w / 2, brick.y + brick.h / 2, getBrickColor(brick), 10);
+
+      if (Math.random() < 0.035) {
+        dropPowerup(brick.x + brick.w / 2, brick.y + brick.h / 2);
+      }
+    }
+  });
+}
+
+function speedUpBall(ball, amount) {
+  ball.dx *= amount;
+  ball.dy *= amount;
+
+  const maxSpeed = 8.8;
+  const currentSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+
+  if (currentSpeed > maxSpeed) {
+    const scale = maxSpeed / currentSpeed;
+    ball.dx *= scale;
+    ball.dy *= scale;
+  }
+}
+
+function dropPowerup(x, y) {
+  const roll = Math.random();
+  let type;
+
+  if (roll < 0.36) type = powerTypes.find(p => p.name === "WIDE");
+  else if (roll < 0.68) type = powerTypes.find(p => p.name === "SLOW");
+  else if (roll < 0.94) type = powerTypes.find(p => p.name === "MULTI");
+  else type = powerTypes.find(p => p.name === "LIFE");
+
+  powerups.push({
+    x,
+    y,
+    w: 64,
+    h: 22,
+    dy: 2.4,
+    type
+  });
+}
+
+function updatePowerups() {
+  powerups.forEach(p => {
+    p.y += p.dy;
+
+    if (
+      p.y + p.h >= paddle.y &&
+      p.y <= paddle.y + paddle.h &&
+      p.x + p.w / 2 >= paddle.x &&
+      p.x - p.w / 2 <= paddle.x + paddle.w
+    ) {
+      activatePower(p.type.name);
+      p.caught = true;
+    }
+  });
+
+  powerups = powerups.filter(p => !p.caught && p.y < canvas.height + 40);
+}
+
+function activatePower(type) {
+  if (type === "WIDE") {
+    powerState.wide = true;
+    paddle.w = 210;
+    showMessage("Powerup: paddle widened");
+
+    clearTimeout(powerTimers.wide);
+    powerTimers.wide = setTimeout(() => {
+      powerState.wide = false;
+      paddle.w = paddle.baseW;
+      updateHud();
+    }, 10000);
+  }
+
+  if (type === "SLOW") {
+    powerState.slow = true;
+
+    balls.forEach(b => {
+      b.dx *= 0.72;
+      b.dy *= 0.72;
+    });
+
+    showMessage("Powerup: ball slowed");
+
+    clearTimeout(powerTimers.slow);
+    powerTimers.slow = setTimeout(() => {
+      powerState.slow = false;
+
+      balls.forEach(b => {
+        b.dx *= 1.22;
+        b.dy *= 1.22;
+      });
+
+      updateHud();
+    }, 8000);
+  }
+
+  if (type === "LIFE") {
+    lives++;
+    showMessage("Powerup: extra life");
+  }
+
+  if (type === "MULTI") {
+    powerState.multi = true;
+    spawnBall(true);
+    spawnBall(true);
+    showMessage("Powerup: multi-ball");
+
+    clearTimeout(powerTimers.multi);
+    powerTimers.multi = setTimeout(() => {
+      powerState.multi = false;
+      updateHud();
+    }, 3000);
+  }
+
+  updateHud();
+}
+
+function clearAllPowers() {
+  Object.keys(powerTimers).forEach(key => {
+    if (powerTimers[key]) clearTimeout(powerTimers[key]);
+    powerTimers[key] = null;
+  });
+
+  powerState.wide = false;
+  powerState.slow = false;
+  powerState.multi = false;
+  paddle.w = paddle.baseW;
+  updateHud();
+}
+
+function completeLevel() {
+  levelReady = true;
+  balls = [];
+  powerups = [];
+  clearAllPowers();
+  canvasWrap.classList.remove("danger");
+
+  if (level >= levels.length) {
+    winGame();
+    return;
+  }
+
+  overlayTitle.textContent = "Level Clear";
+  overlayText.textContent = `Nice work. Score: ${score}. Next up: Level ${level + 1}.`;
+  startBtn.textContent = `Start Level ${level + 1}`;
+  overlay.classList.remove("hidden");
+
+  level++;
+  prepareLevel();
+}
+
+function endGame() {
+  running = false;
+  levelReady = false;
+  cancelAnimationFrame(animationId);
+  canvasWrap.classList.remove("danger");
+
+  overlayTitle.textContent = "Game Over";
+  overlayText.textContent = `Final score: ${score}. You reached level ${level}.`;
+  startBtn.textContent = "Play Again";
+  overlay.classList.remove("hidden");
+}
+
+function winGame() {
+  running = false;
+  levelReady = false;
+  cancelAnimationFrame(animationId);
+  canvasWrap.classList.remove("danger");
+
+  overlayTitle.textContent = "Grid Fractured";
+  overlayText.textContent = `You cleared every level. Final score: ${score}.`;
+  startBtn.textContent = "Play Again";
+  overlay.classList.remove("hidden");
+}
+
+function getBreakableRemaining() {
+  return bricks.filter(b => b.alive && b.type !== "solid").length;
+}
+
+function checkTension() {
+  const remaining = getBreakableRemaining();
+
+  if (remaining === 1 && !lastBrickWarningShown) {
+    lastBrickWarningShown = true;
+    showMessage("Final brick!");
+  }
+
+  if (lives === 1 && running) {
+    canvasWrap.classList.add("danger");
+  } else {
+    canvasWrap.classList.remove("danger");
+  }
+}
+
+function showMessage(text) {
+  messageEl.textContent = text;
+
+  setTimeout(() => {
+    if (messageEl.textContent === text) {
+      messageEl.textContent = "";
+    }
+  }, 2600);
+}
+
+function screenShake() {
+  canvasWrap.classList.remove("shake");
+  void canvasWrap.offsetWidth;
+  canvasWrap.classList.add("shake");
+}
+
+function makeParticles(x, y, color, amount = 8) {
+  for (let i = 0; i < amount; i++) {
+    particles.push({
+      x,
+      y,
+      dx:(Math.random() - 0.5) * 4.5,
+      dy:(Math.random() - 0.5) * 4.5,
+      life:24,
+      color
+    });
+  }
+}
+
+function updateParticles() {
+  particles.forEach(p => {
+    p.x += p.dx;
+    p.y += p.dy;
+    p.life--;
+  });
+
+  particles = particles.filter(p => p.life > 0);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawBricks();
+  drawPaddle();
+  drawBalls();
+  drawPowerups();
+  drawParticles();
+}
+
+function drawBricks() {
+  bricks.forEach(brick => {
+    if (!brick.alive) return;
+
+    const color = getBrickColor(brick);
+    const damagedStrong = brick.type === "strong" && brick.hp === 1;
+
+    ctx.save();
+
+    ctx.shadowBlur = brick.type === "solid" ? 6 : damagedStrong ? 8 : 16;
+    ctx.shadowColor = color;
+    ctx.fillStyle = color;
+    ctx.globalAlpha = brick.type === "solid" ? 0.5 : damagedStrong ? 0.45 : 0.82;
+
+    roundedRect(brick.x, brick.y, brick.w, brick.h, 7);
+    ctx.fill();
+
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = damagedStrong ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.35)";
+    ctx.lineWidth = damagedStrong ? 2 : 1;
+    ctx.stroke();
+
+    if (damagedStrong) {
+      ctx.beginPath();
+      ctx.moveTo(brick.x + 8, brick.y + brick.h - 6);
+      ctx.lineTo(brick.x + brick.w * 0.4, brick.y + 7);
+      ctx.lineTo(brick.x + brick.w * 0.58, brick.y + brick.h - 7);
+      ctx.lineTo(brick.x + brick.w - 8, brick.y + 6);
+      ctx.strokeStyle = "rgba(2,4,2,0.75)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    if (brick.type === "explosive" || brick.type === "speed" || brick.type === "solid") {
+      ctx.font = "bold 17px Consolas, Monaco, monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      if (brick.type === "explosive") {
+        ctx.fillText("💣", brick.x + brick.w / 2, brick.y + brick.h / 2 + 1);
+      }
+
+      if (brick.type === "speed") {
+        ctx.fillStyle = "#020402";
+        ctx.fillText("⚡", brick.x + brick.w / 2, brick.y + brick.h / 2 + 1);
+      }
+
+      if (brick.type === "solid") {
+        ctx.fillText("🧱", brick.x + brick.w / 2, brick.y + brick.h / 2 + 1);
+      }
+    }
+
+    ctx.restore();
+  });
+}
+
+function getBrickColor(brick) {
+  if (brick.type === "strong") return "#ffd86b";
+  if (brick.type === "explosive") return "#ff6b4a";
+  if (brick.type === "speed") return "#7fdcff";
+  if (brick.type === "solid") return "#8a8a8a";
+  return "#8cff6a";
+}
+
+function drawPaddle() {
+  ctx.save();
+  ctx.shadowBlur = powerState.wide ? 30 : 22;
+  ctx.shadowColor = powerState.wide ? "#7fdcff" : "#8cff6a";
+  ctx.fillStyle = powerState.wide ? "#7fdcff" : "#8cff6a";
+  roundedRect(paddle.x, paddle.y, paddle.w, paddle.h, 8);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawBalls() {
+  balls.forEach(ball => {
+    ctx.save();
+    ctx.shadowBlur = powerState.slow ? 24 : 20;
+    ctx.shadowColor = powerState.slow ? "#ffd86b" : "#7fdcff";
+    ctx.fillStyle = powerState.slow ? "#ffd86b" : "#7fdcff";
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+function drawPowerups() {
+  powerups.forEach(p => {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.shadowBlur = 16;
+    ctx.shadowColor = p.type.color;
+    ctx.fillStyle = p.type.color;
+    ctx.strokeStyle = "rgba(255,255,255,0.45)";
+    roundedRect(-p.w / 2, -p.h / 2, p.w, p.h, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#020402";
+    ctx.font = "bold 12px Consolas, Monaco, monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(p.type.name, 0, 1);
+    ctx.restore();
+  });
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    ctx.save();
+    ctx.globalAlpha = p.life / 24;
+    ctx.fillStyle = p.color;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = p.color;
+    ctx.fillRect(p.x, p.y, 3, 3);
+    ctx.restore();
+  });
+}
+
+function roundedRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function updateHud() {
+  scoreEl.textContent = score;
+  livesEl.textContent = lives;
+  levelEl.textContent = level;
+  ballsEl.textContent = balls.length;
+
+  const active = [];
+  if (powerState.wide) active.push("Wide");
+  if (powerState.slow) active.push("Slow");
+  if (powerState.multi) active.push("Multi");
+
+  powerEl.textContent = active.length ? active.join("+") : "None";
+}
+
+draw();
+updateHud();
+</script>
+</body>
+</html>
