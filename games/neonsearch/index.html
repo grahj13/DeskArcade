@@ -1,1 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Neon Search | DeskArcade</title>
 
+<style>
+:root {
+  --green:#8cff6a;
+  --red:#ff6b4a;
+  --yellow:#ffd86b;
+  --blue:#7fdcff;
+  --panel:rgba(7,24,8,0.94);
+  --text-soft:#b9ffd2;
+  --border-soft:rgba(140,255,106,0.35);
+}
+
+* { box-sizing:border-box; }
+
+body {
+  margin:0;
+  height:100vh;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 35%),
+    linear-gradient(180deg,#071106 0%,#020402 100%);
+  color:var(--green);
+  font-family:Consolas, Monaco, monospace;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.arcade-shell {
+  width:100%;
+  max-width:1100px;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+}
+
+.top-bar {
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:6px;
+}
+
+.back-btn, button {
+  border:1px solid var(--border-soft);
+  background:rgba(140,255,106,0.08);
+  color:var(--green);
+  padding:8px 12px;
+  border-radius:10px;
+  cursor:pointer;
+  text-decoration:none;
+}
+
+.header {
+  text-align:center;
+  margin-bottom:6px;
+}
+
+.game-logo {
+  max-width:280px;
+  margin:auto;
+  display:block;
+  filter:drop-shadow(0 0 10px rgba(140,255,106,0.6));
+}
+
+.subtitle {
+  font-size:0.85rem;
+  color:var(--text-soft);
+}
+
+.game-panel {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  background:var(--panel);
+  border:1px solid var(--border-soft);
+  border-radius:20px;
+  padding:10px;
+  overflow:hidden;
+}
+
+.status-row {
+  text-align:center;
+  margin-bottom:6px;
+  color:var(--text-soft);
+}
+
+.main-game {
+  flex:1;
+  display:grid;
+  grid-template-columns:1fr 200px;
+  gap:10px;
+  overflow:hidden;
+}
+
+.grid {
+  height:100%;
+  display:grid;
+  grid-template-columns:repeat(12, 1fr);
+  grid-template-rows:repeat(12, 1fr);
+  gap:4px;
+}
+
+.cell {
+  border:1px solid rgba(140,255,106,0.22);
+  border-radius:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:bold;
+  font-size:clamp(0.7rem,1.5vw,1.1rem);
+  background:rgba(0,0,0,0.32);
+  cursor:pointer;
+}
+
+.cell.selected { background:rgba(127,220,255,0.3); }
+.cell.found { background:rgba(140,255,106,0.3); }
+
+.word-panel {
+  overflow:auto;
+  font-size:0.85rem;
+}
+
+.word-list li.found {
+  text-decoration:line-through;
+  opacity:0.6;
+}
+
+.message {
+  text-align:center;
+  color:var(--yellow);
+  font-size:0.85rem;
+}
+
+.complete-overlay {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.8);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+.complete-box {
+  background:var(--panel);
+  padding:20px;
+  border-radius:20px;
+  text-align:center;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="arcade-shell">
+
+  <div class="top-bar">
+    <a class="back-btn" href="../../index.html">← Return to Arcade</a>
+    <button onclick="newGame()">New Game</button>
+  </div>
+
+  <div class="header">
+    <img src="neonsearchlogo.png" class="game-logo">
+    <div class="subtitle">Click first letter, then last</div>
+  </div>
+
+  <div class="game-panel">
+
+    <div class="status-row">
+      Found: <span id="found">0</span>/<span id="total">0</span>
+    </div>
+
+    <div class="main-game">
+      <div id="grid" class="grid"></div>
+
+      <div class="word-panel">
+        <ul id="words"></ul>
+      </div>
+    </div>
+
+    <div id="message" class="message"></div>
+
+  </div>
+
+</div>
+
+<div id="complete" class="complete-overlay">
+  <div class="complete-box">
+    <h2>Complete</h2>
+    <button onclick="newGame()">New Game</button>
+    <a class="back-btn" href="../../index.html">Return</a>
+  </div>
+</div>
+
+<script>
+const size = 12;
+
+const bank = ["ARCADE","NEON","SEARCH","PIXEL","BUTTON","PLAYER","SCREEN","WINNER","LASER","VECTOR","CYBER","MATRIX","ROBOT","CIRCUIT","BINARY","SERVER","LOGIN","SYSTEM","CODING","SCRIPT","LEVEL","PUZZLE","TARGET","POWER","ENERGY","GALAXY","ROCKET","FLASH","STORM","DRAGON","QUEST","MAGIC","BATTLE","RACING","TURBO","ENGINE","SPEED","MEMORY","REACTION","LETTER","NUMBER","HIDDEN","RUNNER","CHASE","BLOCK","BRICK","CLOUD","FROST","FLAME","LIGHT","DARK","GHOST","PORTAL","SECRET","COOKIE","PIZZA","OFFICE","DESK","CHAIR","MOUSE","LAPTOP","EMAIL"];
+
+let grid=[], words=[], placed=[], found=[], first=null;
+
+const gridEl=document.getElementById("grid");
+const wordsEl=document.getElementById("words");
+const foundEl=document.getElementById("found");
+const totalEl=document.getElementById("total");
+const msg=document.getElementById("message");
+const complete=document.getElementById("complete");
+
+newGame();
+
+function newGame(){
+  complete.style.display="none";
+  grid=Array.from({length:size},()=>Array(size).fill(""));
+  words=[...bank].sort(()=>Math.random()-0.5).slice(0,12);
+  placed=[]; found=[]; first=null;
+
+  words.forEach(placeWord);
+  fill();
+  draw();
+  drawWords();
+  update();
+}
+
+function placeWord(word){
+  const dirs=[[0,1],[1,0],[1,1],[1,-1]];
+  let placedFlag=false;
+
+  for(let a=0;a<200 && !placedFlag;a++){
+    let [dr,dc]=dirs[Math.floor(Math.random()*dirs.length)];
+    let r=Math.floor(Math.random()*size);
+    let c=Math.floor(Math.random()*size);
+
+    let ok=true;
+    for(let i=0;i<word.length;i++){
+      let nr=r+dr*i,nc=c+dc*i;
+      if(nr<0||nc<0||nr>=size||nc>=size|| (grid[nr][nc] && grid[nr][nc]!=word[i])) ok=false;
+    }
+
+    if(ok){
+      let cells=[];
+      for(let i=0;i<word.length;i++){
+        let nr=r+dr*i,nc=c+dc*i;
+        grid[nr][nc]=word[i];
+        cells.push([nr,nc]);
+      }
+      placed.push({word,cells});
+      placedFlag=true;
+    }
+  }
+}
+
+function fill(){
+  const L="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  for(let r=0;r<size;r++){
+    for(let c=0;c<size;c++){
+      if(!grid[r][c]) grid[r][c]=L[Math.floor(Math.random()*26)];
+    }
+  }
+}
+
+function draw(){
+  gridEl.innerHTML="";
+  for(let r=0;r<size;r++){
+    for(let c=0;c<size;c++){
+      let d=document.createElement("div");
+      d.className="cell";
+      d.textContent=grid[r][c];
+      d.onclick=()=>clickCell(d,r,c);
+      gridEl.appendChild(d);
+    }
+  }
+}
+
+function drawWords(){
+  wordsEl.innerHTML="";
+  words.forEach(w=>{
+    let li=document.createElement("li");
+    li.textContent=w;
+    li.id="w"+w;
+    wordsEl.appendChild(li);
+  });
+  totalEl.textContent=words.length;
+}
+
+function clickCell(el,r,c){
+  if(!first){
+    clearSel();
+    first=[r,c];
+    el.classList.add("selected");
+    return;
+  }
+
+  let path=getPath(first,[r,c]);
+  if(!path){ clearSel(); first=null; return; }
+
+  let str=path.map(([r,c])=>grid[r][c]).join("");
+  let match=placed.find(p=>p.word==str && !found.includes(str));
+
+  if(match){
+    found.push(str);
+    path.forEach(([r,c])=>gridEl.children[r*size+c].classList.add("found"));
+    document.getElementById("w"+str).classList.add("found");
+    update();
+    if(found.length===words.length) complete.style.display="flex";
+  }
+
+  clearSel();
+  first=null;
+}
+
+function getPath(a,b){
+  let [r1,c1]=a,[r2,c2]=b;
+  let dr=Math.sign(r2-r1), dc=Math.sign(c2-c1);
+
+  if(!(r1==r2||c1==c2||Math.abs(r2-r1)==Math.abs(c2-c1))) return null;
+
+  let len=Math.max(Math.abs(r2-r1),Math.abs(c2-c1))+1;
+  return Array.from({length:len},(_,i)=>[r1+dr*i,c1+dc*i]);
+}
+
+function clearSel(){
+  document.querySelectorAll(".selected").forEach(e=>e.classList.remove("selected"));
+}
+
+function update(){
+  foundEl.textContent=found.length;
+}
+</script>
+
+</body>
+</html>
