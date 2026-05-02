@@ -1,22 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DeskArcade</title>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg1: #071106;
-      --bg2: #020402;
-      --panel: rgba(7, 24, 8, 0.92);
       --green: #8cff6a;
-      --green-soft: #c8ffd9;
+      --green-soft: #c8ffd8;
+      --bg: #071106;
+      --bg-deep: #020402;
+      --panel: rgba(7, 24, 8, 0.94);
+      --panel-hover: rgba(10, 32, 11, 0.98);
       --border: rgba(140,255,106,0.22);
-      --border-strong: rgba(140,255,106,0.45);
-      --shadow: 0 0 18px rgba(140,255,106,0.12);
-      --shadow-strong: 0 0 24px rgba(140,255,106,0.22);
+      --border-strong: rgba(140,255,106,0.46);
+      --glow-soft: 0 0 12px rgba(140,255,106,0.10);
+      --glow-strong: 0 0 24px rgba(140,255,106,0.24);
+      --frame-glow:
+        0 0 18px rgba(140,255,106,0.08),
+        0 0 36px rgba(140,255,106,0.05);
+      --radius-large: 18px;
+      --radius-medium: 14px;
+      --radius-small: 10px;
     }
 
     * {
@@ -32,194 +42,245 @@
       font-family: 'IBM Plex Mono', monospace;
       color: var(--green);
       background:
-        radial-gradient(circle at top, rgba(140,255,106,0.10), transparent 38%),
-        linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
-      padding: 28px 18px 40px;
+        radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 34%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+      padding: 24px;
     }
 
-    .wrap {
+    .page {
       max-width: 1180px;
       margin: 0 auto;
     }
 
-    .hero {
+    .frame {
       border: 1px solid var(--border);
-      background: var(--panel);
-      padding: 28px 20px;
+      background: rgba(4, 14, 5, 0.72);
+      box-shadow: var(--frame-glow);
+      padding: 22px;
+      border-radius: var(--radius-large);
+    }
+
+    .hero {
+      position: relative;
       text-align: center;
-      margin-bottom: 22px;
-      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid rgba(140,255,106,0.10);
+      overflow: hidden;
     }
 
-    .hero h1 {
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(140,255,106,0.08) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .hero > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .main-logo {
+      display: block;
+      max-width: 420px;
+      width: 100%;
+      height: auto;
+      margin: 0 auto 14px;
+      filter:
+        drop-shadow(0 0 10px rgba(140,255,106,0.25))
+        drop-shadow(0 0 22px rgba(140,255,106,0.12));
+    }
+
+    .subline {
       margin: 0;
-      font-size: clamp(34px, 6vw, 64px);
-      line-height: 1;
-      letter-spacing: 1px;
-      text-shadow: 0 0 12px rgba(140,255,106,0.45);
-    }
-
-    .hero p {
-      margin: 12px 0 0;
-      font-size: 14px;
+      font-size: 13px;
       color: var(--green-soft);
-    }
-
-    .section-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
-      padding: 0 2px;
-    }
-
-    .section-bar h2 {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--green-soft);
-    }
-
-    .game-count {
-      font-size: 12px;
-      color: rgba(200,255,217,0.75);
+      text-shadow: 0 0 10px rgba(140,255,106,0.12);
     }
 
     .games-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
+      gap: 14px;
     }
 
     .game-card {
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: center;
-      min-height: 190px;
-      padding: 18px 16px;
-      border: 1px solid var(--border);
-      background: var(--panel);
+      align-items: center;
+      min-height: 170px;
+      padding: 16px;
       text-decoration: none;
       color: var(--green);
-      text-align: center;
-      box-shadow: var(--shadow);
-      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-medium);
+      background: var(--panel);
+      box-shadow:
+        inset 0 0 18px rgba(140,255,106,0.03),
+        0 0 12px rgba(140,255,106,0.10);
+      transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        background 0.18s ease;
     }
 
     .game-card:hover {
       transform: translateY(-4px);
+      background: var(--panel-hover);
       border-color: var(--border-strong);
-      box-shadow: var(--shadow-strong);
-      background: rgba(10, 32, 11, 0.98);
+      animation: tilePulse 1.4s ease-in-out infinite;
+    }
+
+    .game-logo-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 80px;
+      width: 100%;
+      padding: 8px;
+      border-radius: var(--radius-small);
     }
 
     .game-logo {
-      max-width: 170px;
-      max-height: 72px;
+      max-width: 100%;
+      max-height: 58px;
       width: auto;
       height: auto;
-      display: block;
-      margin-bottom: 16px;
       object-fit: contain;
-      filter: drop-shadow(0 0 10px rgba(140,255,106,0.16));
-    }
-
-    .game-name {
-      font-size: 20px;
-      font-weight: 700;
-      line-height: 1.15;
-      margin-bottom: 8px;
-    }
-
-    .game-tag {
-      font-size: 12px;
-      color: var(--green-soft);
-      opacity: 0.9;
+      display: block;
+      filter: drop-shadow(0 0 8px rgba(140,255,106,0.14));
     }
 
     .footer {
-      margin-top: 22px;
+      margin-top: 18px;
       text-align: center;
       font-size: 12px;
-      color: rgba(200,255,217,0.7);
+      color: rgba(200,255,216,0.72);
     }
 
-    @media (max-width: 700px) {
+    @keyframes tilePulse {
+      0% {
+        box-shadow:
+          inset 0 0 18px rgba(140,255,106,0.04),
+          0 0 10px rgba(140,255,106,0.14),
+          0 0 18px rgba(140,255,106,0.10);
+      }
+      50% {
+        box-shadow:
+          inset 0 0 22px rgba(140,255,106,0.05),
+          0 0 18px rgba(140,255,106,0.22),
+          0 0 30px rgba(140,255,106,0.14);
+      }
+      100% {
+        box-shadow:
+          inset 0 0 18px rgba(140,255,106,0.04),
+          0 0 12px rgba(140,255,106,0.16),
+          0 0 24px rgba(140,255,106,0.11);
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 14px;
+      }
+
+      .frame {
+        padding: 16px;
+        border-radius: 14px;
+      }
+
+      .main-logo {
+        max-width: 320px;
+      }
+
+      .hero {
+        margin-bottom: 16px;
+        padding-bottom: 14px;
+      }
+
+      .games-grid {
+        gap: 12px;
+      }
+
       .game-card {
-        min-height: 170px;
+        min-height: 150px;
+        padding: 14px;
+        border-radius: 12px;
       }
 
       .game-logo {
-        max-width: 150px;
-        max-height: 64px;
+        max-height: 52px;
       }
     }
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <section class="hero">
-      <h1>DeskArcade</h1>
-      <p>Pick a game. Kill a few minutes. Try not to get caught.</p>
-    </section>
+  <main class="page">
+    <div class="frame">
 
-    <div class="section-bar">
-      <h2>Games</h2>
-      <div class="game-count">8 live</div>
+      <section class="hero">
+        <img src="deskarcadelogo.png" alt="DeskArcade logo" class="main-logo">
+        <p class="subline">Pick a game. Waste a few minutes.</p>
+      </section>
+
+      <section class="games-grid">
+        <a class="game-card" href="games/keystorm/index.html" aria-label="Play KeyStorm">
+          <div class="game-logo-wrap">
+            <img src="games/keystorm/keystorm-logo.png" alt="KeyStorm logo" class="game-logo">
+          </div>
+        </a>
+
+        <a class="game-card" href="games/snake/index.html" aria-label="Play Grid Viper">
+          <div class="game-logo-wrap">
+            <img src="games/snake/gridviperlogov2.png" alt="Grid Viper logo" class="game-logo">
+          </div>
+        </a>
+
+        <a class="game-card" href="games/shockline/index.html" aria-label="Play Shockline">
+          <div class="game-logo-wrap">
+            <img src="games/shockline/shocklinelogo.png" alt="Shockline logo" class="game-logo">
+          </div>
+        </a>
+
+        <a class="game-card" href="games/neonreels/index.html" aria-label="Play NeonReels">
+          <div class="game-logo-wrap">
+            <img src="games/neonreels/neonreelslogo.png" alt="NeonReels logo" class="game-logo">
+          </div>
+        </a>
+
+        <a class="game-card" href="games/reacto/index.html" aria-label="Play Reacto">
+          <div class="game-logo-wrap">
+            <img src="games/reacto/reactologo.png" alt="Reacto logo" class="game-logo">
+          </div>
+        </a>
+
+        <a class="game-card" href="games/perfect10/index.html" aria-label="Play Perfect 10">
+          <div class="game-logo-wrap">
+            <img src="games/perfect10/perfect10logo.png" alt="Perfect 10 logo" class="game-logo">
+          </div>
+        </a>
+
+        <a class="game-card" href="games/lanedash/index.html" aria-label="Play Lane Dash">
+          <div class="game-logo-wrap">
+            <img src="games/lanedash/lanedashlogo.png" alt="Lane Dash logo" class="game-logo">
+          </div>
+        </a>
+
+        <a class="game-card" href="games/neonsearch/index.html" aria-label="Play Neon Search">
+          <div class="game-logo-wrap">
+            <img src="games/neonsearch/neonsearchlogo.png" alt="Neon Search logo" class="game-logo">
+          </div>
+        </a>
+      </section>
+
+      <footer class="footer">
+        Built by Jason
+      </footer>
+
     </div>
-
-    <section class="games-grid">
-      <a class="game-card" href="games/keystorm/index.html">
-        <img class="game-logo" src="games/keystorm/keystorm-logo.png" alt="KeyStorm logo">
-        <div class="game-name">KeyStorm</div>
-        <div class="game-tag">Typing</div>
-      </a>
-
-      <a class="game-card" href="games/snake/index.html">
-        <div class="game-name">Grid Viper</div>
-        <div class="game-tag">Arcade</div>
-      </a>
-
-      <a class="game-card" href="games/shockline/index.html">
-        <div class="game-name">Shockline</div>
-        <div class="game-tag">Precision</div>
-      </a>
-
-      <a class="game-card" href="games/neonreels/index.html">
-        <img class="game-logo" src="games/neonreels/neonreelslogo.png" alt="NeonReels logo">
-        <div class="game-name">NeonReels</div>
-        <div class="game-tag">Slots</div>
-      </a>
-
-      <a class="game-card" href="games/reacto/index.html">
-        <div class="game-name">Reacto</div>
-        <div class="game-tag">Reaction</div>
-      </a>
-
-      <a class="game-card" href="games/perfect10/index.html">
-        <img class="game-logo" src="games/perfect10/perfect10logo.png" alt="Perfect 10 logo">
-        <div class="game-name">Perfect 10</div>
-        <div class="game-tag">Timing</div>
-      </a>
-
-      <a class="game-card" href="games/lanedash/index.html">
-        <img class="game-logo" src="games/lanedash/lanedashlogo.png" alt="Lane Dash logo">
-        <div class="game-name">Lane Dash</div>
-        <div class="game-tag">Dodge</div>
-      </a>
-
-      <a class="game-card" href="games/neonsearch/index.html">
-        <img class="game-logo" src="games/neonsearch/neonsearchlogo.png" alt="Neon Search logo">
-        <div class="game-name">Neon Search</div>
-        <div class="game-tag">Wordsearch</div>
-      </a>
-    </section>
-
-    <div class="footer">Built by Jason</div>
   </main>
 </body>
 </html>
