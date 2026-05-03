@@ -432,12 +432,12 @@
         headers: {
           "Content-Type": "text/plain;charset=utf-8"
         },
-        body: JSON.stringify({
-          game,
-          page: document.title,
-          feedback,
-          userAgent: navigator.userAgent
-        })
+body: JSON.stringify({
+  game: game,
+  page: document.title,
+  feedback: feedback,
+  userAgent: navigator.userAgent
+})
       });
 
       const result = await response.json();
