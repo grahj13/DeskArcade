@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Word Forge</title>
+  <script src="dictionary.js"></script>
+  <style>
+    :root {
+      --bg: #050807;
+      --panel: #0b1411;
+      --green: #39ff88;
+      --green-dim: #1f8f52;
+      --text: #d8ffe7;
+      --muted: #7da990;
+      --danger: #ff4d6d;
+      --gold: #ffd166;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, rgba(57, 255, 136, 0.12), transparent 35%),
+        linear-gradient(180deg, #020403, var(--bg));
+      color: var(--text);
+      font-family: Consolas, Monaco, 'Courier New', monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .screen {
+      width: min(980px, 100%);
+      background: rgba(11, 20, 17, 0.92);
+      border: 1px solid rgba(57, 255, 136, 0.45);
+      box-shadow: 0 0 28px rgba(57, 255, 136, 0.14);
+      border-radius: 18px;
+      padding: 24px;
+    }
+
+    .hidden { display: none !important; }
+
+    h1 {
+      margin: 0;
+      font-size: 1.85rem;
+      letter-spacing: 3px;
+      color: var(--green);
+      text-shadow: 0 0 14px rgba(57, 255, 136, 0.55);
+      text-align: center;
+    }
+
+    .logo {
+      display: block;
+      max-width: min(520px, 92vw);
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+      filter: drop-shadow(0 0 18px rgba(57, 255, 136, 0.38));
+    }
+
+    .game .logo {
+      max-width: 360px;
+      margin: 0;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 1rem;
+      text-align: center;
+    }
+
+    .menu {
+      display: grid;
+      place-items: center;
+      gap: 22px;
+      min-height: 620px;
+    }
+
+    .menu-card-wrap {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(240px, 1fr));
+      gap: 18px;
+      width: min(720px, 100%);
+    }
+
+    .mode-card {
+      border: 1px solid rgba(57, 255, 136, 0.32);
+      border-radius: 18px;
+      padding: 22px;
+      background: rgba(0, 0, 0, 0.2);
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      width: 100%;
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    .mode-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(57, 255, 136, 0.75);
+      box-shadow: 0 0 20px rgba(57, 255, 136, 0.18);
+    }
+
+    .mode-card h2 {
+      margin: 0 0 10px;
+      color: var(--green);
+      font-size: 1.6rem;
+    }
+
+    .mode-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .credit {
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    .game header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 18px;
+    }
+
+    .game h1 {
+      text-align: left;
+      font-size: clamp(2rem, 5vw, 4rem);
+    }
+
+    .game .subtitle {
+      text-align: left;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(90px, 1fr));
+      gap: 10px;
+      min-width: 310px;
+    }
+
+    .stat {
+      border: 1px solid rgba(57, 255, 136, 0.28);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stat strong {
+      font-size: 1.35rem;
+      color: var(--green);
+    }
+
+    .control-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+      justify-content: center;
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid rgba(57, 255, 136, 0.5);
+      background: #06100c;
+      color: var(--text);
+      font-family: inherit;
+      border-radius: 12px;
+      padding: 11px 15px;
+      font-weight: 700;
+      transition: transform 0.08s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover {
+      background: rgba(57, 255, 136, 0.12);
+      box-shadow: 0 0 12px rgba(57, 255, 136, 0.22);
+    }
+
+    button:active { transform: scale(0.97); }
+
+    button.primary {
+      background: var(--green);
+      color: #031008;
+      box-shadow: 0 0 16px rgba(57, 255, 136, 0.42);
+    }
+
+    button.danger {
+      border-color: rgba(255, 77, 109, 0.55);
+      color: #ffd5dc;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+    }
+
+    .panel {
+      max-width: 720px;
+      width: 100%;
+      border: 1px solid rgba(57, 255, 136, 0.25);
+      border-radius: 16px;
+      padding: 18px;
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .letters {
+      display: grid;
+      grid-template-columns: repeat(8, 56px);
+      justify-content: center;
+      gap: 10px;
+      margin: 10px auto 14px;
+      width: 100%;
+    }
+
+    .tile {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      font-weight: 700;$1position: relative;
+      overflow: hidden;
+      font-family: Consolas, Monaco, 'Courier New', monospace;
+      line-height: 1;
+      padding: 0;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .tile::after {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border-radius: 11px;
+      border: 1px solid rgba(216, 255, 231, 0.12);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .tile .tile-letter {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      transform: translateY(-1px);
+    }
+
+    .tile.used {
+      opacity: 1;
+      transform: scale(0.96);
+      border-color: var(--gold);
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.28), transparent 24%),
+        linear-gradient(145deg, rgba(255, 209, 102, 0.38), rgba(57, 255, 136, 0.12));
+      color: var(--gold);
+      box-shadow:
+        inset 0 0 18px rgba(255, 209, 102, 0.18),
+        0 0 18px rgba(255, 209, 102, 0.34);
+    }
+
+    .tile.flash {
+      transform: scale(1.08);
+      border-color: var(--gold);
+      box-shadow: 0 0 22px rgba(255, 209, 102, 0.55);
+    }
+
+    .tile.full-forge {
+      transform: scale(1.12);
+      border-color: var(--gold);
+      box-shadow: 0 0 32px rgba(255, 209, 102, 0.75);
+    }
+
+    .entry {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid rgba(57, 255, 136, 0.45);
+      border-radius: 12px;
+      background: #030806;
+      color: var(--text);
+      padding: 14px;
+      font-family: inherit;
+      font-size: 1.1rem;
+      outline: none;
+      text-transform: uppercase;
+    }
+
+    input:focus {
+      box-shadow: 0 0 14px rgba(57, 255, 136, 0.22);
+    }
+
+    input.shake {
+      animation: shake 0.22s ease-in-out;
+      border-color: var(--danger);
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-3px); }
+    }
+
+    .message {
+      min-height: 28px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .message.good { color: var(--green); }
+    .message.bad { color: var(--danger); }
+    .message.gold { color: var(--gold); }
+
+    .found-title {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 0.82rem;
+    }
+
+    .found-list {
+      min-height: 280px;
+      max-height: 350px;
+      overflow: auto;
+      display: flex;
+      align-content: flex-start;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .word-chip {
+      border: 1px solid rgba(57, 255, 136, 0.35);
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: rgba(57, 255, 136, 0.08);
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+
+    .rules {
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.92rem;
+      margin-top: 14px;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transition: opacity 0.22s ease;
+    }
+
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      width: min(520px, 100%);
+      border: 1px solid rgba(57, 255, 136, 0.5);
+      background: #07100d;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 0 32px rgba(57, 255, 136, 0.22);
+      text-align: center;
+      position: relative;
+      z-index: 10000;
+      transform: scale(0.92) translateY(10px);
+      opacity: 0;
+      transition: transform 0.24s ease, opacity 0.24s ease;
+    }
+
+    .overlay.show .modal {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+
+    .modal h2 {
+      color: var(--green);
+      font-size: 2rem;
+      margin: 0 0 10px;
+    }
+
+    .modal p { color: var(--muted); }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+      text-align: left;
+    }
+
+    .results-box {
+      border: 1px solid rgba(57, 255, 136, 0.25);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.22);
+      max-height: 190px;
+      overflow: auto;
+    }
+
+    .results-box h3 {
+      margin: 0 0 8px;
+      color: var(--green);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .results-words {
+      color: var(--text);
+      font-size: 0.85rem;
+      line-height: 1.55;
+      word-break: break-word;
+    }
+
+    @media (max-width: 560px) {
+      .results-grid { grid-template-columns: 1fr; }
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 800px) {
+      .letters {
+        grid-template-columns: repeat(4, 56px);
+      }
+      .game header, .main { grid-template-columns: 1fr; display: grid; }
+      .stats { min-width: 0; grid-template-columns: repeat(2, 1fr); }
+      .letters { grid-template-columns: repeat(4, 1fr); }
+      .entry { flex-direction: column; }
+      .menu-card-wrap { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="menuScreen" class="screen menu">
+    <div>
+      <img class="logo" src="wordforgelogo.png" alt="Word Forge" />
+      <div class="subtitle">Forge as many words as you can from 8 letters.</div>
+    </div>
+
+    <div class="menu-card-wrap">
+      <button id="startChallenge" class="mode-card" type="button">
+        <h2>Challenge Mode</h2>
+        <p>60 seconds while testing. Push for the highest score before the forge goes cold.</p>
+      </button>
+      <button id="startChill" class="mode-card" type="button">
+        <h2>Chill Mode</h2>
+        <p>No timer. Take your time and find every word you can.</p>
+      </button>
+    </div>
+
+    <button id="returnArcadeBtn" type="button">Return to Arcade</button>
+
+    <div class="credit">Created by Jason / build v1.18</div>
+  </div>
+
+  <div id="gameScreen" class="screen game hidden">
+    <header>
+      <div>
+        <img class="logo" src="wordforgelogo.png" alt="Word Forge" />
+        <div id="gameSubtitle" class="subtitle">Challenge Mode</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><span>Score</span><strong id="score">0</strong></div>
+        <div class="stat"><span>Words</span><strong id="wordCount">0</strong></div>
+        <div class="stat"><span>Available</span><strong id="availableCount">0</strong></div>
+        <div class="stat"><span>Time</span><strong id="timer">20</strong></div>
+      </div>
+    </header>
+
+    <div class="control-row">
+      <button id="newBtn">New Letters</button>
+      <button id="shuffleBtn">Shuffle</button>
+      <button id="endBtn" class="danger">End</button>
+    </div>
+
+    <div class="main">
+      <section class="panel">
+        <div class="letters" id="letters"></div>
+        <div class="entry">
+          <input id="wordInput" type="text" placeholder="Type a word..." autocomplete="off" />
+          <button id="submitBtn" class="primary">Forge</button>
+        </div>
+        <div id="message" class="message">Use only the letters shown. Minimum 3 letters.</div>
+        <div class="rules">
+          Scoring: 3 letters = 10, 4 = 20, 5 = 40, 6 = 70, 7 = 110, 8 = 170. Use all 8 letters for a bonus.
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="found-title">
+          <span>Forged Words</span>
+          <span id="modeLabel">Challenge</span>
+        </div>
+        <div id="foundList" class="found-list"></div>
+      </section>
+    </div>
+  </div>
+
+  <div id="overlay" class="overlay">
+    <div class="modal">
+      <h2>Round Complete</h2>
+      <p id="finalText"></p>
+      <div class="modal-actions">
+        <button id="playAgainBtn" class="primary">Play Again</button>
+        <button id="menuBtn">Main Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const wordBank = [
+      'ace','act','add','ado','age','ago','aid','aim','air','ale','all','and','ant','any','ape','apt','arc','are','ark','arm','art','ash','ask','ate','awe','bad','bag','ban','bar','bat','bay','bed','bee','beg','bet','bid','big','bin','bit','boa','bog','bow','box','boy','bra','bud','bug','bus','but','buy','bye','cab','can','cap','car','cat','cog','con','cop','cow','cry','cub','cue','cup','cut','dad','dam','day','den','dew','did','die','dig','dim','din','dip','dog','dot','dry','due','dug','ear','eat','egg','ego','elf','elm','end','era','eve','eye','fad','fan','far','fat','fax','fed','fee','few','fig','fin','fit','fix','fly','fog','for','fox','fun','fur','gap','gas','gel','gem','get','gig','gin','got','gum','gun','gut','guy','had','ham','has','hat','hay','hem','hen','her','hid','him','hip','his','hit','hog','hop','hot','how','hug','hut','ice','ill','ink','inn','ion','ire','ivy','jam','jar','jaw','jet','job','jog','joy','key','kid','kin','kit','lab','lad','lag','lap','law','lay','led','leg','let','lid','lie','lip','lit','log','lot','low','mad','man','map','mat','may','men','met','mix','mob','mud','mug','net','new','nod','nor','not','now','nut','oak','oar','odd','off','oil','old','one','opt','ore','our','out','owl','own','pad','pal','pan','par','pat','pay','pea','pen','pet','pie','pin','pit','pod','pop','pot','pub','put','rag','ram','ran','rap','rat','raw','ray','red','rib','rid','rig','rim','rip','rob','rod','rot','row','rub','rug','run','sad','sag','sap','sat','saw','say','sea','see','set','she','sin','sip','sir','sit','six','sky','sob','son','sow','soy','spa','spy','sub','sun','tab','tag','tan','tap','tar','tax','tea','ten','the','tie','tin','tip','toe','ton','top','toy','try','tub','two','use','van','vet','via','war','was','wax','way','web','wed','wet','who','why','win','wit','won','wow','yes','yet','you','able','acid','acne','acre','aged','aide','aims','airs','ally','also','amen','amid','anal','ante','arch','area','arms','army','arts','atom','aunt','auto','avid','away','axis','bake','bald','bale','band','bane','bank','bare','bark','barn','base','bash','bask','bath','bead','beak','beam','bean','bear','beat','beef','been','beer','bell','belt','bend','bent','best','bias','bike','bind','bird','bite','blow','blue','boat','body','boil','bold','bolt','bond','bone','book','boot','bore','born','boss','both','bowl','brag','bran','brat','brew','brim','buck','bulk','burn','bush','busy','cafe','cage','cake','calm','came','camp','cane','card','care','cart','case','cash','cast','cave','cell','cent','chat','chef','chew','chip','city','clan','clap','clay','clip','club','coal','coat','code','coil','coin','cold','come','cone','copy','cord','core','corn','cost','crab','crew','crop','cube','cure','curl','cute','dare','dark','data','date','dawn','dead','deal','dear','debt','deck','deep','deer','desk','dial','dice','dine','dirt','dish','disk','dive','dock','does','doll','done','door','down','drag','draw','drop','drum','duck','dust','duty','each','earn','ease','east','easy','echo','edge','edit','else','envy','epic','even','ever','evil','exam','exit','face','fact','fade','fail','fair','fake','fall','fame','farm','fast','fate','fear','feed','feel','feet','file','film','find','fine','fire','firm','fish','five','flag','flat','flaw','flow','fold','folk','food','fool','foot','form','fort','free','frog','from','fuel','full','fund','gain','game','gate','gear','gift','girl','give','glad','glow','goal','goat','gold','golf','gone','good','grab','gray','grid','grin','grip','grow','gulf','hail','hair','half','hall','hand','hard','harm','hate','have','head','heal','heap','hear','heat','held','hell','help','herb','hero','hide','high','hill','hire','hold','hole','holy','home','hope','host','hour','huge','hung','hunt','hurt','idea','idle','inch','into','iron','item','jail','jazz','join','joke','jump','junk','just','keen','keep','kick','kind','king','knee','knew','knit','know','lace','lack','lady','laid','lake','land','lane','last','late','lead','leaf','leak','lean','left','lend','lens','less','life','lift','like','limb','lime','line','link','lion','list','live','load','loan','lock','lone','long','look','loop','lord','lose','loss','lost','loud','love','luck','made','mail','main','make','male','many','mark','mask','mass','mate','math','meal','mean','meat','meet','melt','menu','mild','mile','milk','mind','mine','mint','miss','mode','mood','moon','more','most','move','much','must','name','near','neat','neck','need','nest','news','next','nice','nine','node','none','noon','nose','note','noun','oath','once','only','open','oral','over','pace','pack','page','paid','pain','pair','pale','palm','park','part','pass','past','path','peak','pear','peer','perk','pick','pile','pine','pink','pipe','plan','play','plot','plug','poem','poet','pole','pond','pool','poor','port','pose','post','pour','pray','pull','pure','push','quit','race','rack','rage','rail','rain','rank','rare','rate','read','real','rear','redo','reed','reef','rely','rent','rest','rice','rich','ride','ring','rise','risk','road','rock','role','roll','roof','room','root','rope','rose','rule','rush','safe','sage','said','sail','sale','salt','same','sand','save','scan','scar','seal','seat','seed','seek','seem','seen','self','sell','send','sent','ship','shoe','shop','shot','show','shut','sick','side','sign','silk','sing','sink','site','skin','slab','slam','slap','slim','slot','slow','slug','snap','snow','soap','soft','soil','sold','sole','some','song','soon','sort','soul','soup','spin','spot','star','stay','stem','step','stir','stop','such','suit','sure','swim','tail','take','tale','talk','tall','tank','task','team','tear','tell','tend','term','text','than','that','them','then','thin','this','tick','tide','tile','time','tiny','tire','told','tone','tool','torn','tour','town','trap','tree','trip','true','tube','tune','turn','twin','type','unit','upon','used','user','vain','vary','vast','very','vest','view','vote','wage','wait','wake','walk','wall','want','warm','warn','wash','wave','weak','wear','week','well','went','were','west','what','when','wild','will','wind','wine','wing','wire','wise','wish','with','wolf','wood','word','work','worm','yard','year','yell','yoga','young','about','above','actor','acute','adapt','admit','adopt','adult','after','again','agent','agree','alert','alien','align','alike','alive','allow','alone','along','alter','amend','among','angel','anger','angle','apple','apply','arena','argue','arise','armed','arrow','aside','asset','audio','audit','avoid','badge','baker','basic','batch','beach','beard','began','begin','being','below','bench','blade','blank','blast','blend','blind','block','board','boast','bonus','brain','brand','brave','bread','break','brick','bring','broad','brown','build','cable','carry','catch','cause','chain','chair','chalk','change','chant','chart','chase','cheap','cheat','check','cheer','chest','chief','child','claim','class','clean','clear','climb','clock','close','cloud','coach','coast','craft','crane','crash','crate','cream','crime','cross','crowd','crown','dance','danger','debug','decay','delay','delta','dense','depth','design','direct','dream','drive','eagle','early','earth','elite','empty','enemy','enjoy','enter','equal','error','event','exact','extra','feast','field','fight','final','first','flame','flash','fleet','floor','focus','force','forge','frame','fresh','front','garden','ghost','giant','given','glass','glide','glory','grade','grain','grand','grant','graph','grave','great','green','group','guard','guess','guide','habit','heart','heavy','hidden','house','ideal','image','index','inner','input','judge','knife','label','labor','large','laser','layer','learn','least','leave','legal','lemon','level','light','limit','logic','loose','magic','major','maker','maple','march','match','matter','maybe','metal','meter','might','minor','mixed','model','money','month','moral','motor','mouse','mouth','music','never','night','noise','north','novel','ocean','offer','often','orbit','order','other','outer','paint','panel','paper','party','pause','peace','phase','phone','piece','pilot','place','plain','plane','plant','plate','point','power','press','prime','print','prize','proof','proud','pulse','quick','quiet','radio','range','rapid','reach','react','ready','realm','reason','record','reduce','relay','reset','right','river','robot','rough','round','route','royal','scale','score','screen','script','search','season','second','secret','sector','sense','serve','shade','shake','shape','share','sharp','sheet','shift','shine','shore','short','signal','silent','simple','skill','slate','smart','snake','solid','solve','sound','space','spark','speak','speed','spell','spend','spike','split','sport','stack','stage','stand','start','steam','stone','storm','story','stream','strike','strong','table','taken','target','teach','theme','thing','think','timer','title','toast','today','token','tower','trace','track','trade','trail','train','trial','trick','trust','truth','under','union','urban','value','video','voice','water','watch','wheel','white','whole','world','worth','write','wrong','beauty','before','better','border','bottle','branch','breath','bridge','bright','broken','camera','career','castle','center','chance','circle','client','coffee','corner','course','danger','detail','doctor','double','dragon','effect','energy','engine','escape','family','father','figure','filter','finger','forest','friend','future','golden','ground','handle','health','hunter','impact','island','letter','little','market','master','matter','memory','middle','minute','modern','mother','motion','nature','number','object','office','orange','parent','planet','player','pocket','reason','record','remote','rocket','screen','search','second','shadow','silver','simple','single','sister','source','spring','square','station','summer','system','target','temple','thread','ticket','travel','tunnel','update','valley','victor','vision','window','winner','wonder','yellow','ancient','another','balance','battery','between','builder','capture','central','channel','classic','control','counter','creator','diamond','digital','display','dynamic','element','evening','gateway','general','harvest','holding','journal','kingdom','landing','machine','manager','natural','network','nothing','opening','package','perfect','picture','project','quality','reactor','rebuild','recover','release','running','science','section','speaker','storage','strange','student','support','teacher','trainer','trouble','variant','victory','weather','welcome','western','working','writing','anything','building','challenge','computer','creative','developer','distance','friendly','generate','graphics','learning','lighting','magnetic','movement','platform','practice','reaction','security','strategy','strength','terminal','training','triangle','wireless','wordplay'
+    ];
+
+    const extraWordsText = "abase abate abbot abide abode abort abound abuse abyss accent accept access accord accuse ache acorn across action active addict adhere adjoin adjust admire admit adopt adore adult advent advice advise affair affect afford afraid agency agenda agreed ahead alarm album alias alibi alien align alike alive allege allied allure almond almost alone along alpine alter amaze amber amend amount anchor ancient animal ankle annex annual answer anthem anyone appeal appear append archer archive ardent arrest arrive artist ascend ashore asking aspect aspire assist assume assure atlas attack attain attend author autumn awake aware awkward backed badge bagel baker ballot bamboo bandit banker banner barley barrel basic basin basket beacon beagle beaker beauty become before behave behind belief belong better beyond bitter bladed blanket blazer bleach blister blossom border borrow bother bottle bottom bounce bounty branch brave breach breath bridge bright broken bronze browse bubble bucket budget buffer bundle bunker burden bureau burger button cabinet cactus caller camera candle canine cannon canvas carbon career cargo carpet castle casual cattle centre cereal chain chair chalk chance change chapel charge chase cheek cheer cherry chest choice choose chorus circle circus claim clamp clang clash class clean clear clever client cliff climb clinic clock closet cloud coarse coast coffee collar collect colony combat comedy common corner cotton course cousin cover crack craft crane crash create credit creek cricket crime crisis critic crown crush crystal custom cycle damage dancer danger daring debate decay decent decide decked degree demand depart depend deploy design desire detail detect device differ digest dinner direct doctor dollar domain double dragon drawer dream driven driver during dynamic eager eagle early easier easily eastern effect effort either elder eleven emerge empire employ empty ending endure energy engine enough enrich entire equal escape estate ethnic event every exact exceed except excite excuse expand expect expire export extend extra fabric factor fallen family famous farmer fasten father favour feeder fellow female figure final finely finger finish fitted flower fluent follow forest forget formal former fortune forward foster found frozen future galaxy garden garlic gather gentle giant given glider golden govern grammar grand gravel greedy green ground growth guard guilty guitar hammer handle happen harbour hardly hazard health heaven helmet hidden higher hollow honest hunter hurdle ignore image impact import income indeed infant inform inhale inject injury inner input insect inside intend island itself jacket jewel joined journal journey jungle junior justice kernel kettle kicker kitten knight ladder ladies landing laptop larger lasting lately latter leader league leather legal lemon length lesson letter lifted likely limit linear linked liquid listen little loaded locate logic lonely longer lovely lumber machine magnet mainly manage manner marble margin market master matrix matter meadow medium memory mental method middle mighty mirror mobile modern module moment money monkey mother motion motive mouse mouth moving murder museum music mutual myself narrow nation native nature nearby neatly needle never nickel night nobody normal notice number object office orange origin output oxygen packet palace parent parcel pardon parked parser partial party patent patrol pencil pepper perfect person phase phone phrase picked picnic picture pirate planet player pocket poetry police policy portal postal powder power practice prefer pretty prince prison proper public puzzle quarry quarter question quick quiet rabbit random rarely rather rating reader reason recent record reduce refuge reject relate remain remote render repair repeat report rescue result retail retain return reveal reward rhythm ribbon riding rocket roster rough round router rubber runner sacred safety sailor sample saving scanner school science scored screen search season second secret sector secure seeing select sensor serial server settle shadow shaken shaped shared sharp shelter shield shine signal silent silver simple single sister skill skull sleep slight slowly smart smooth social socket softer solid solve source spark speaker speed spell spend spider spiral spirit split spoken spring square stable staged standard starter static station status steady storage strange stream street strength strike string strong struck studio sudden summer supply surely system tablet tackle target teacher temple tender tennis theory thing third though thread ticket timber timing title today token tower traced track trader trail train travel treaty trick trouble tunnel turtle twenty under union unique unless update upload useful using usual utility valley value velvet vendor verbal verify vessel victim victor video village violet vision visual volume voyage waited walker wallet wander wanted warmth washer water wealth weapon weekly weight western window winner winter wisdom within wonder wooden worker world worthy writer written yellow absolute abstract academy accident account accurate achieve acquire actress address advance adverse adviser airport amateur amazing ancient another anxiety anyone anymore apology apparel arrange arrival article aspirin athlete attempt attract average balance battery because bedroom believe beneath benefit between bicycle biology biscuit brother builder calcium capture careful carrier central chamber channel chapter charity chicken chronic circuit citizen classic climate closing clothes college command comment compact company compare compete complex concern conduct confirm connect consent content contest context control convert correct council counter country courage creative creator culture current curious customer damaged dealing decimal decline default defence deliver density deposit desktop develop diamond digital display distant divide drawing earlier easiest economy edition educate element elevate emotion endless evening evident examine example exclude express extreme faithful failure farther fashion feature fiction fighter filter finding fitness flavour foreign forever formula founder freedom friendly funeral further generate genuine gesture gateway graphic greater habitat harvest heading healthy hearing heavier holiday hundred imagine include index industry initial install instant instead intense interest kitchen lantern lateral lawsuit leading learned lecture leisure lending liberal liberty licence lighter limited listing logical manager maximum meaning measure medical meeting member message million mineral minimum neither network neutral noticed nuclear observe obvious offence officer opening operate opinion optical outdoor painter pattern payment perform perhaps phoenix popular portion poverty prepare present pretend prevent primary printer privacy problem process produce product profile project promise protect provide purpose quickly rebuild receive recipe recover reflect regular release remove replace request respond safety section security segment serious sketch social special speech square student subject success support suppose surface survive uniform variant vehicle version visual weather working writing challenge computer creative developer distance friendly graphics learning lighting magnetic movement platform reaction security strategy terminal training triangle wireless wordplay anything building generate practice strength";
+
+    const dictionary = [...new Set((window.dictionary || wordBank).map(word => String(word).trim().toLowerCase()).filter(word => word.length >= 3 && word.length <= 8))];
+
+    const letterSets = [
+      'FORGEMAP', 'TRIANGLE', 'NOTECAST', 'SILENTAR', 'STREAMON', 'CRAFTERS',
+      'PLANTERS', 'ROASTING', 'REACTING', 'MASTERED', 'WORDPLAY', 'BRIGHTEN',
+      'SCOREPAD', 'HOLDINGS', 'TRAINERS', 'SHARPEND', 'CLEANORT', 'PAINTERS',
+      'READINGS', 'LISTENER', 'CREATION', 'STORAGED', 'TEACHERS', 'PLAYERS',
+      'FARMINGS', 'CARTOONS', 'DEALINGS', 'PARTNERS', 'CLEANERS', 'MARKETED',
+      'TRAILERS', 'GARDENER', 'REPAINTS', 'STEAMING', 'LEARNING', 'REACTORS'
+    ];
+
+    const vowels = ['A', 'E', 'I', 'O', 'U'];
+    const minimumPossibleWords = 12;
+
+    const state = {
+      mode: 'challenge',
+      letters: [],
+      found: [],
+      score: 0,
+      time: 60,
+      timerId: null,
+      active: false
+    };
+
+    const els = {
+      menuScreen: document.getElementById('menuScreen'),
+      gameScreen: document.getElementById('gameScreen'),
+      startChallenge: document.getElementById('startChallenge'),
+      startChill: document.getElementById('startChill'),
+      returnArcadeBtn: document.getElementById('returnArcadeBtn'),
+      gameSubtitle: document.getElementById('gameSubtitle'),
+      score: document.getElementById('score'),
+      wordCount: document.getElementById('wordCount'),
+      availableCount: document.getElementById('availableCount'),
+      timer: document.getElementById('timer'),
+      letters: document.getElementById('letters'),
+      input: document.getElementById('wordInput'),
+      message: document.getElementById('message'),
+      foundList: document.getElementById('foundList'),
+      restartBtn: document.getElementById('restartBtn'),
+      newBtn: document.getElementById('newBtn'),
+      shuffleBtn: document.getElementById('shuffleBtn'),
+      submitBtn: document.getElementById('submitBtn'),
+      endBtn: document.getElementById('endBtn'),
+      overlay: document.getElementById('overlay'),
+      finalText: document.getElementById('finalText'),
+      playAgainBtn: document.getElementById('playAgainBtn'),
+      menuBtn: document.getElementById('menuBtn'),
+      modeLabel: document.getElementById('modeLabel')
+    };
+
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function canBuildWord(word) {
+      return canBuildFromLetters(word, state.letters);
+    }
+
+    function canBuildFromLetters(word, letters) {
+      const available = {};
+      letters.forEach(letter => available[letter] = (available[letter] || 0) + 1);
+      for (const char of word.toUpperCase()) {
+        if (!available[char]) return false;
+        available[char]--;
+      }
+      return true;
+    }
+
+    function hasEnoughVowels(letters) {
+      const count = letters.filter(letter => vowels.includes(letter)).length;
+      return count >= 2 && count <= 3;
+    }
+
+    function possibleWordsForLetters(letters) {
+      return dictionary.filter(word => word.length >= 3 && word.length <= 8 && canBuildFromLetters(word, letters));
+    }
+
+    function pickGoodLetters() {
+      const eightLetterWords = dictionary.filter(word => word.length === 8);
+
+      for (let i = 0; i < 60; i++) {
+        const word = eightLetterWords[Math.floor(Math.random() * eightLetterWords.length)];
+        if (!word) break;
+        const letters = shuffleArray(word.toUpperCase().split(''));
+        if (hasEnoughVowels(letters) && possibleWordsForLetters(letters).length >= minimumPossibleWords) {
+          return letters;
+        }
+      }
+
+      const shuffledSets = shuffleArray(letterSets);
+      for (const set of shuffledSets) {
+        const letters = shuffleArray(set.split(''));
+        if (hasEnoughVowels(letters) && possibleWordsForLetters(letters).length >= minimumPossibleWords) {
+          return letters;
+        }
+      }
+
+      return shuffleArray('REACTING'.split(''));
+    }
+
+    function scoreWord(word) {
+      const len = word.length;
+      let points = 0;
+      if (len === 3) points = 10;
+      else if (len === 4) points = 20;
+      else if (len === 5) points = 40;
+      else if (len === 6) points = 70;
+      else if (len === 7) points = 110;
+      else points = 170;
+      if (len === 8) points += 80;
+      return points;
+    }
+
+    function getPossibleWords() {
+      return possibleWordsForLetters(state.letters);
+    }
+
+    function getBestWord() {
+      if (!state.found.length) return 'None';
+      return state.found.slice().sort((a, b) => scoreWord(b) - scoreWord(a) || b.length - a.length)[0].toUpperCase();
+    }
+
+    function getLongestWord() {
+      if (!state.found.length) return 'None';
+      return state.found.slice().sort((a, b) => b.length - a.length || a.localeCompare(b))[0].toUpperCase();
+    }
+
+    function setMessage(text, type = '') {
+      els.message.textContent = text;
+      els.message.className = 'message ' + type;
+    }
+
+    function shakeInput() {
+      els.input.classList.remove('shake');
+      void els.input.offsetWidth;
+      els.input.classList.add('shake');
+    }
+
+    function flashTiles(isFullForge = false) {
+      const tiles = Array.from(document.querySelectorAll('.tile'));
+      tiles.forEach(tile => tile.classList.add(isFullForge ? 'full-forge' : 'flash'));
+      setTimeout(() => {
+        tiles.forEach(tile => tile.classList.remove('flash', 'full-forge'));
+      }, isFullForge ? 420 : 260);
+    }
+
+    function formatWordList(words, limit = 50) {
+      if (!words.length) return 'None';
+      const sorted = words.slice().sort((a, b) => b.length - a.length || a.localeCompare(b)).map(w => w.toUpperCase());
+      const visible = sorted.slice(0, limit).join(', ');
+      const remaining = sorted.length - limit;
+      return remaining > 0 ? `${visible}<br><br>+ ${remaining} more...` : visible;
+    }
+
+    function render() {
+      els.score.textContent = state.score;
+      els.wordCount.textContent = state.found.length;
+      els.availableCount.textContent = getPossibleWords().length;
+      els.timer.textContent = state.mode === 'challenge' ? state.time : '∞';
+      els.modeLabel.textContent = state.mode === 'challenge' ? 'Challenge' : 'Chill';
+      els.gameSubtitle.textContent = state.mode === 'challenge' ? 'Challenge Mode: 60 seconds testing' : 'Chill Mode: no timer';
+      els.letters.innerHTML = '';
+      state.letters.forEach((letter, index) => {
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = 'tile';
+        tile.innerHTML = `<span class="tile-letter">${letter}</span>`;
+        tile.dataset.index = index;
+        tile.addEventListener('click', () => addLetterFromTile(index));
+        els.letters.appendChild(tile);
+      });
+      updateTileUsage();
+      els.foundList.innerHTML = '';
+      state.found.slice().sort((a, b) => b.length - a.length || a.localeCompare(b)).forEach(word => {
+        const chip = document.createElement('div');
+        chip.className = 'word-chip';
+        chip.textContent = word;
+        els.foundList.appendChild(chip);
+      });
+    }
+
+    function startTimer() {
+      clearInterval(state.timerId);
+      if (state.mode !== 'challenge') return;
+      state.timerId = setInterval(() => {
+        state.time--;
+        render();
+        if (state.time <= 0) endRound();
+      }, 1000);
+    }
+
+    function showGame() {
+      els.menuScreen.classList.add('hidden');
+      els.gameScreen.classList.remove('hidden');
+    }
+
+    function showMenu() {
+      clearInterval(state.timerId);
+      state.active = false;
+      els.overlay.classList.remove('show');
+      els.gameScreen.classList.add('hidden');
+      els.menuScreen.classList.remove('hidden');
+    }
+
+    function newRound(keepLetters = false) {
+      clearInterval(state.timerId);
+      if (!keepLetters) {
+        state.letters = pickGoodLetters();
+      }
+      state.found = [];
+      state.score = 0;
+      state.time = 60;
+      state.active = true;
+      els.overlay.classList.remove('show');
+      els.input.value = '';
+      els.input.disabled = false;
+      setMessage('Use only the letters shown. Minimum 3 letters.');
+      render();
+      startTimer();
+      els.input.focus();
+    }
+
+    function startMode(mode) {
+      if (!dictionary.length) {
+        alert('Dictionary failed to load. Check dictionary.js is in the same folder as index.html and starts with: window.dictionary = [...]');
+        return;
+      }
+      state.mode = mode;
+      showGame();
+      newRound(false);
+    }
+
+    function addLetterFromTile(index) {
+      if (!state.active) return;
+      const letter = state.letters[index];
+      const current = els.input.value.toUpperCase();
+      const available = {};
+      state.letters.forEach(l => available[l] = (available[l] || 0) + 1);
+      for (const char of current) {
+        if (available[char]) available[char]--;
+      }
+      if (!available[letter]) {
+        shakeInput();
+        return;
+      }
+      els.input.value += letter;
+      updateTileUsage();
+      els.input.focus();
+    }
+
+    function updateTileUsage() {
+      const tiles = Array.from(document.querySelectorAll('.tile'));
+      tiles.forEach(tile => tile.classList.remove('used'));
+
+      const selectedIndexes = new Set();
+      const typedLetters = els.input.value.toUpperCase().split('');
+
+      typedLetters.forEach(char => {
+        const tileIndex = state.letters.findIndex((letter, index) => {
+          return letter === char && !selectedIndexes.has(index);
+        });
+
+        if (tileIndex !== -1) {
+          selectedIndexes.add(tileIndex);
+          if (tiles[tileIndex]) tiles[tileIndex].classList.add('used');
+        }
+      });
+    }
+
+    function submitWord() {
+      if (!state.active) return;
+      const word = els.input.value.trim().toLowerCase();
+      els.input.value = '';
+
+      if (word.length < 3) {
+        setMessage('Too short. Minimum 3 letters.', 'bad');
+        shakeInput();
+        return;
+      }
+      if (state.found.includes(word)) {
+        setMessage('Already forged. Find another.', 'bad');
+        shakeInput();
+        return;
+      }
+      if (!canBuildWord(word)) {
+        setMessage('You cannot build that from these letters.', 'bad');
+        shakeInput();
+        return;
+      }
+      if (!dictionary.includes(word)) {
+        setMessage('Not in the forge dictionary yet.', 'bad');
+        shakeInput();
+        return;
+      }
+
+      const points = scoreWord(word);
+      state.found.push(word);
+      state.score += points;
+      setMessage(word.length === 8 ? `FULL FORGE! +${points}` : `Forged: ${word.toUpperCase()} +${points}`, word.length === 8 ? 'gold' : 'good');
+      render();
+      flashTiles(word.length === 8);
+    }
+
+    function endRound() {
+      clearInterval(state.timerId);
+      state.active = false;
+      els.input.disabled = true;
+      const possibleWords = getPossibleWords();
+      const missedWords = possibleWords.filter(word => !state.found.includes(word));
+      const foundDisplay = formatWordList(state.found, 50);
+      const missedDisplay = formatWordList(missedWords, 50);
+      els.finalText.innerHTML = `
+        You forged <strong>${state.found.length}</strong> words and scored <strong>${state.score}</strong> points.<br><br>
+        Best word: <strong>${getBestWord()}</strong><br>
+        Longest word: <strong>${getLongestWord()}</strong><br>
+        Possible words found: <strong>${state.found.length}/${possibleWords.length}</strong><br>
+        Missed words: <strong>${missedWords.length}</strong>
+        <div class="results-grid">
+          <div class="results-box">
+            <h3>Words Found</h3>
+            <div class="results-words">${foundDisplay}</div>
+          </div>
+          <div class="results-box">
+            <h3>Words Missed</h3>
+            <div class="results-words">${missedDisplay}</div>
+          </div>
+        </div>
+      `;
+      els.overlay.classList.add('show');
+    }
+
+    els.startChallenge.addEventListener('click', () => startMode('challenge'));
+    els.startChill.addEventListener('click', () => startMode('chill'));
+    els.returnArcadeBtn.addEventListener('click', () => {
+	window.location.href = '../../index.html';
+    });
+    els.submitBtn.addEventListener('click', submitWord);
+    els.input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitWord();
+      setTimeout(updateTileUsage, 0);
+    });
+    els.input.addEventListener('input', updateTileUsage);
+    els.shuffleBtn.addEventListener('click', () => {
+      state.letters = shuffleArray(state.letters);
+      render();
+      els.input.focus();
+    });
+    els.newBtn.addEventListener('click', () => newRound(false));
+    els.endBtn.addEventListener('click', endRound);
+    els.playAgainBtn.addEventListener('click', () => newRound(false));
+    els.menuBtn.addEventListener('click', showMenu);
+  </script>
+</body>
+</html>
