@@ -193,6 +193,69 @@
       }
     }
 
+.feedback-panel {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-medium);
+  background: var(--panel);
+  box-shadow:
+    inset 0 0 18px rgba(140,255,106,0.03),
+    0 0 12px rgba(140,255,106,0.10);
+}
+
+.feedback-panel h2 {
+  margin: 0 0 14px;
+  font-size: 20px;
+  text-transform: uppercase;
+}
+
+.feedback-panel label {
+  display: block;
+  margin: 12px 0 6px;
+  font-size: 13px;
+  color: var(--green-soft);
+}
+
+#gameSelect,
+#feedbackBox {
+  width: 100%;
+  padding: 11px;
+  background: #001507;
+  color: var(--green);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-small);
+  font-family: inherit;
+}
+
+#feedbackBox {
+  min-height: 110px;
+  resize: vertical;
+}
+
+#sendFeedbackBtn {
+  margin-top: 14px;
+  padding: 11px 16px;
+  background: var(--green);
+  color: #061206;
+  border: none;
+  border-radius: var(--radius-small);
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+#sendFeedbackBtn:hover {
+  filter: brightness(1.15);
+}
+
+#feedbackStatus {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--green-soft);
+}
+    
     @media (max-width: 640px) {
       body {
         padding: 14px;
@@ -310,12 +373,87 @@
         </a>
         
       </section>
+    <section class="feedback-panel">
+  <h2>Feedback</h2>
 
+  <label for="gameSelect">Game</label>
+  <select id="gameSelect">
+    <option value="">Select a game</option>
+    <option value="DeskArcade Home">DeskArcade Home</option>
+    <option value="KeyStorm">KeyStorm</option>
+    <option value="Grid Viper">Grid Viper</option>
+    <option value="Shockline">Shockline</option>
+    <option value="NeonReels">NeonReels</option>
+    <option value="Reacto">Reacto</option>
+    <option value="Perfect 10">Perfect 10</option>
+    <option value="Lane Dash">Lane Dash</option>
+    <option value="Neon Search">Neon Search</option>
+    <option value="Fracture">Fracture</option>
+    <option value="Signal Scan">Signal Scan</option>
+  </select>
+
+  <label for="feedbackBox">Feedback</label>
+  <textarea id="feedbackBox" placeholder="Drop your feedback here..."></textarea>
+
+  <button id="sendFeedbackBtn">Send Feedback</button>
+  <p id="feedbackStatus"></p>
+</section>
       <footer class="footer">
         Built by Jason
       </footer>
 
     </div>
   </main>
+  <script>
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztVnfSyDu7hy4tK2FBO71DVKwFUBiVpPgNh8ueQ4mcKsji_MPTZrV_Vm96btXX4-i0/exec";
+
+  document.getElementById("gameSelect").value = "DeskArcade Home";
+
+  document.getElementById("sendFeedbackBtn").addEventListener("click", async () => {
+    const game = document.getElementById("gameSelect").value;
+    const feedback = document.getElementById("feedbackBox").value.trim();
+    const status = document.getElementById("feedbackStatus");
+
+    if (!game) {
+      status.textContent = "Pick a game first.";
+      return;
+    }
+
+    if (!feedback) {
+      status.textContent = "Write something first.";
+      return;
+    }
+
+    status.textContent = "Sending...";
+
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify({
+          game,
+          page: document.title,
+          feedback,
+          userAgent: navigator.userAgent
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        document.getElementById("feedbackBox").value = "";
+        status.textContent = "Thanks. Feedback sent.";
+      } else {
+        status.textContent = "Failed to send feedback.";
+        console.error(result.error);
+      }
+    } catch (error) {
+      status.textContent = "Failed to send feedback.";
+      console.error(error);
+    }
+  });
+</script>
 </body>
 </html>
