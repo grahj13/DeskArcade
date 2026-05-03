@@ -374,12 +374,13 @@
         
       </section>
     <section class="feedback-panel">
-  <h2>Feedback</h2>
+  <h2>Feedback & Suggestions</h2>
 
   <label for="gameSelect">Game</label>
 <select id="gameSelect">
   <option value="">Select a game</option>
-  <option value="DeskArcade Home" selected>DeskArcade Home</option>
+  <option value="General">General</option>
+  <option value="DeskArcade Home">Home Page</option>
   <option value="KeyStorm">KeyStorm</option>
   <option value="Grid Viper">Grid Viper</option>
   <option value="Shockline">Shockline</option>
@@ -392,10 +393,10 @@
   <option value="Signal Scan">Signal Scan</option>
 </select>
 
-  <label for="feedbackBox">Feedback</label>
-  <textarea id="feedbackBox" placeholder="Drop your feedback here..."></textarea>
+  <label for="feedbackBox">Feedback/Suggestions</label>
+  <textarea id="feedbackBox" placeholder="Drop your feedback here or suggestions here..."></textarea>
 
-  <button id="sendFeedbackBtn">Send Feedback</button>
+  <button id="sendFeedbackBtn">Send Feedback/Suggestion</button>
   <p id="feedbackStatus"></p>
 </section>
       <footer class="footer">
@@ -405,7 +406,7 @@
     </div>
   </main>
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztVnfSyDu7hy4tK2FBO71DVKwFUBiVpPgNh8ueQ4mcKsji_MPTZrV_Vm96btXX4-i0/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxKN2_C2XJU8ozndhiZQmYYjoRzwrytxe3LcxsEjs6AeVIL_LY0K9fcUfN0sOJzJ2pC/exec";
 
   document.getElementById("sendFeedbackBtn").addEventListener("click", async () => {
     const game = document.getElementById("gameSelect").value;
