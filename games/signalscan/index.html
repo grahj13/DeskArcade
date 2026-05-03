@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal Scan | DeskArcade</title>
+
+<style>
+:root{
+  --green:#8cff6a;
+  --green-soft:#c8ffd8;
+  --yellow:#ffd86b;
+  --red:#ff6b4a;
+  --panel:rgba(7,24,8,0.94);
+  --border:rgba(140,255,106,0.35);
+}
+
+*{box-sizing:border-box;}
+
+.digit.wrong{
+  background:rgba(255,107,74,0.3);
+  color:#fff;
+}
+
+.board-correct{
+  box-shadow:0 0 30px rgba(140,255,106,0.6);
+}
+
+.board-wrong{
+  box-shadow:0 0 30px rgba(255,107,74,0.7);
+}
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at top,rgba(140,255,106,0.15),transparent 40%),
+    linear-gradient(180deg,#071106,#020402);
+  color:var(--green);
+  font-family:Consolas, Monaco, monospace;
+  display:flex;
+  justify-content:center;
+  padding:20px;
+}
+
+.wrap{max-width:1000px;width:100%;}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:15px;
+}
+
+.arcade-btn{
+  text-decoration:none;
+  border:1px solid var(--border);
+  padding:10px 16px;
+  border-radius:12px;
+  background:rgba(0,0,0,0.25);
+  color:var(--green);
+  transition:0.2s;
+}
+
+.arcade-btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 0 18px rgba(140,255,106,0.4);
+}
+
+.secondary{
+  border:1px solid var(--border);
+  padding:10px 16px;
+  border-radius:12px;
+  background:rgba(0,0,0,0.25);
+  color:var(--green);
+  cursor:pointer;
+}
+
+.logo{
+  text-align:center;
+}
+
+.logo img{
+  height:140px;
+  animation:glow 2s infinite ease-in-out;
+}
+
+@keyframes glow{
+  0%,100%{filter:drop-shadow(0 0 8px rgba(140,255,106,0.5));}
+  50%{filter:drop-shadow(0 0 25px rgba(140,255,106,1));}
+}
+
+.subtitle{
+  text-align:center;
+  color:var(--green-soft);
+}
+
+.creator{
+  text-align:center;
+  margin-bottom:20px;
+  font-size:0.8rem;
+  color:rgba(200,255,216,0.6);
+}
+
+.panel{
+  position:relative;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:22px;
+  padding:28px;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+  margin-bottom:20px;
+}
+
+.stat{
+  text-align:center;
+  padding:14px;
+  border-radius:14px;
+  border:1px solid var(--border);
+}
+
+.stat span{
+  display:block;
+  font-size:0.75rem;
+  color:var(--green-soft);
+}
+
+.stat strong{
+  font-size:1.5rem;
+}
+
+.message{
+  text-align:center;
+  color:var(--yellow);
+  margin-bottom:15px;
+}
+
+.digit-board{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:12px;
+  min-height:140px;
+}
+
+.digit{
+  width:50px;
+  height:50px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.7rem;
+  border:1px solid rgba(140,255,106,0.2);
+  background:rgba(140,255,106,0.05);
+}
+
+.digit.target{
+  color:var(--yellow);
+  background:rgba(255,216,107,0.2);
+  box-shadow:0 0 15px rgba(255,216,107,0.8);
+}
+
+.digit.hidden{
+  opacity:0;
+  transition:0.35s;
+}
+
+@keyframes pulse{
+  0%{transform:scale(1);}
+  50%{transform:scale(1.25);}
+  100%{transform:scale(1);}
+}
+
+.digit.pulse{animation:pulse 0.35s;}
+
+.countdown{
+  position:absolute;
+  top:15px;
+  right:20px;
+  font-size:2.2rem;
+  color:var(--yellow);
+  opacity:0;
+}
+
+.countdown.urgent{
+  color:var(--red);
+  transform:scale(1.2);
+}
+
+.answer-area{
+  display:none;
+  text-align:center;
+  margin-top:20px;
+}
+
+.answer-area.active{display:block;}
+
+input{
+  font-size:1.4rem;
+  padding:12px;
+  width:240px;
+  text-align:center;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:rgba(0,0,0,0.4);
+  color:var(--green);
+}
+
+.controls{
+  text-align:center;
+  margin-top:10px;
+}
+
+button{
+  padding:12px 18px;
+  margin:5px;
+  border:none;
+  border-radius:12px;
+  background:var(--green);
+  color:#041005;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+button:disabled{opacity:0.5;}
+
+.history{
+  margin-top:18px;
+  text-align:center;
+  color:var(--green-soft);
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<div class="topbar">
+<a class="arcade-btn" href="index.html">← Back to Arcade</a>
+<button class="secondary" onclick="resetGame()">Reset</button>
+</div>
+
+<div class="logo">
+<img src="signalscanlogo.png">
+</div>
+
+<div class="subtitle">Memorise highlighted digits → type left to right</div>
+<div class="creator">Created by Jason</div>
+
+<div class="panel">
+
+<div id="countdown" class="countdown"></div>
+
+<div class="stats">
+<div class="stat"><span>ROUND</span><strong id="round">1</strong></div>
+<div class="stat"><span>STREAK</span><strong id="streak">0</strong></div>
+<div class="stat"><span>BEST</span><strong id="best">0</strong></div>
+<div class="stat"><span>TIME</span><strong id="time">4.0s</strong></div>
+</div>
+
+<div id="message" class="message">Press Start</div>
+
+<div id="digitBoard" class="digit-board"></div>
+
+<div id="answerArea" class="answer-area">
+<input id="answerInput" placeholder="Enter digits">
+</div>
+
+<div class="controls">
+<button id="startBtn">Start</button>
+<button id="submitBtn" disabled>Submit</button>
+<button id="nextBtn" style="display:none;">Next</button>
+</div>
+
+<div id="history" class="history">None yet</div>
+
+</div>
+</div>
+
+<script>
+let round = 1;
+let streak = 0;
+let best = Number(localStorage.best) || 0;
+
+let digits = [];
+let targets = [];
+let answer = "";
+let accepting = false;
+let history = [];
+
+// DOM
+const startBtn = document.getElementById("startBtn");
+const submitBtn = document.getElementById("submitBtn");
+const answerInput = document.getElementById("answerInput");
+const answerArea = document.getElementById("answerArea");
+const digitBoard = document.getElementById("digitBoard");
+const message = document.getElementById("message");
+const historyEl = document.getElementById("history");
+const countdownEl = document.getElementById("countdown");
+const nextBtn = document.getElementById("nextBtn");
+
+// ---------- SETTINGS ----------
+function getTotal(){ return Math.min(22 + round * 3, 60); }
+function getTargets(){ return Math.min(3 + Math.floor(round * 0.8), 12); }
+function getTime(){ return round <= 5 ? 4000 : Math.max(4000 - (round * 80), 1800); }
+
+// ---------- UI ----------
+function updateUI(){
+  document.getElementById("round").textContent = round;
+  document.getElementById("streak").textContent = streak;
+  document.getElementById("best").textContent = best;
+  document.getElementById("time").textContent = (getTime()/1000).toFixed(1) + "s";
+}
+
+// ---------- GENERATE ----------
+function generate(){
+  digits = [];
+  targets = [];
+
+  for(let i=0;i<getTotal();i++){
+    digits.push(Math.floor(Math.random()*10));
+  }
+
+  while(targets.length < getTargets()){
+    let r = Math.floor(Math.random()*digits.length);
+    if(!targets.includes(r)) targets.push(r);
+  }
+
+  targets.sort((a,b)=>a-b);
+  answer = targets.map(i=>digits[i]).join("");
+}
+
+// ---------- RENDER ----------
+function render(hidden=false){
+  digitBoard.innerHTML = "";
+
+  digits.forEach((d,i)=>{
+    const el = document.createElement("div");
+    el.className = "digit";
+
+    if(targets.includes(i)) el.classList.add("target");
+    if(hidden) el.classList.add("hidden");
+
+    el.textContent = hidden ? "" : d;
+    digitBoard.appendChild(el);
+  });
+}
+
+// ---------- PULSE ----------
+function pulse(){
+  document.querySelectorAll(".digit").forEach((el,i)=>{
+    if(targets.includes(i)){
+      el.classList.add("pulse");
+      setTimeout(()=>el.classList.remove("pulse"), 300);
+    }
+  });
+}
+
+// ---------- END COUNTDOWN ----------
+function endCountdown(){
+  return new Promise(resolve => {
+
+    let count = 3;
+    countdownEl.classList.remove("urgent");
+    countdownEl.style.opacity = 1;
+    countdownEl.textContent = count;
+
+    const int = setInterval(()=>{
+      count--;
+
+      if(count > 0){
+        countdownEl.textContent = count;
+
+        if(count === 1){
+          countdownEl.classList.add("urgent");
+        }
+      }
+      else if(count === 0){
+        countdownEl.textContent = "GO";
+      }
+      else{
+        clearInterval(int);
+        countdownEl.style.opacity = 0;
+        countdownEl.classList.remove("urgent");
+        resolve();
+      }
+
+    }, 500);
+  });
+}
+
+// ---------- ROUND FLOW ----------
+async function nextRound(){
+  accepting = false;
+  submitBtn.disabled = true;
+  nextBtn.style.display = "none";
+  answerArea.classList.remove("active");
+
+  digitBoard.classList.remove("board-correct","board-wrong");
+
+  generate();
+  render();
+  updateUI();
+
+  answerInput.value = "";
+  answerInput.maxLength = answer.length;
+
+  message.textContent = "Memorise the highlighted digits in order";
+
+  await new Promise(r => setTimeout(r, getTime() - 2000));
+
+  await endCountdown();
+
+  pulse();
+  await new Promise(r => setTimeout(r, 300));
+
+  render(true);
+
+  answerArea.classList.add("active");
+  answerInput.focus();
+  submitBtn.disabled = false;
+  accepting = true;
+
+  message.textContent = "Enter digits left → right";
+}
+
+// ---------- SUBMIT ----------
+function submit(){
+  if(!accepting) return;
+
+  accepting = false;
+  const val = answerInput.value;
+  submitBtn.disabled = true;
+
+  render(false);
+
+  digitBoard.classList.remove("board-correct","board-wrong");
+
+  if(val === answer){
+    digitBoard.classList.add("board-correct");
+    streak++;
+    round++;
+
+    if(round - 1 > best){
+      best = round - 1;
+      localStorage.best = best;
+    }
+
+    message.textContent = "✔ Correct";
+
+  } else {
+    digitBoard.classList.add("board-wrong");
+
+    // highlight correct digits
+    targets.forEach(i => {
+      digitBoard.children[i].classList.add("correct");
+    });
+
+    streak = 0;
+    round = 1;
+
+    message.textContent = "✖ Incorrect";
+  }
+
+  history.unshift(val === answer ? "✓ " + answer : "✗ " + val + " → " + answer);
+  history = history.slice(0,5);
+  historyEl.textContent = history.join(" | ");
+
+  updateUI();
+
+  nextBtn.style.display = "inline-block";
+}
+
+// ---------- RESET ----------
+function resetGame(){
+  round = 1;
+  streak = 0;
+  history = [];
+
+  digitBoard.innerHTML = "";
+  answerArea.classList.remove("active");
+
+  startBtn.style.display = "inline-block";
+  nextBtn.style.display = "none";
+
+  message.textContent = "Press Start";
+
+  updateUI();
+}
+
+// ---------- EVENTS ----------
+startBtn.onclick = ()=>{
+  startBtn.style.display = "none";
+  nextRound();
+};
+
+submitBtn.onclick = submit;
+
+nextBtn.onclick = nextRound;
+
+answerInput.addEventListener("keydown", e=>{
+  if(e.key === "Enter") submit();
+});
+
+updateUI();
+</script>
+
+</body>
+</html>
