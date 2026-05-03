@@ -377,20 +377,20 @@
   <h2>Feedback</h2>
 
   <label for="gameSelect">Game</label>
-  <select id="gameSelect">
-    <option value="">Select a game</option>
-    <option value="DeskArcade Home">DeskArcade Home</option>
-    <option value="KeyStorm">KeyStorm</option>
-    <option value="Grid Viper">Grid Viper</option>
-    <option value="Shockline">Shockline</option>
-    <option value="NeonReels">NeonReels</option>
-    <option value="Reacto">Reacto</option>
-    <option value="Perfect 10">Perfect 10</option>
-    <option value="Lane Dash">Lane Dash</option>
-    <option value="Neon Search">Neon Search</option>
-    <option value="Fracture">Fracture</option>
-    <option value="Signal Scan">Signal Scan</option>
-  </select>
+<select id="gameSelect">
+  <option value="">Select a game</option>
+  <option value="DeskArcade Home" selected>DeskArcade Home</option>
+  <option value="KeyStorm">KeyStorm</option>
+  <option value="Grid Viper">Grid Viper</option>
+  <option value="Shockline">Shockline</option>
+  <option value="NeonReels">NeonReels</option>
+  <option value="Reacto">Reacto</option>
+  <option value="Perfect 10">Perfect 10</option>
+  <option value="Lane Dash">Lane Dash</option>
+  <option value="Neon Search">Neon Search</option>
+  <option value="Fracture">Fracture</option>
+  <option value="Signal Scan">Signal Scan</option>
+</select>
 
   <label for="feedbackBox">Feedback</label>
   <textarea id="feedbackBox" placeholder="Drop your feedback here..."></textarea>
@@ -406,8 +406,6 @@
   </main>
   <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztVnfSyDu7hy4tK2FBO71DVKwFUBiVpPgNh8ueQ4mcKsji_MPTZrV_Vm96btXX4-i0/exec";
-
-  document.getElementById("gameSelect").value = "DeskArcade Home";
 
   document.getElementById("sendFeedbackBtn").addEventListener("click", async () => {
     const game = document.getElementById("gameSelect").value;
@@ -432,12 +430,12 @@
         headers: {
           "Content-Type": "text/plain;charset=utf-8"
         },
-body: JSON.stringify({
-  game: game,
-  page: document.title,
-  feedback: feedback,
-  userAgent: navigator.userAgent
-})
+        body: JSON.stringify({
+          game: game,
+          page: document.title,
+          feedback: feedback,
+          userAgent: navigator.userAgent
+        })
       });
 
       const result = await response.json();
