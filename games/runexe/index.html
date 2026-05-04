@@ -47,17 +47,35 @@
       margin-bottom: 14px;
     }
 
-    .brand-row {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
+.brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 6px;
+}
 
-    .game-logo {
-      width: clamp(56px, 8vw, 86px);
-      height: auto;
-      filter: drop-shadow(0 0 16px var(--green-soft));
-    }
+.logo-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.logo-wrap::after {
+  content: '';
+  position: absolute;
+  inset: -28px;
+  background: radial-gradient(circle, rgba(57,255,136,0.18), transparent 70%);
+  filter: blur(22px);
+  z-index: -1;
+}
+
+.game-logo {
+  width: clamp(200px, 24vw, 360px);
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 0 32px rgba(57,255,136,0.4));
+}
+
+
 
     h1 {
       margin: 0;
@@ -69,12 +87,13 @@
       text-transform: uppercase;
     }
 
-    .subtitle {
-      margin-top: 10px;
-      color: rgba(216, 255, 232, 0.72);
-      font-size: 0.95rem;
-      letter-spacing: 0.05em;
-    }
+.subtitle {
+  margin-top: 6px;
+  margin-left: 6px;
+  white-space: nowrap;
+  font-size: clamp(0.8rem, 1vw, 0.95rem);
+  letter-spacing: 0.05em;
+}
 
     .meta {
       text-align: right;
@@ -225,12 +244,14 @@
 <body>
   <main class="wrap">
     <header class="topbar">
-      <div>
-        <div class="brand-row">
-          <img src="runexelogo.png" alt="Run.exe logo" class="game-logo" />
-        </div>
-        <div class="subtitle">Battle through the cyber threats. Jump the bugs. Duck the firewall beams.</div>
-      </div>
+<div>
+  <div class="brand-row">
+    <div class="logo-wrap">
+      <img src="runexelogo.png" class="game-logo" />
+    </div>
+  </div>
+  <div class="subtitle">Battle through the cyber threats. Jump the bugs. Duck the firewall beams.</div>
+</div>
       <div class="meta">
         <div>System Uptime: <strong id="score">00000</strong></div>
         <div>Best: <strong id="best">00000</strong></div>
