@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Perfect Trace</title>
+  <style>
+    :root{--bg:#050807;--panel:#0b1411;--panel2:#101d18;--neon:#00ff88;--danger:#ff365e;--text:#eafff5;--muted:#8fb8a5;--line:rgba(0,255,136,.35)}
+    *{box-sizing:border-box;user-select:none}body{margin:0;min-height:100vh;background:radial-gradient(circle at top,rgba(0,255,136,.14),transparent 35%),linear-gradient(180deg,#06110d 0%,var(--bg) 70%);color:var(--text);font-family:Consolas,Monaco,'Courier New',monospace;display:flex;align-items:center;justify-content:center;padding:20px}.game-shell{width:min(980px,100%);border:1px solid var(--line);background:rgba(5,12,9,.92);box-shadow:0 0 35px rgba(0,255,136,.12),inset 0 0 20px rgba(0,255,136,.04);border-radius:22px;overflow:hidden}header{padding:18px 22px 14px;border-bottom:1px solid rgba(0,255,136,.18);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}h1{margin:0;color:var(--neon);font-size:clamp(2rem,5vw,4rem);letter-spacing:2px;text-shadow:0 0 12px rgba(0,255,136,.45);line-height:1}.subtitle{margin-top:8px;color:var(--muted);font-size:.95rem}.badge{border:1px solid rgba(0,255,136,.35);color:var(--neon);padding:8px 12px;border-radius:999px;background:rgba(0,255,136,.07);font-size:.8rem;white-space:nowrap}main{padding:24px}.screen{display:none}.screen.active{display:block}.intro-copy,.hint,.breakdown{color:var(--muted);line-height:1.5;margin:0}.menu-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:24px}.shape-card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid rgba(0,255,136,.22);border-radius:18px;padding:22px;cursor:pointer;min-height:190px;display:flex;flex-direction:column;justify-content:space-between;transition:.15s}.shape-card:hover{transform:translateY(-4px);border-color:var(--neon);box-shadow:0 0 22px rgba(0,255,136,.14)}.shape-icon{height:90px;display:flex;align-items:center;justify-content:center}.shape-card h2{margin:16px 0 4px;font-size:1.4rem}.shape-card p{color:var(--muted);line-height:1.5;margin:0}.draw-topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}.target-label,.timer,.score-mini{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);padding:10px 14px;border-radius:14px;color:var(--neon);font-weight:700}.timer.low{color:var(--danger);border-color:rgba(255,54,94,.55);box-shadow:0 0 18px rgba(255,54,94,.16)}.canvas-wrap{position:relative;border:1px solid rgba(0,255,136,.25);background:#020504;border-radius:18px;overflow:hidden;box-shadow:inset 0 0 30px rgba(0,255,136,.05)}canvas{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair}.countdown{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,5,4,.82);color:var(--neon);font-size:clamp(5rem,18vw,12rem);font-weight:900;text-shadow:0 0 22px rgba(0,255,136,.75);z-index:5}.countdown.show{display:flex}.hint{margin-top:12px;font-size:.9rem}.results-layout{display:grid;grid-template-columns:1.3fr .7fr;gap:20px;align-items:stretch}.results-panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid rgba(0,255,136,.22);border-radius:18px;padding:22px}.score-number{font-size:clamp(3.5rem,11vw,7rem);color:var(--neon);line-height:1;text-shadow:0 0 18px rgba(0,255,136,.35);margin:12px 0}.verdict{font-size:1.5rem;font-weight:900;margin-bottom:12px}.verdict.pass{color:var(--neon)}.verdict.fail{color:var(--danger)}.buttons{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}button{border:1px solid rgba(0,255,136,.4);background:rgba(0,255,136,.08);color:var(--text);padding:12px 16px;border-radius:14px;font-family:inherit;font-weight:800;cursor:pointer}button:hover{background:rgba(0,255,136,.15);border-color:var(--neon)}button.primary{background:var(--neon);color:#021008;box-shadow:0 0 18px rgba(0,255,136,.24)}footer{padding:14px 24px 20px;color:rgba(234,255,245,.45);font-size:.8rem;border-top:1px solid rgba(0,255,136,.12)}@media(max-width:760px){.menu-grid,.results-layout{grid-template-columns:1fr}main{padding:16px}header{padding:18px 16px 14px}}
+  </style>
+</head>
+<body>
+  <div class="game-shell">
+    <header style="display:flex;flex-direction:column;align-items:center;gap:12px;padding-top:16px;">
+  <img src="./perfecttracelogo.png" alt="Perfect Trace" style="height:140px; display:block; filter: drop-shadow(0 0 8px rgba(0,255,136,0.35)) drop-shadow(0 0 18px rgba(0,255,136,0.15));"/>
+  
+  <div class="subtitle" style="text-align:center;">Pick a shape. Draw it blind. You get 5 seconds. No excuses.</div>
+</header>
+
+<div style="display:flex;justify-content:space-between;align-items:center;padding:0 24px 12px;">
+  <button onclick="window.location.href='../index.html'">Return to Arcade</button>
+  <div class="badge">Created by Jason / build v4.2</div>
+</div>
+    <main style="padding:16px;">
+      <section id="menuScreen" class="screen active">
+        <p class="intro-copy">Choose your target shape. You get a 3–2–1 countdown, then a blank screen. Your ink is invisible until the result reveal.</p>
+        <div class="menu-grid">
+          <div class="shape-card" data-shape="square" onclick="window.startPerfectTrace && window.startPerfectTrace('square')"><div class="shape-icon"><svg width="86" height="86" viewBox="0 0 100 100"><rect x="18" y="18" width="64" height="64" fill="none" stroke="#00ff88" stroke-width="7"/></svg></div><div><h2>Square</h2><p>Must have 4 sides. Equal length matters.</p></div></div>
+          <div class="shape-card" data-shape="triangle" onclick="window.startPerfectTrace && window.startPerfectTrace('triangle')"><div class="shape-icon"><svg width="96" height="86" viewBox="0 0 110 100"><polygon points="55,14 92,84 18,84" fill="none" stroke="#00ff88" stroke-width="7"/></svg></div><div><h2>Triangle</h2><p>Must have 3 sides. Lengths can vary.</p></div></div>
+          <div class="shape-card" data-shape="circle" onclick="window.startPerfectTrace && window.startPerfectTrace('circle')"><div class="shape-icon"><svg width="90" height="90" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="#00ff88" stroke-width="7"/></svg></div><div><h2>Circle</h2><p>No sides. Smooth and closed.</p></div></div>
+        </div>
+      </section>
+      <section id="drawScreen" class="screen"><div class="draw-topbar"><div id="targetLabel" class="target-label">Target: Square</div><div id="timer" class="timer">5.0s</div></div><div class="canvas-wrap"><canvas id="gameCanvas" width="900" height="440"></canvas><div id="countdown" class="countdown">3</div></div><div class="hint">Invisible ink mode: your drawing is hidden until the timer hits zero.</div></section>
+      <section id="resultsScreen" class="screen"><div class="results-layout"><div class="canvas-wrap"><canvas id="resultCanvas" width="900" height="440"></canvas></div><div class="results-panel"><div class="score-mini" id="resultShape">Square Attempt</div><div class="score-number" id="scoreNumber">0%</div><div class="verdict" id="verdict">FAIL</div><div class="breakdown" id="breakdown">Your result will appear here.</div><div class="buttons"><button class="primary" id="retryBtn">Retry Shape</button><button id="menuBtn">Change Shape</button><button onclick="window.location.href='../index.html'">Return to Arcade</button></div></div></div></section>
+    </main>
+    
+  </div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const menuScreen=$('menuScreen'), drawScreen=$('drawScreen'), resultsScreen=$('resultsScreen');
+  const countdownEl=$('countdown'), timerEl=$('timer'), targetLabel=$('targetLabel'), resultShape=$('resultShape'), scoreNumber=$('scoreNumber'), verdictEl=$('verdict'), breakdownEl=$('breakdown');
+  const canvas=$('gameCanvas'), ctx=canvas.getContext('2d'), resultCanvas=$('resultCanvas'), rctx=resultCanvas.getContext('2d');
+  let selectedShape='square', points=[], drawing=false, canDraw=false, finished=false, timerFrame=null, countdownTimer=null, finishTimeout=null, endTime=0;
+  const drawSeconds=5;
+
+  const clamp=(v,min,max)=>Number.isFinite(v)?Math.max(min,Math.min(max,v)):min;
+  const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  const pretty=s=>s[0].toUpperCase()+s.slice(1);
+  const show=screen=>{[menuScreen,drawScreen,resultsScreen].forEach(s=>s.classList.remove('active'));screen.classList.add('active')};
+  const clear=(c,cv)=>{c.clearRect(0,0,cv.width,cv.height);c.fillStyle='#020504';c.fillRect(0,0,cv.width,cv.height)};
+  const point=e=>{const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*(canvas.width/r.width),y:(e.clientY-r.top)*(canvas.height/r.height)}};
+  function resetTimers(){if(timerFrame)cancelAnimationFrame(timerFrame);if(countdownTimer)clearInterval(countdownTimer);if(finishTimeout)clearTimeout(finishTimeout);timerFrame=countdownTimer=finishTimeout=null}
+
+  function start(shape){resetTimers();selectedShape=shape;points=[];drawing=false;canDraw=false;finished=false;timerEl.textContent='5.0s';timerEl.classList.remove('low');targetLabel.textContent='Target: '+pretty(shape);clear(ctx,canvas);show(drawScreen);countdown()}
+  function countdown(){let n=3;countdownEl.textContent=n;countdownEl.classList.add('show');countdownTimer=setInterval(()=>{n--;if(n>0)countdownEl.textContent=n;else if(n===0)countdownEl.textContent='GO';else{clearInterval(countdownTimer);countdownEl.classList.remove('show');begin()}},750)}
+  function begin(){
+    finished=false;
+    canDraw=true;
+    endTime=performance.now()+drawSeconds*1000;
+    finishTimeout=setTimeout(()=>finish(),drawSeconds*1000+300);
+    tick();
+  }
+  function tick(){
+    if(finished)return;
+    const left=Math.max(0,endTime-performance.now());
+    const s=left/1000;
+    timerEl.textContent=s.toFixed(1)+'s';
+    timerEl.classList.toggle('low',s<=2);
+    if(left<=0){
+      finish();
+      return;
+    }
+    timerFrame=requestAnimationFrame(tick);
+  }
+  function finish(){
+    if(finished)return;
+    finished=true;
+    canDraw=false;
+    drawing=false;
+    resetTimers();
+    timerEl.textContent='0.0s';
+
+    let result;
+    try{
+      result=score();
+    }catch(err){
+      console.error('Score failed:',err);
+      result={score:0,verdict:'FAIL',notes:'Scoring failed safely.'};
+    }
+
+    try{
+      drawResults(result);
+    }catch(err){
+      console.error('Results render failed:',err);
+      scoreNumber.textContent=result.score+'%';
+      verdictEl.textContent=result.verdict;
+      verdictEl.className='verdict fail';
+      breakdownEl.textContent='Something went wrong displaying the drawing.';
+    }
+
+    show(resultsScreen);
+  }
+
+  function bbox(ps){if(!ps.length)return null;const xs=ps.map(p=>p.x),ys=ps.map(p=>p.y);const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);return{minX,maxX,minY,maxY,width:maxX-minX,height:maxY-minY,cx:(minX+maxX)/2,cy:(minY+maxY)/2}}
+  function length(ps){let l=0;for(let i=1;i<ps.length;i++)l+=dist(ps[i-1],ps[i]);return l}
+  function closeScore(ps,b){if(ps.length<2||!b)return 0;return clamp(100-(dist(ps[0],ps[ps.length-1])/Math.max(b.width,b.height,1))*160,0,100)}
+  function segDist(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,len=dx*dx+dy*dy;const t=len?clamp(((p.x-a.x)*dx+(p.y-a.y)*dy)/len,0,1):0;return Math.hypot(p.x-(a.x+t*dx),p.y-(a.y+t*dy))}
+  function ccw(a,b,c){return (c.y-a.y)*(b.x-a.x)>(b.y-a.y)*(c.x-a.x)}
+  function linesIntersect(a,b,c,d){return ccw(a,c,d)!==ccw(b,c,d)&&ccw(a,b,c)!==ccw(a,b,d)}
+  function hasSelfIntersection(ps){
+    for(let i=0;i<ps.length-3;i++){
+      for(let j=i+3;j<ps.length-1;j++){
+        if(i===0&&j>=ps.length-3)continue;
+        if(linesIntersect(ps[i],ps[i+1],ps[j],ps[j+1]))return true;
+      }
+    }
+    return false;
+  }
+
+  function simplify(ps,tol=24){if(ps.length<3)return ps.slice();let out=[ps[0]],anchor=ps[0];for(let i=1;i<ps.length-1;i++){if(dist(anchor,ps[i])>=tol){out.push(ps[i]);anchor=ps[i]}}out.push(ps[ps.length-1]);return out}
+  function analyseEdges(ps){
+    // Direction-based side detection. This reads messy human intent better than raw corner counting.
+    if(ps.length<3)return{vertices:[],sides:0,groups:{h:0,v:0,d1:0,d2:0}};
+
+    const b=bbox(ps);
+    const minSeg=Math.max(8,Math.max(b?.width||0,b?.height||0)*0.035);
+    const buckets={h:0,v:0,d1:0,d2:0};
+    let lastBucket=null;
+    let runs=[];
+    let runLen=0;
+    let runPoints=[];
+
+    function bucketForAngle(a){
+      let deg=Math.abs(a*180/Math.PI);
+      if(deg>180)deg-=180;
+      if(deg>157.5||deg<=22.5)return'h';
+      if(deg>67.5&&deg<=112.5)return'v';
+      if(deg>22.5&&deg<=67.5)return'd1';
+      return'd2';
+    }
+
+    function closeRun(){
+      if(lastBucket&&runLen>=minSeg){
+        buckets[lastBucket]+=runLen;
+        runs.push({bucket:lastBucket,len:runLen,points:runPoints.slice()});
+      }
+      runLen=0;
+      runPoints=[];
+    }
+
+    for(let i=1;i<ps.length;i++){
+      const a=ps[i-1],p=ps[i];
+      const l=dist(a,p);
+      if(l<2)continue;
+      const bucket=bucketForAngle(Math.atan2(p.y-a.y,p.x-a.x));
+      if(bucket!==lastBucket){closeRun();lastBucket=bucket;runPoints=[a,p];runLen=l;}
+      else{runPoints.push(p);runLen+=l;}
+    }
+    closeRun();
+
+    // Merge tiny interruptions between same-direction runs.
+    const merged=[];
+    for(const r of runs){
+      const prev=merged[merged.length-1];
+      if(prev&&prev.bucket===r.bucket){prev.len+=r.len;prev.points=prev.points.concat(r.points);}
+      else merged.push({...r});
+    }
+
+    const total=Object.values(buckets).reduce((a,v)=>a+v,0)||1;
+    const strongRuns=merged.filter(r=>r.len/total>.08);
+
+    let sides=strongRuns.length;
+
+    // Squares are normally two horizontal-ish and two vertical-ish sides.
+    const hRuns=strongRuns.filter(r=>r.bucket==='h').length;
+    const vRuns=strongRuns.filter(r=>r.bucket==='v').length;
+    if(selectedShape==='square'){
+      if(hRuns>=2&&vRuns>=2)sides=4;
+      else if(hRuns+vRuns>=3)sides=3;
+      else sides=hRuns+vRuns;
+    }
+
+    // Triangles usually have three dominant directional runs, commonly diagonal/diagonal/horizontal.
+    if(selectedShape==='triangle'){
+      sides=Math.min(4,Math.max(strongRuns.length, Object.values(buckets).filter(v=>v/total>.14).length));
+    }
+
+    return{vertices:strongRuns.map(r=>r.points[Math.floor(r.points.length/2)]).filter(Boolean),sides,groups:buckets,runs:strongRuns};
+  }
+
+  function lineControlToEdges(ps,edges,b){const avg=ps.reduce((sum,p)=>sum+Math.min(...edges.map(e=>segDist(p,e[0],e[1]))),0)/ps.length;return clamp(100-(avg/Math.max(b.width,b.height,1))*300,0,100)}
+  function squareMetrics(ps,b){const edges=[[{x:b.minX,y:b.minY},{x:b.maxX,y:b.minY}],[{x:b.maxX,y:b.minY},{x:b.maxX,y:b.maxY}],[{x:b.maxX,y:b.maxY},{x:b.minX,y:b.maxY}],[{x:b.minX,y:b.maxY},{x:b.minX,y:b.minY}]];const sides=Math.min(b.width,b.height)/Math.max(b.width,b.height,1)*100;const line=clamp(lineControlToEdges(ps,edges,b)*0.82,0,100);return{line,equal:clamp(sides,0,100)}}
+  function triangleMetric(ps,b){const top={x:b.cx,y:b.minY},right={x:b.maxX,y:b.maxY},left={x:b.minX,y:b.maxY};return lineControlToEdges(ps,[[top,right],[right,left],[left,top]],b)}
+  function excess(ps,b,shape){const len=length(ps);let exp=1;if(shape==='square')exp=2*(b.width+b.height);if(shape==='triangle')exp=b.width+Math.hypot(b.width/2,b.height)*2;if(shape==='circle')exp=Math.PI*(b.width+b.height)/2;return clamp(100-Math.abs(len-exp)/exp*120,0,100)}
+  function smooth(ps){if(ps.length<8)return 0;let total=0,n=0;for(let i=2;i<ps.length-2;i+=2){const a=ps[i-2],b=ps[i],c=ps[i+2];let A=Math.atan2(b.y-a.y,b.x-a.x),B=Math.atan2(c.y-b.y,c.x-b.x),d=Math.abs(B-A);if(d>Math.PI)d=Math.PI*2-d;total+=d;n++}return clamp(100-(total/Math.max(n,1))*55,0,100)}
+
+  function score(){const b=bbox(points),len=length(points);if(!b||points.length<6||len<40)return{score:0,verdict:'FAIL',notes:'You barely drew anything.'};const edges=analyseEdges(points),connection=closeScore(points,b),ex=excess(points,b,selectedShape),intersects=hasSelfIntersection(points);let final=0,notes='';
+    if(selectedShape==='square'){const m=squareMetrics(points,b);const sideScore=edges.sides===4?100:clamp(100-Math.abs(4-edges.sides)*35,0,100);const hvTotal=edges.groups.h+edges.groups.v+edges.groups.d1+edges.groups.d2||1;const hvRatio=(edges.groups.h+edges.groups.v)/hvTotal;final=sideScore*.22+m.equal*.28+m.line*.26+connection*.16+ex*.08;if(edges.sides!==4)final=Math.min(final,58);if(m.equal<65)final*=.72;if(m.equal<50)final=Math.min(final,70);if(connection<85)final*=.82;if(connection<60)final=Math.min(final,60);if(hvRatio<.7)final*=.65;if(intersects)final=Math.min(final,35);if(m.line<80||connection<85||m.equal<85)final=Math.min(final,89);if(ex>88&&connection>92&&m.line>85&&m.equal>85)final+=3;notes=`Sides: ${edges.sides}/4. Equal length: ${Math.round(m.equal)}%. Straightness: ${Math.round(m.line)}%. Connection: ${Math.round(connection)}%. Excess: ${Math.round(ex)}%. ${m.equal<65?'Too rectangular. ':''}${intersects?'Self-intersection: yes. ':''}${hvRatio<.7?'Too diagonal for a square. ':''}`}
+    if(selectedShape==='triangle'){const form=triangleMetric(points,b);const sideScore=edges.sides===3?100:clamp(100-Math.abs(3-edges.sides)*40,0,100);final=sideScore*.35+form*.35+connection*.20+ex*.10;notes=`Sides: ${edges.sides}/3. Straightness: ${Math.round(form)}%. Connection: ${Math.round(connection)}%. Excess: ${Math.round(ex)}%.`;if(edges.sides!==3)final=Math.min(final,58)}
+    if(selectedShape==='circle'){const c={x:b.cx,y:b.cy};const radii=points.map(p=>dist(p,c));const avg=radii.reduce((a,v)=>a+v,0)/radii.length;const variance=radii.reduce((s,r)=>s+Math.abs(r-avg),0)/radii.length;const round=clamp(100-(variance/Math.max(avg,1))*230,0,100);const sm=smooth(points);final=round*.45+sm*.30+connection*.15+ex*.10;notes=`Roundness: ${Math.round(round)}%. Smoothness: ${Math.round(sm)}%. Connection: ${Math.round(connection)}%. Excess: ${Math.round(ex)}%.`}
+    final=Math.round(clamp(final,0,100));return{score:final,verdict:final>=93?'GREAT':final>=82?'PASS':'FAIL',notes};
+  }
+
+  function drawPath(c,ps){if(ps.length<2)return;c.save();c.strokeStyle='#eafff5';c.lineWidth=5;c.lineCap='round';c.lineJoin='round';c.beginPath();c.moveTo(ps[0].x,ps[0].y);for(let i=1;i<ps.length;i++)c.lineTo(ps[i].x,ps[i].y);c.stroke();c.restore()}
+  function drawIdeal(c,shape,b){if(!b)return;const m=18,minX=b.minX-m,minY=b.minY-m,maxX=b.maxX+m,maxY=b.maxY+m,cx=(minX+maxX)/2,cy=(minY+maxY)/2,w=maxX-minX,h=maxY-minY;c.save();c.strokeStyle='#00ff88';c.lineWidth=6;c.setLineDash([12,8]);c.shadowColor='rgba(0,255,136,.45)';c.shadowBlur=12;c.beginPath();if(shape==='square')c.rect(minX,minY,w,h);if(shape==='triangle'){c.moveTo(cx,minY);c.lineTo(maxX,maxY);c.lineTo(minX,maxY);c.closePath()}if(shape==='circle')c.ellipse(cx,cy,w/2,h/2,0,0,Math.PI*2);c.stroke();c.restore()}
+  function drawResults(result){
+  clear(rctx,resultCanvas);
+  const b=bbox(points);
+  drawPath(rctx,points);
+  drawIdeal(rctx,selectedShape,b);
+
+  resultShape.textContent=pretty(selectedShape)+' Attempt';
+  scoreNumber.textContent=result.score+'%';
+  verdictEl.textContent=result.verdict;
+  verdictEl.className='verdict '+(result.score>=82?'pass':'fail');
+
+  // --- Human-friendly feedback ---
+  const msgs=[];
+  const edges=analyseEdges(points);
+  const connection=closeScore(points,b);
+  const ex=excess(points,b,selectedShape);
+  const intersects=hasSelfIntersection(points);
+
+  if(selectedShape==='square'){
+    const m=squareMetrics(points,b);
+    if(edges.sides<4) msgs.push('Missing sides');
+    if(m.equal<70) msgs.push('Sides are uneven');
+    if(m.line<75) msgs.push('Lines are wobbly');
+    if(connection<80) msgs.push('Shape not fully closed');
+    if(intersects) msgs.push('Lines cross over');
+    if(ex>90) msgs.push('Too much overdraw');
+  }
+
+  if(selectedShape==='triangle'){
+    if(edges.sides<3) msgs.push('Missing sides');
+    if(connection<80) msgs.push('Shape not fully closed');
+    if(intersects) msgs.push('Lines cross over');
+    if(ex>90) msgs.push('Too much overdraw');
+  }
+
+  if(selectedShape==='circle'){
+    const sm=smooth(points);
+    if(sm<75) msgs.push('Not smooth enough');
+    if(connection<80) msgs.push('Shape not fully closed');
+    if(ex>90) msgs.push('Too much overdraw');
+  }
+
+  if(msgs.length===0){
+    if(result.score>=93) msgs.push('Clean and controlled');
+    else if(result.score>=82) msgs.push('Solid shape');
+    else msgs.push('Keep refining your control');
+  }
+
+  // Limit to 3 messages
+  breakdownEl.textContent = msgs.slice(0,3).map(m=>`• ${m}`).join(' ');
+}
+
+  canvas.addEventListener('pointerdown',e=>{if(!canDraw)return;drawing=true;canvas.setPointerCapture?.(e.pointerId);points.push(point(e))});
+  canvas.addEventListener('pointermove',e=>{if(!canDraw||!drawing)return;const p=point(e),last=points[points.length-1];if(!last||dist(last,p)>3)points.push(p)});
+  window.addEventListener('pointerup',()=>drawing=false);
+  window.startPerfectTrace=start;
+  document.querySelectorAll('.shape-card').forEach(card=>card.addEventListener('click',()=>start(card.dataset.shape)));
+  $('retryBtn').addEventListener('click',()=>start(selectedShape));
+  $('menuBtn').addEventListener('click',()=>{resetTimers();show(menuScreen)});
+  clear(ctx,canvas);
+})();
+</script>
+</body>
+</html>
