@@ -180,6 +180,21 @@
 
     .pulse { margin-top: 12px; color: var(--gold); animation: pulse 0.9s infinite alternate; }
     @keyframes pulse { from { opacity: .45; transform: scale(.98); } to { opacity: 1; transform: scale(1); } }
+    .logo {
+      width: 100%;
+      max-width: 220px;
+      display: block;
+      margin-bottom: 6px;
+      filter: drop-shadow(0 0 12px rgba(57,255,136,.25));
+    }
+
+    .menu-logo {
+      width: min(82%, 240px);
+      margin: 0 auto 12px;
+      display: block;
+      filter: drop-shadow(0 0 12px rgba(57,255,136,.25));
+    }
+
     @media (max-height: 720px) { .shell { padding: 8px; } header { margin-bottom: 6px; } .footer { display: none; } }
   </style>
 </head>
@@ -187,6 +202,7 @@
   <main class="shell">
     <header>
       <div class="brand">
+        <img src="pixelglidelogo.png" alt="Pixel Glide logo" class="logo">
         <h1>Pixel Glide</h1>
         <p>Thread the gaps. Don’t clip the code.</p>
       </div>
@@ -210,7 +226,7 @@
       </div>
     </section>
 
-    <div class="footer"><span>Created by Jason</span><span>build v1.1 · combo/skins/audio patch</span></div>
+    <div class="footer"><span>Created by Jason</span><span>build v1.2 · arcade expansion patch</span></div>
   </main>
 
   <script>
@@ -240,6 +256,29 @@
         { name: 'Cyber Rocket', body: '#ff3864', wing: '#52d7ff', beak: '#ffffff', unlock: 100, type: 'rocket' },
       ];
       let skinIndex = Math.min(Number(localStorage.getItem(keys.skin) || 0), skins.length - 1);
+
+      const achievements = [
+        { id: 'score10', name: 'Thread The Needle', check: () => best >= 10 },
+        { id: 'score25', name: 'System Survivor', check: () => best >= 25 },
+        { id: 'combo5', name: 'Combo King', check: () => stats.bestCombo >= 5 },
+        { id: 'near20', name: 'Risk Taker', check: () => stats.totalNear >= 20 },
+      ];
+
+      const themes = [
+        { name: 'Neon Grid', top: '#071a13', mid: '#06100c', bottom: '#020403' },
+        { name: 'Synthwave', top: '#2a0f3f', mid: '#1a1030', bottom: '#09030f' },
+        { name: 'Toxic Reactor', top: '#113012', mid: '#0a170b', bottom: '#020403' },
+        { name: 'Frozen Core', top: '#10293a', mid: '#08111c', bottom: '#02060b' },
+      ];
+
+      const stats = {
+        totalDeaths: Number(localStorage.getItem('pgDeaths') || 0),
+        totalScore: Number(localStorage.getItem('pgScore') || 0),
+        totalNear: Number(localStorage.getItem('pgNear') || 0),
+        bestCombo: Number(localStorage.getItem('pgCombo') || 0),
+      };
+
+      let themeIndex = 0;
 
       const state = {
         mode: 'ready', score: 0, frame: 0, speed: 2.75, shake: 0, flash: 0,
@@ -280,7 +319,7 @@
       }
 
       function showOverlay(title, body, pulse = 'Press to start') {
-        panel.innerHTML = `<h2>${title}</h2>${body}<p class="pulse">${pulse}</p>`;
+        panel.innerHTML = `<img src="pixelglidelogo.png" alt="Pixel Glide" class="menu-logo"><h2>${title}</h2>${body}<p class="pulse">${pulse}</p>`;
         overlay.style.display = 'grid';
       }
       function hideOverlay() { overlay.style.display = 'none'; }
@@ -345,15 +384,36 @@
       function resume() { if (state.mode === 'paused') { state.mode = 'playing'; hideOverlay(); } }
       function togglePause() { state.mode === 'paused' ? resume() : pause(); }
 
+      function achievementHtml() {
+        return `<div class="skin-grid">${achievements.map(a => {
+          const unlocked = a.check();
+          return `<div class="skin-tile ${unlocked ? 'active' : 'locked'}"><span class="skin-icon">${unlocked ? '🏆' : '🔒'}</span><strong>${a.name}</strong></div>`;
+        }).join('')}</div>`;
+      }
+
+      function cycleTheme() {
+        themeIndex = (themeIndex + 1) % themes.length;
+        state.message = themes[themeIndex].name;
+        state.messageTimer = 70;
+      }
+
       function gameOver() {
         if (state.mode !== 'playing') return;
         state.mode = 'gameover'; state.shake = 14; state.flash = 14;
+        stats.totalDeaths++;
+        stats.totalScore += state.score;
+        stats.totalNear += state.nearMisses;
+        stats.bestCombo = Math.max(stats.bestCombo, state.combo);
+        localStorage.setItem('pgDeaths', stats.totalDeaths);
+        localStorage.setItem('pgScore', stats.totalScore);
+        localStorage.setItem('pgNear', stats.totalNear);
+        localStorage.setItem('pgCombo', stats.bestCombo);
         burst(player.x, player.y, 32, '#ff3864'); beep(110, .2, 'sawtooth', .04);
         const oldBest = best;
         if (state.score > best) { best = state.score; localStorage.setItem(keys.best, String(best)); bestScoreEl.textContent = best; }
         const newlyUnlocked = skins.find(s => oldBest < s.unlock && best >= s.unlock);
         const unlockLine = newlyUnlocked ? `<p class="unlock">Unlocked skin: <strong>${newlyUnlocked.name}</strong></p>` : '';
-        showOverlay('System Crash', `<p>Score: <strong class="statline">${state.score}</strong></p><p>Best: <strong>${best}</strong></p><p>Near misses: <strong>${state.nearMisses}</strong></p>${unlockLine}${skinMenuHtml()}<p>You clipped the code. No excuses — run it back.</p><p class="tiny"><span class="kbd">S</span> skin · <span class="kbd">M</span> sound</p>`, 'Press to restart');
+        showOverlay('System Crash', `<p>Score: <strong class="statline">${state.score}</strong></p><p>Best: <strong>${best}</strong></p><p>Near misses: <strong>${state.nearMisses}</strong></p><p>Total deaths: <strong>${stats.totalDeaths}</strong></p>${unlockLine}${skinMenuHtml()}<p><strong>Achievements</strong></p>${achievementHtml()}<p>You clipped the code. No excuses — run it back.</p><p class="tiny"><span class="kbd">S</span> skin · <span class="kbd">T</span> theme · <span class="kbd">M</span> sound</p>`, 'Press to restart');
       }
 
       function update() {
@@ -396,7 +456,8 @@
       }
 
       function drawBackground() {
-        const grd = ctx.createLinearGradient(0,0,0,H); grd.addColorStop(0,'#071a13'); grd.addColorStop(.52,'#06100c'); grd.addColorStop(1,'#020403'); ctx.fillStyle = grd; ctx.fillRect(0,0,W,H);
+        const theme = themes[themeIndex];
+        const grd = ctx.createLinearGradient(0,0,0,H); grd.addColorStop(0,theme.top); grd.addColorStop(.52,theme.mid); grd.addColorStop(1,theme.bottom); ctx.fillStyle = grd; ctx.fillRect(0,0,W,H);
         ctx.save();
         for (const cloud of state.clouds) { ctx.globalAlpha = cloud.a; ctx.fillStyle = '#d8ffe8'; ctx.fillRect(cloud.x, cloud.y, cloud.w, 10); ctx.fillRect(cloud.x+18, cloud.y-8, cloud.w*.35, 10); ctx.fillRect(cloud.x+cloud.w*.52, cloud.y-5, cloud.w*.28, 10); }
         for (const star of state.stars) { ctx.globalAlpha = star.a; ctx.fillStyle = '#d8ffe8'; ctx.fillRect(star.x, star.y, star.s, star.s); }
@@ -544,6 +605,16 @@
         ctx.restore();
       }
 
+      function drawTrail() {
+        const skin = skins[skinIndex];
+        for (let i = 0; i < 6; i++) {
+          ctx.globalAlpha = 0.12 - i * 0.018;
+          ctx.fillStyle = skin.wing;
+          ctx.fillRect(player.x - 14 - i * 8, player.y + i * 2, 12 - i, 6 - i * 0.5);
+        }
+        ctx.globalAlpha = 1;
+      }
+
       function drawParticles() { ctx.save(); for (const p of state.particles) { ctx.globalAlpha = Math.max(0,p.life/p.max); ctx.fillStyle = p.colour; ctx.fillRect(p.x,p.y,p.size,p.size); } ctx.restore(); }
 
       function drawHUD() {
@@ -559,7 +630,7 @@
 
       function render() {
         update(); ctx.save(); if (state.shake > 0) ctx.translate(rand(-state.shake,state.shake), rand(-state.shake,state.shake));
-        drawBackground(); drawReadyGhost(); drawGates(); drawParticles(); drawPlayer(); drawGround(); drawHUD();
+        drawBackground(); drawReadyGhost(); drawGates(); drawTrail(); drawParticles(); drawPlayer(); drawGround(); drawHUD();
         if (state.flash > 0) { ctx.fillStyle = `rgba(255,56,100,${state.flash/45})`; ctx.fillRect(0,0,W,H); }
         ctx.restore(); requestAnimationFrame(render);
       }
@@ -569,6 +640,7 @@
         if (e.code === 'KeyP') togglePause();
         if (e.code === 'KeyM') toggleSound();
         if (e.code === 'KeyS') changeSkin();
+        if (e.code === 'KeyT') cycleTheme();
       }
       function toggleSound() { soundOn = !soundOn; localStorage.setItem(keys.sound, soundOn ? 'on' : 'off'); soundBtn.textContent = soundOn ? '🔊' : '🔇'; beep(620,.06,'square',.025); }
 
