@@ -17,10 +17,18 @@
       --purple: #c084fc;
     }
 
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+    }
 
     body {
-      margin: 0;
       min-height: 100vh;
       display: grid;
       place-items: center;
@@ -29,16 +37,19 @@
         linear-gradient(180deg, #020403, #08110c 55%, #020403);
       color: var(--text);
       font-family: Consolas, Monaco, 'Courier New', monospace;
-      overflow: hidden;
+      overflow: auto;
+      padding: 12px;
     }
 
     .shell {
       width: min(96vw, 520px);
+      max-height: 96vh;
       padding: 14px;
       border: 1px solid rgba(57, 255, 136, 0.45);
       border-radius: 18px;
       background: rgba(2, 8, 5, 0.86);
       box-shadow: 0 0 26px rgba(57, 255, 136, 0.18), inset 0 0 18px rgba(57, 255, 136, 0.05);
+      overflow: hidden;
     }
 
     header {
@@ -49,17 +60,29 @@
       margin-bottom: 10px;
     }
 
-    .brand h1 {
-      margin: 0;
-      font-size: clamp(1.4rem, 5vw, 2.15rem);
-      color: var(--neon);
-      text-shadow: 0 0 10px var(--neon-soft);
-      letter-spacing: 1px;
+    .brand {
+      min-width: 0;
     }
 
-    .brand p { margin: 2px 0 0; font-size: 0.75rem; opacity: 0.82; }
+    .logo {
+      width: min(230px, 48vw);
+      display: block;
+      margin-bottom: 6px;
+      filter: drop-shadow(0 0 12px rgba(57,255,136,.25));
+    }
 
-    .top-right { display: flex; align-items: stretch; gap: 8px; }
+    .brand p {
+      margin: 0;
+      font-size: 0.75rem;
+      opacity: 0.82;
+    }
+
+    .top-right {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+      flex-shrink: 0;
+    }
 
     .score-card {
       min-width: 92px;
@@ -70,11 +93,20 @@
       background: rgba(57, 255, 136, 0.06);
     }
 
-    .score-card div:first-child { font-size: 0.65rem; opacity: 0.75; }
-    .score-card div:last-child { font-size: 1.25rem; color: var(--gold); font-weight: bold; }
+    .score-card div:first-child {
+      font-size: 0.65rem;
+      opacity: 0.75;
+    }
+
+    .score-card div:last-child {
+      font-size: 1.25rem;
+      color: var(--gold);
+      font-weight: bold;
+    }
 
     button.icon-btn {
       width: 42px;
+      min-height: 42px;
       border-radius: 12px;
       border: 1px solid rgba(57, 255, 136, 0.32);
       background: rgba(57, 255, 136, 0.06);
@@ -84,7 +116,10 @@
       cursor: pointer;
     }
 
-    button.icon-btn:hover { border-color: rgba(57, 255, 136, 0.8); color: var(--neon); }
+    button.icon-btn:hover {
+      border-color: rgba(57, 255, 136, 0.8);
+      color: var(--neon);
+    }
 
     .stage-wrap {
       position: relative;
@@ -98,7 +133,8 @@
       display: block;
       width: 100%;
       aspect-ratio: 9 / 14;
-      max-height: 78vh;
+      max-height: calc(96vh - 190px);
+      min-height: 360px;
       background: #06100c;
       cursor: pointer;
     }
@@ -108,31 +144,69 @@
       inset: 0;
       display: grid;
       place-items: center;
-      padding: 24px;
+      padding: 16px;
       text-align: center;
       pointer-events: none;
     }
 
     .panel {
       width: min(92%, 405px);
-      padding: 22px 18px;
+      max-height: calc(100% - 20px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 18px 16px;
       border: 1px solid rgba(57, 255, 136, 0.48);
       border-radius: 16px;
-      background: rgba(2, 8, 5, 0.86);
+      background: rgba(2, 8, 5, 0.9);
       box-shadow: 0 0 22px rgba(57, 255, 136, 0.18);
       backdrop-filter: blur(5px);
+      scrollbar-width: thin;
+      pointer-events: auto;
+    }
+
+    .panel::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .panel::-webkit-scrollbar-thumb {
+      background: rgba(57,255,136,.36);
+      border-radius: 99px;
+    }
+
+    .menu-logo {
+      width: min(72%, 215px);
+      margin: 0 auto 10px;
+      display: block;
+      filter: drop-shadow(0 0 12px rgba(57,255,136,.25));
     }
 
     .panel h2 {
       margin: 0 0 8px;
       color: var(--neon);
-      font-size: clamp(1.4rem, 6vw, 2rem);
+      font-size: clamp(1.25rem, 5vw, 1.85rem);
       text-shadow: 0 0 8px var(--neon-soft);
     }
 
-    .panel p { margin: 8px 0; font-size: 0.92rem; line-height: 1.45; }
-    .tiny { font-size: 0.76rem !important; opacity: 0.78; }
-    .kbd { display: inline-block; padding: 2px 7px; border: 1px solid rgba(216,255,232,.42); border-radius: 6px; color: white; background: rgba(255,255,255,.08); }
+    .panel p {
+      margin: 7px 0;
+      font-size: 0.88rem;
+      line-height: 1.35;
+    }
+
+    .tiny {
+      font-size: 0.72rem !important;
+      opacity: 0.78;
+    }
+
+    .kbd {
+      display: inline-block;
+      padding: 2px 7px;
+      border: 1px solid rgba(216,255,232,.42);
+      border-radius: 6px;
+      color: white;
+      background: rgba(255,255,255,.08);
+    }
+
     .statline { color: var(--gold); }
     .unlock { color: var(--cyan); }
 
@@ -140,16 +214,17 @@
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 7px;
-      margin: 12px 0 8px;
+      margin: 10px 0 8px;
     }
 
     .skin-tile {
-      padding: 7px 6px;
+      padding: 6px 5px;
       border: 1px solid rgba(216,255,232,.2);
       border-radius: 10px;
       background: rgba(255,255,255,.045);
-      font-size: 0.68rem;
-      line-height: 1.2;
+      font-size: 0.66rem;
+      line-height: 1.15;
+      min-height: 55px;
     }
 
     .skin-tile.active {
@@ -164,7 +239,7 @@
 
     .skin-icon {
       display: block;
-      font-size: 1.15rem;
+      font-size: 1rem;
       margin-bottom: 3px;
     }
 
@@ -178,24 +253,41 @@
       opacity: 0.74;
     }
 
-    .pulse { margin-top: 12px; color: var(--gold); animation: pulse 0.9s infinite alternate; }
-    @keyframes pulse { from { opacity: .45; transform: scale(.98); } to { opacity: 1; transform: scale(1); } }
-    .logo {
-      width: 100%;
-      max-width: 220px;
-      display: block;
-      margin-bottom: 6px;
-      filter: drop-shadow(0 0 12px rgba(57,255,136,.25));
+    .pulse {
+      margin-top: 10px;
+      color: var(--gold);
+      animation: pulse 0.9s infinite alternate;
     }
 
-    .menu-logo {
-      width: min(82%, 240px);
-      margin: 0 auto 12px;
-      display: block;
-      filter: drop-shadow(0 0 12px rgba(57,255,136,.25));
+    @keyframes pulse {
+      from { opacity: .45; transform: scale(.98); }
+      to { opacity: 1; transform: scale(1); }
     }
 
-    @media (max-height: 720px) { .shell { padding: 8px; } header { margin-bottom: 6px; } .footer { display: none; } }
+    @media (max-height: 760px) {
+      body { padding: 6px; }
+      .shell { padding: 8px; }
+      header { margin-bottom: 6px; }
+      .logo { width: min(170px, 42vw); margin-bottom: 3px; }
+      .brand p { font-size: .68rem; }
+      .footer { display: none; }
+      canvas { max-height: calc(100vh - 132px); min-height: 330px; }
+      .overlay { padding: 10px; }
+      .panel { padding: 13px 12px; max-height: calc(100% - 12px); }
+      .menu-logo { width: min(58%, 170px); margin-bottom: 6px; }
+      .panel h2 { font-size: 1.35rem; margin-bottom: 5px; }
+      .panel p { margin: 5px 0; font-size: .78rem; }
+      .skin-grid { gap: 5px; margin: 7px 0; }
+      .skin-tile { min-height: 47px; padding: 5px 4px; font-size: .58rem; }
+      .skin-icon { font-size: .86rem; margin-bottom: 1px; }
+    }
+
+    @media (max-width: 430px) {
+      .top-right { gap: 5px; }
+      button.icon-btn { width: 38px; min-height: 38px; }
+      .score-card { min-width: 76px; padding: 7px 8px; }
+      .logo { width: min(170px, 43vw); }
+    }
   </style>
 </head>
 <body>
@@ -203,7 +295,6 @@
     <header>
       <div class="brand">
         <img src="pixelglidelogo.png" alt="Pixel Glide logo" class="logo">
-        <h1>Pixel Glide</h1>
         <p>Thread the gaps. Don’t clip the code.</p>
       </div>
       <div class="top-right">
@@ -217,16 +308,17 @@
       <canvas id="game" width="450" height="700" aria-label="Pixel Glide game canvas"></canvas>
       <div class="overlay" id="overlay">
         <div class="panel" id="panel">
-          <h2>Pixel Glide</h2>
+          <img src="pixelglidelogo.png" alt="Pixel Glide" class="menu-logo">
+          <h2>Ready?</h2>
           <p>Tap, click, or press <span class="kbd">Space</span> to glide upward.</p>
-          <p>Near-miss gates to build combo. Every 10 points unlocks a new skin.</p>
-          <p class="tiny"><span class="kbd">P</span> pause · <span class="kbd">M</span> sound · <span class="kbd">S</span> change skin</p>
+          <p>Near-miss gates to build combo. Every milestone unlocks a new skin.</p>
+          <p class="tiny"><span class="kbd">P</span> pause · <span class="kbd">M</span> sound · <span class="kbd">S</span> skin · <span class="kbd">T</span> theme</p>
           <p class="pulse">Press to start</p>
         </div>
       </div>
     </section>
 
-    <div class="footer"><span>Created by Jason</span><span>build v1.2 · arcade expansion patch</span></div>
+    <div class="footer"><span>Created by Jason</span><span>build v1.4 · menu scroll fix</span></div>
   </main>
 
   <script>
@@ -239,8 +331,21 @@
       const soundBtn = document.getElementById('soundBtn');
       const pauseBtn = document.getElementById('pauseBtn');
 
-      const W = canvas.width, H = canvas.height, groundH = 70;
-      const keys = { best: 'pixelGlideBest', skin: 'pixelGlideSkin', sound: 'pixelGlideSound' };
+      const W = canvas.width;
+      const H = canvas.height;
+      const groundH = 70;
+
+      const keys = {
+        best: 'pixelGlideBest',
+        skin: 'pixelGlideSkin',
+        sound: 'pixelGlideSound',
+        theme: 'pixelGlideTheme',
+        deaths: 'pgDeaths',
+        score: 'pgScore',
+        near: 'pgNear',
+        combo: 'pgCombo'
+      };
+
       let best = Number(localStorage.getItem(keys.best) || 0);
       let soundOn = localStorage.getItem(keys.sound) !== 'off';
       let audioCtx = null;
@@ -253,105 +358,102 @@
         { name: 'Ghost Cube', body: '#d8ffe8', wing: '#52d7ff', beak: '#39ff88', unlock: 50, type: 'cube' },
         { name: 'Nano Drone', body: '#52d7ff', wing: '#c084fc', beak: '#ffe66d', unlock: 65, type: 'drone' },
         { name: 'Toxic Bug', body: '#39ff88', wing: '#ff3864', beak: '#ffe66d', unlock: 80, type: 'bug' },
-        { name: 'Cyber Rocket', body: '#ff3864', wing: '#52d7ff', beak: '#ffffff', unlock: 100, type: 'rocket' },
-      ];
-      let skinIndex = Math.min(Number(localStorage.getItem(keys.skin) || 0), skins.length - 1);
-
-      const achievements = [
-        { id: 'score10', name: 'Thread The Needle', check: () => best >= 10 },
-        { id: 'score25', name: 'System Survivor', check: () => best >= 25 },
-        { id: 'combo5', name: 'Combo King', check: () => stats.bestCombo >= 5 },
-        { id: 'near20', name: 'Risk Taker', check: () => stats.totalNear >= 20 },
+        { name: 'Cyber Rocket', body: '#ff3864', wing: '#52d7ff', beak: '#ffffff', unlock: 100, type: 'rocket' }
       ];
 
       const themes = [
         { name: 'Neon Grid', top: '#071a13', mid: '#06100c', bottom: '#020403' },
         { name: 'Synthwave', top: '#2a0f3f', mid: '#1a1030', bottom: '#09030f' },
         { name: 'Toxic Reactor', top: '#113012', mid: '#0a170b', bottom: '#020403' },
-        { name: 'Frozen Core', top: '#10293a', mid: '#08111c', bottom: '#02060b' },
+        { name: 'Frozen Core', top: '#10293a', mid: '#08111c', bottom: '#02060b' }
       ];
 
       const stats = {
-        totalDeaths: Number(localStorage.getItem('pgDeaths') || 0),
-        totalScore: Number(localStorage.getItem('pgScore') || 0),
-        totalNear: Number(localStorage.getItem('pgNear') || 0),
-        bestCombo: Number(localStorage.getItem('pgCombo') || 0),
+        totalDeaths: Number(localStorage.getItem(keys.deaths) || 0),
+        totalScore: Number(localStorage.getItem(keys.score) || 0),
+        totalNear: Number(localStorage.getItem(keys.near) || 0),
+        bestCombo: Number(localStorage.getItem(keys.combo) || 0)
       };
 
-      let themeIndex = 0;
+      const achievements = [
+        { id: 'score10', name: 'Thread The Needle', check: () => best >= 10 },
+        { id: 'score25', name: 'System Survivor', check: () => best >= 25 },
+        { id: 'combo5', name: 'Combo King', check: () => stats.bestCombo >= 5 },
+        { id: 'near20', name: 'Risk Taker', check: () => stats.totalNear >= 20 }
+      ];
+
+      let skinIndex = Math.min(Number(localStorage.getItem(keys.skin) || 0), skins.length - 1);
+      let themeIndex = Math.min(Number(localStorage.getItem(keys.theme) || 0), themes.length - 1);
 
       const state = {
-        mode: 'ready', score: 0, frame: 0, speed: 2.75, shake: 0, flash: 0,
-        combo: 0, comboTimer: 0, nearMisses: 0, gates: [], particles: [], stars: [], clouds: [], message: '', messageTimer: 0,
+        mode: 'ready',
+        score: 0,
+        frame: 0,
+        speed: 2.75,
+        shake: 0,
+        flash: 0,
+        combo: 0,
+        runBestCombo: 0,
+        comboTimer: 0,
+        nearMisses: 0,
+        gates: [],
+        particles: [],
+        stars: [],
+        clouds: [],
+        message: '',
+        messageTimer: 0
       };
 
-      const player = { x: 112, y: H * .43, r: 17, vy: 0, gravity: .36, lift: -7.05, rot: 0 };
+      const player = {
+        x: 112,
+        y: H * 0.43,
+        r: 17,
+        vy: 0,
+        gravity: 0.36,
+        lift: -7.05,
+        rot: 0
+      };
+
       bestScoreEl.textContent = best;
       soundBtn.textContent = soundOn ? '🔊' : '🔇';
 
       const rand = (min, max) => Math.random() * (max - min) + min;
       const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-      function beep(freq = 440, dur = .08, type = 'square', gain = .03) {
+      function beep(freq = 440, dur = 0.08, type = 'square', gain = 0.03) {
         if (!soundOn) return;
         try {
           audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
           const osc = audioCtx.createOscillator();
           const g = audioCtx.createGain();
-          osc.type = type; osc.frequency.value = freq;
+          osc.type = type;
+          osc.frequency.value = freq;
           g.gain.value = gain;
-          osc.connect(g); g.connect(audioCtx.destination);
-          osc.start(); g.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime + dur); osc.stop(audioCtx.currentTime + dur);
+          osc.connect(g);
+          g.connect(audioCtx.destination);
+          osc.start();
+          g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+          osc.stop(audioCtx.currentTime + dur);
         } catch {}
       }
 
       function resetSky() {
-        state.stars = Array.from({ length: 70 }, () => ({ x: rand(0,W), y: rand(0,H-groundH), s: rand(.5,2.2), a: rand(.18,.85) }));
-        state.clouds = Array.from({ length: 6 }, () => ({ x: rand(0,W), y: rand(55,H*.55), w: rand(45,105), a: rand(.04,.1) }));
+        state.stars = Array.from({ length: 70 }, () => ({
+          x: rand(0, W),
+          y: rand(0, H - groundH),
+          s: rand(0.5, 2.2),
+          a: rand(0.18, 0.85)
+        }));
+        state.clouds = Array.from({ length: 6 }, () => ({
+          x: rand(0, W),
+          y: rand(55, H * 0.55),
+          w: rand(45, 105),
+          a: rand(0.04, 0.1)
+        }));
       }
 
-      function resetGame() {
-        state.mode = 'playing'; state.score = 0; state.frame = 0; state.speed = 2.75; state.shake = 0; state.flash = 0;
-        state.combo = 0; state.comboTimer = 0; state.nearMisses = 0; state.gates = []; state.particles = []; state.message = ''; state.messageTimer = 0;
-        player.y = H * .43; player.vy = 0;
-        spawnGate(W + 130); spawnGate(W + 360);
-        hideOverlay(); beep(660, .07, 'square', .035);
-      }
-
-      function showOverlay(title, body, pulse = 'Press to start') {
-        panel.innerHTML = `<img src="pixelglidelogo.png" alt="Pixel Glide" class="menu-logo"><h2>${title}</h2>${body}<p class="pulse">${pulse}</p>`;
-        overlay.style.display = 'grid';
-      }
-      function hideOverlay() { overlay.style.display = 'none'; }
-
-      function spawnGate(x = W + 40) {
-        const gap = Math.max(122, 176 - Math.floor(state.score / 6) * 5);
-        const margin = 82;
-        const centre = rand(margin + gap/2, H-groundH-margin-gap/2);
-        const type = state.score >= 15 && Math.random() < .22 ? 'moving' : 'normal';
-        state.gates.push({ x, w: 68, gapY: centre-gap/2, baseGapY: centre-gap/2, gapH: gap, passed: false, near: false, pulse: rand(0,Math.PI*2), type, amp: rand(16,34), phase: rand(0,Math.PI*2) });
-      }
-
-      function flap() {
-        if (state.mode === 'ready' || state.mode === 'gameover') { resetGame(); player.vy = player.lift; burst(player.x-10, player.y+16, 8, '#39ff88'); return; }
-        if (state.mode === 'paused') { resume(); return; }
-        if (state.mode !== 'playing') return;
-        player.vy = player.lift; burst(player.x-12, player.y+14, 5, '#39ff88'); beep(520, .045, 'square', .025);
-      }
-
-      function burst(x,y,amount,colour) {
-        for (let i=0;i<amount;i++) state.particles.push({ x,y,vx:rand(-1.8,1.2),vy:rand(-1.8,1.8),life:rand(16,32),max:32,colour,size:rand(2,5) });
-      }
-
-      function unlockedCount() { return skins.filter(s => best >= s.unlock).length; }
-      function changeSkin() {
-        const count = unlockedCount();
-        skinIndex = (skinIndex + 1) % count;
-        localStorage.setItem(keys.skin, String(skinIndex));
-        state.message = skins[skinIndex].name; state.messageTimer = 75; beep(760, .06, 'triangle', .025);
-        if (state.mode === 'paused') {
-          showOverlay('Paused', `<p>Current score: <strong class="statline">${state.score}</strong></p><p>Skin: <span class="unlock">${skins[skinIndex].name}</span></p>${skinMenuHtml()}<p class="tiny"><span class="kbd">S</span> change skin · <span class="kbd">M</span> sound</p>`, 'Press to resume');
-        }
+      function unlockedCount() {
+        return skins.filter(s => best >= s.unlock).length;
       }
 
       function skinIcon(skin) {
@@ -376,280 +478,593 @@
         }).join('')}</div>`;
       }
 
-      function pause() {
-        if (state.mode !== 'playing') return;
-        state.mode = 'paused';
-        showOverlay('Paused', `<p>Current score: <strong class="statline">${state.score}</strong></p><p>Skin: <span class="unlock">${skins[skinIndex].name}</span></p>${skinMenuHtml()}<p class="tiny"><span class="kbd">S</span> change skin · <span class="kbd">M</span> sound</p>`, 'Press to resume');
-      }
-      function resume() { if (state.mode === 'paused') { state.mode = 'playing'; hideOverlay(); } }
-      function togglePause() { state.mode === 'paused' ? resume() : pause(); }
-
       function achievementHtml() {
         return `<div class="skin-grid">${achievements.map(a => {
           const unlocked = a.check();
-          return `<div class="skin-tile ${unlocked ? 'active' : 'locked'}"><span class="skin-icon">${unlocked ? '🏆' : '🔒'}</span><strong>${a.name}</strong></div>`;
+          return `<div class="skin-tile ${unlocked ? 'active' : 'locked'}">
+            <span class="skin-icon">${unlocked ? '🏆' : '🔒'}</span>
+            <strong>${a.name}</strong>
+          </div>`;
         }).join('')}</div>`;
+      }
+
+      function showOverlay(title, body, pulse = 'Press to start') {
+        panel.innerHTML = `<img src="pixelglidelogo.png" alt="Pixel Glide" class="menu-logo"><h2>${title}</h2>${body}<p class="pulse">${pulse}</p>`;
+        overlay.style.display = 'grid';
+        panel.scrollTop = 0;
+      }
+
+      function hideOverlay() {
+        overlay.style.display = 'none';
+      }
+
+      function resetGame() {
+        state.mode = 'playing';
+        state.score = 0;
+        state.frame = 0;
+        state.speed = 2.75;
+        state.shake = 0;
+        state.flash = 0;
+        state.combo = 0;
+        state.runBestCombo = 0;
+        state.comboTimer = 0;
+        state.nearMisses = 0;
+        state.gates = [];
+        state.particles = [];
+        state.message = '';
+        state.messageTimer = 0;
+        player.y = H * 0.43;
+        player.vy = 0;
+        spawnGate(W + 130);
+        spawnGate(W + 360);
+        hideOverlay();
+        beep(660, 0.07, 'square', 0.035);
+      }
+
+      function spawnGate(x = W + 40) {
+        const gap = Math.max(122, 176 - Math.floor(state.score / 6) * 5);
+        const margin = 82;
+        const centre = rand(margin + gap / 2, H - groundH - margin - gap / 2);
+        const type = state.score >= 15 && Math.random() < 0.22 ? 'moving' : 'normal';
+        state.gates.push({
+          x,
+          w: 68,
+          gapY: centre - gap / 2,
+          baseGapY: centre - gap / 2,
+          gapH: gap,
+          passed: false,
+          near: false,
+          pulse: rand(0, Math.PI * 2),
+          type,
+          amp: rand(16, 34),
+          phase: rand(0, Math.PI * 2)
+        });
+      }
+
+      function burst(x, y, amount, colour) {
+        for (let i = 0; i < amount; i++) {
+          state.particles.push({
+            x,
+            y,
+            vx: rand(-1.8, 1.2),
+            vy: rand(-1.8, 1.8),
+            life: rand(16, 32),
+            max: 32,
+            colour,
+            size: rand(2, 5)
+          });
+        }
+      }
+
+      function flap() {
+        if (state.mode === 'ready' || state.mode === 'gameover') {
+          resetGame();
+          player.vy = player.lift;
+          burst(player.x - 10, player.y + 16, 8, '#39ff88');
+          return;
+        }
+        if (state.mode === 'paused') {
+          resume();
+          return;
+        }
+        if (state.mode !== 'playing') return;
+        player.vy = player.lift;
+        burst(player.x - 12, player.y + 14, 5, '#39ff88');
+        beep(520, 0.045, 'square', 0.025);
+      }
+
+      function changeSkin() {
+        const count = unlockedCount();
+        skinIndex = (skinIndex + 1) % count;
+        localStorage.setItem(keys.skin, String(skinIndex));
+        state.message = skins[skinIndex].name;
+        state.messageTimer = 75;
+        beep(760, 0.06, 'triangle', 0.025);
+        if (state.mode === 'paused') renderPauseMenu();
+        if (state.mode === 'gameover') renderDeathMenu('System Crash');
       }
 
       function cycleTheme() {
         themeIndex = (themeIndex + 1) % themes.length;
+        localStorage.setItem(keys.theme, String(themeIndex));
         state.message = themes[themeIndex].name;
         state.messageTimer = 70;
+        beep(620, 0.06, 'triangle', 0.025);
+        if (state.mode === 'paused') renderPauseMenu();
+        if (state.mode === 'gameover') renderDeathMenu('System Crash');
+      }
+
+      function toggleSound() {
+        soundOn = !soundOn;
+        localStorage.setItem(keys.sound, soundOn ? 'on' : 'off');
+        soundBtn.textContent = soundOn ? '🔊' : '🔇';
+        beep(620, 0.06, 'square', 0.025);
+      }
+
+      function renderPauseMenu() {
+        showOverlay(
+          'Paused',
+          `<p>Current score: <strong class="statline">${state.score}</strong></p>
+           <p>Skin: <span class="unlock">${skins[skinIndex].name}</span> · Theme: <span class="unlock">${themes[themeIndex].name}</span></p>
+           ${skinMenuHtml()}
+           <p class="tiny"><span class="kbd">S</span> change skin · <span class="kbd">T</span> theme · <span class="kbd">M</span> sound</p>`,
+          'Press to resume'
+        );
+      }
+
+      function pause() {
+        if (state.mode !== 'playing') return;
+        state.mode = 'paused';
+        renderPauseMenu();
+      }
+
+      function resume() {
+        if (state.mode === 'paused') {
+          state.mode = 'playing';
+          hideOverlay();
+        }
+      }
+
+      function togglePause() {
+        state.mode === 'paused' ? resume() : pause();
+      }
+
+      function renderDeathMenu(title) {
+        showOverlay(
+          title,
+          `<p>Score: <strong class="statline">${state.score}</strong></p>
+           <p>Best: <strong>${best}</strong> · Near misses: <strong>${state.nearMisses}</strong> · Deaths: <strong>${stats.totalDeaths}</strong></p>
+           ${state.unlockLine || ''}
+           ${skinMenuHtml()}
+           <p><strong>Achievements</strong></p>
+           ${achievementHtml()}
+           <p class="tiny"><span class="kbd">S</span> skin · <span class="kbd">T</span> theme · <span class="kbd">M</span> sound</p>`,
+          'Press to restart'
+        );
       }
 
       function gameOver() {
         if (state.mode !== 'playing') return;
-        state.mode = 'gameover'; state.shake = 14; state.flash = 14;
+        state.mode = 'gameover';
+        state.shake = 14;
+        state.flash = 14;
+
         stats.totalDeaths++;
         stats.totalScore += state.score;
         stats.totalNear += state.nearMisses;
-        stats.bestCombo = Math.max(stats.bestCombo, state.combo);
-        localStorage.setItem('pgDeaths', stats.totalDeaths);
-        localStorage.setItem('pgScore', stats.totalScore);
-        localStorage.setItem('pgNear', stats.totalNear);
-        localStorage.setItem('pgCombo', stats.bestCombo);
-        burst(player.x, player.y, 32, '#ff3864'); beep(110, .2, 'sawtooth', .04);
+        stats.bestCombo = Math.max(stats.bestCombo, state.runBestCombo);
+        localStorage.setItem(keys.deaths, stats.totalDeaths);
+        localStorage.setItem(keys.score, stats.totalScore);
+        localStorage.setItem(keys.near, stats.totalNear);
+        localStorage.setItem(keys.combo, stats.bestCombo);
+
+        burst(player.x, player.y, 32, '#ff3864');
+        beep(110, 0.2, 'sawtooth', 0.04);
+
         const oldBest = best;
-        if (state.score > best) { best = state.score; localStorage.setItem(keys.best, String(best)); bestScoreEl.textContent = best; }
+        if (state.score > best) {
+          best = state.score;
+          localStorage.setItem(keys.best, String(best));
+          bestScoreEl.textContent = best;
+        }
+
         const newlyUnlocked = skins.find(s => oldBest < s.unlock && best >= s.unlock);
-        const unlockLine = newlyUnlocked ? `<p class="unlock">Unlocked skin: <strong>${newlyUnlocked.name}</strong></p>` : '';
-        showOverlay('System Crash', `<p>Score: <strong class="statline">${state.score}</strong></p><p>Best: <strong>${best}</strong></p><p>Near misses: <strong>${state.nearMisses}</strong></p><p>Total deaths: <strong>${stats.totalDeaths}</strong></p>${unlockLine}${skinMenuHtml()}<p><strong>Achievements</strong></p>${achievementHtml()}<p>You clipped the code. No excuses — run it back.</p><p class="tiny"><span class="kbd">S</span> skin · <span class="kbd">T</span> theme · <span class="kbd">M</span> sound</p>`, 'Press to restart');
+        state.unlockLine = newlyUnlocked ? `<p class="unlock">Unlocked skin: <strong>${newlyUnlocked.name}</strong></p>` : '';
+        renderDeathMenu('System Crash');
       }
 
       function update() {
         state.frame++;
-        for (const star of state.stars) { star.x -= state.speed * (.12 + star.s*.08); if (star.x < -4) { star.x = W+4; star.y = rand(0,H-groundH); } }
-        for (const cloud of state.clouds) { cloud.x -= state.speed * .08; if (cloud.x < -cloud.w) { cloud.x = W + rand(20,120); cloud.y = rand(55,H*.55); } }
+
+        for (const star of state.stars) {
+          star.x -= state.speed * (0.12 + star.s * 0.08);
+          if (star.x < -4) {
+            star.x = W + 4;
+            star.y = rand(0, H - groundH);
+          }
+        }
+
+        for (const cloud of state.clouds) {
+          cloud.x -= state.speed * 0.08;
+          if (cloud.x < -cloud.w) {
+            cloud.x = W + rand(20, 120);
+            cloud.y = rand(55, H * 0.55);
+          }
+        }
+
         state.particles = state.particles.filter(p => p.life > 0);
-        for (const p of state.particles) { p.x += p.vx; p.y += p.vy; p.life--; p.vy += .03; }
+        for (const p of state.particles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.life--;
+          p.vy += 0.03;
+        }
+
         if (state.messageTimer > 0) state.messageTimer--;
-        if (state.comboTimer > 0) state.comboTimer--; else state.combo = 0;
+        if (state.comboTimer > 0) state.comboTimer--;
+        else state.combo = 0;
+
         if (state.mode !== 'playing') return;
 
-        state.speed = Math.min(5.45, 2.75 + state.score * .035);
-        player.vy += player.gravity; player.vy = Math.min(player.vy, 9.6); player.y += player.vy; player.rot = clamp(player.vy / 9, -.55, .9);
-        if (player.y - player.r < 0) { player.y = player.r; player.vy = 0; }
-        if (player.y + player.r > H - groundH) { player.y = H - groundH - player.r; gameOver(); }
+        state.speed = Math.min(5.45, 2.75 + state.score * 0.035);
+        player.vy += player.gravity;
+        player.vy = Math.min(player.vy, 9.6);
+        player.y += player.vy;
+        player.rot = clamp(player.vy / 9, -0.55, 0.9);
+
+        if (player.y - player.r < 0) {
+          player.y = player.r;
+          player.vy = 0;
+        }
+
+        if (player.y + player.r > H - groundH) {
+          player.y = H - groundH - player.r;
+          gameOver();
+        }
 
         for (const gate of state.gates) {
-          gate.x -= state.speed; gate.pulse += .05;
-          if (gate.type === 'moving') gate.gapY = gate.baseGapY + Math.sin(state.frame*.035 + gate.phase) * gate.amp;
+          gate.x -= state.speed;
+          gate.pulse += 0.05;
+          if (gate.type === 'moving') {
+            gate.gapY = gate.baseGapY + Math.sin(state.frame * 0.035 + gate.phase) * gate.amp;
+          }
+
           const withinX = player.x + player.r > gate.x && player.x - player.r < gate.x + gate.w;
           const hitsTop = player.y - player.r < gate.gapY;
           const hitsBottom = player.y + player.r > gate.gapY + gate.gapH;
+
           if (withinX && (hitsTop || hitsBottom)) gameOver();
 
           const closeToTop = Math.abs((player.y - player.r) - gate.gapY);
           const closeToBottom = Math.abs((gate.gapY + gate.gapH) - (player.y + player.r));
           if (withinX && !gate.near && Math.min(closeToTop, closeToBottom) < 12 && !hitsTop && !hitsBottom) {
-            gate.near = true; state.nearMisses++; state.combo++; state.comboTimer = 150; state.score += Math.min(3, state.combo); state.message = `NEAR MISS x${state.combo}`; state.messageTimer = 65; burst(player.x, player.y, 14, '#52d7ff'); beep(900 + state.combo*60, .045, 'triangle', .03);
+            gate.near = true;
+            state.nearMisses++;
+            state.combo++;
+            state.runBestCombo = Math.max(state.runBestCombo, state.combo);
+            state.comboTimer = 150;
+            state.score += Math.min(3, state.combo);
+            state.message = `NEAR MISS x${state.combo}`;
+            state.messageTimer = 65;
+            burst(player.x, player.y, 14, '#52d7ff');
+            beep(900 + state.combo * 60, 0.045, 'triangle', 0.03);
           }
 
           if (!gate.passed && gate.x + gate.w < player.x - player.r) {
-            gate.passed = true; state.score++; burst(player.x - 24, player.y, 10, '#ffe66d'); beep(700, .045, 'square', .024);
-            if (state.score % 10 === 0) { state.message = 'SPEED UP'; state.messageTimer = 70; state.shake = 5; }
+            gate.passed = true;
+            state.score++;
+            burst(player.x - 24, player.y, 10, '#ffe66d');
+            beep(700, 0.045, 'square', 0.024);
+            if (state.score % 10 === 0) {
+              state.message = 'SPEED UP';
+              state.messageTimer = 70;
+              state.shake = 5;
+            }
           }
         }
+
         state.gates = state.gates.filter(g => g.x + g.w > -20);
-        const lastGate = state.gates[state.gates.length - 1]; if (!lastGate || lastGate.x < W - 230) spawnGate();
-        if (state.shake > 0) state.shake--; if (state.flash > 0) state.flash--;
+        const lastGate = state.gates[state.gates.length - 1];
+        if (!lastGate || lastGate.x < W - 230) spawnGate();
+
+        if (state.shake > 0) state.shake--;
+        if (state.flash > 0) state.flash--;
       }
 
       function drawBackground() {
         const theme = themes[themeIndex];
-        const grd = ctx.createLinearGradient(0,0,0,H); grd.addColorStop(0,theme.top); grd.addColorStop(.52,theme.mid); grd.addColorStop(1,theme.bottom); ctx.fillStyle = grd; ctx.fillRect(0,0,W,H);
+        const grd = ctx.createLinearGradient(0, 0, 0, H);
+        grd.addColorStop(0, theme.top);
+        grd.addColorStop(0.52, theme.mid);
+        grd.addColorStop(1, theme.bottom);
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, W, H);
+
         ctx.save();
-        for (const cloud of state.clouds) { ctx.globalAlpha = cloud.a; ctx.fillStyle = '#d8ffe8'; ctx.fillRect(cloud.x, cloud.y, cloud.w, 10); ctx.fillRect(cloud.x+18, cloud.y-8, cloud.w*.35, 10); ctx.fillRect(cloud.x+cloud.w*.52, cloud.y-5, cloud.w*.28, 10); }
-        for (const star of state.stars) { ctx.globalAlpha = star.a; ctx.fillStyle = '#d8ffe8'; ctx.fillRect(star.x, star.y, star.s, star.s); }
+        for (const cloud of state.clouds) {
+          ctx.globalAlpha = cloud.a;
+          ctx.fillStyle = '#d8ffe8';
+          ctx.fillRect(cloud.x, cloud.y, cloud.w, 10);
+          ctx.fillRect(cloud.x + 18, cloud.y - 8, cloud.w * 0.35, 10);
+          ctx.fillRect(cloud.x + cloud.w * 0.52, cloud.y - 5, cloud.w * 0.28, 10);
+        }
+        for (const star of state.stars) {
+          ctx.globalAlpha = star.a;
+          ctx.fillStyle = '#d8ffe8';
+          ctx.fillRect(star.x, star.y, star.s, star.s);
+        }
         ctx.restore();
-        ctx.strokeStyle = 'rgba(57,255,136,.08)'; ctx.lineWidth = 1;
-        const gridOffset = (state.frame * state.speed * .55) % 34;
-        for (let x=-34+gridOffset; x<W; x+=34) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H-groundH); ctx.stroke(); }
-        for (let y=0; y<H-groundH; y+=34) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+        ctx.strokeStyle = 'rgba(57,255,136,.08)';
+        ctx.lineWidth = 1;
+        const gridOffset = (state.frame * state.speed * 0.55) % 34;
+        for (let x = -34 + gridOffset; x < W; x += 34) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, H - groundH);
+          ctx.stroke();
+        }
+        for (let y = 0; y < H - groundH; y += 34) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(W, y);
+          ctx.stroke();
+        }
+      }
+
+      function drawGatePart(x, y, w, h, glow, type) {
+        if (h <= 0) return;
+        ctx.fillStyle = type === 'moving' ? '#1a1430' : '#0b2618';
+        ctx.fillRect(x, y, w, h);
+
+        ctx.strokeStyle = type === 'moving' ? `rgba(192,132,252,${glow + 0.12})` : `rgba(57,255,136,${glow})`;
+        ctx.lineWidth = 4;
+        ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
+
+        ctx.fillStyle = type === 'moving' ? 'rgba(192,132,252,.18)' : 'rgba(57,255,136,.16)';
+        for (let yy = y + 12; yy < y + h - 8; yy += 18) {
+          ctx.fillRect(x + 10, yy, w - 20, 3);
+        }
+
+        ctx.fillStyle = type === 'moving' ? '#c084fc' : '#39ff88';
+        ctx.fillRect(x - 4, y + h - 10, w + 8, 10);
+        ctx.fillRect(x - 4, y, w + 8, 10);
       }
 
       function drawGates() {
         for (const gate of state.gates) {
-          const glow = .32 + Math.sin(gate.pulse)*.12;
+          const glow = 0.32 + Math.sin(gate.pulse) * 0.12;
           drawGatePart(gate.x, 0, gate.w, gate.gapY, glow, gate.type);
-          drawGatePart(gate.x, gate.gapY+gate.gapH, gate.w, H-groundH-(gate.gapY+gate.gapH), glow, gate.type);
+          drawGatePart(gate.x, gate.gapY + gate.gapH, gate.w, H - groundH - (gate.gapY + gate.gapH), glow, gate.type);
         }
       }
 
-      function drawGatePart(x,y,w,h,glow,type) {
-        if (h <= 0) return;
-        ctx.fillStyle = type === 'moving' ? '#1a1430' : '#0b2618'; ctx.fillRect(x,y,w,h);
-        ctx.strokeStyle = type === 'moving' ? `rgba(192,132,252,${glow+.12})` : `rgba(57,255,136,${glow})`; ctx.lineWidth = 4; ctx.strokeRect(x+2,y+2,w-4,h-4);
-        ctx.fillStyle = type === 'moving' ? 'rgba(192,132,252,.18)' : 'rgba(57,255,136,.16)';
-        for (let yy=y+12; yy<y+h-8; yy+=18) ctx.fillRect(x+10,yy,w-20,3);
-        ctx.fillStyle = type === 'moving' ? '#c084fc' : '#39ff88'; ctx.fillRect(x-4,y+h-10,w+8,10); ctx.fillRect(x-4,y,w+8,10);
+      function drawGround() {
+        const y = H - groundH;
+        ctx.fillStyle = '#07110d';
+        ctx.fillRect(0, y, W, groundH);
+        ctx.fillStyle = 'rgba(57,255,136,.22)';
+        const offset = (state.frame * state.speed) % 28;
+        for (let x = -28 + offset; x < W + 28; x += 28) {
+          ctx.fillRect(x, y + 14, 15, 4);
+          ctx.fillRect(x + 8, y + 38, 15, 4);
+        }
+        ctx.strokeStyle = '#39ff88';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, y + 1);
+        ctx.lineTo(W, y + 1);
+        ctx.stroke();
       }
 
-      function drawGround() {
-        const y = H-groundH; ctx.fillStyle = '#07110d'; ctx.fillRect(0,y,W,groundH);
-        ctx.fillStyle = 'rgba(57,255,136,.22)'; const offset = (state.frame*state.speed)%28;
-        for (let x=-28+offset; x<W+28; x+=28) { ctx.fillRect(x,y+14,15,4); ctx.fillRect(x+8,y+38,15,4); }
-        ctx.strokeStyle = '#39ff88'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0,y+1); ctx.lineTo(W,y+1); ctx.stroke();
+      function drawTrail() {
+        const skin = skins[skinIndex];
+        ctx.save();
+        for (let i = 0; i < 6; i++) {
+          ctx.globalAlpha = 0.12 - i * 0.018;
+          ctx.fillStyle = skin.wing;
+          ctx.fillRect(player.x - 14 - i * 8, player.y + i * 2, 12 - i, 6 - i * 0.5);
+        }
+        ctx.restore();
       }
 
       function drawPlayer() {
         const skin = skins[skinIndex];
         ctx.save();
-        ctx.translate(player.x,player.y);
+        ctx.translate(player.x, player.y);
         ctx.rotate(player.rot);
         ctx.shadowColor = skin.wing;
         ctx.shadowBlur = 14;
 
         if (skin.type === 'bird') {
           ctx.fillStyle = skin.body;
-          ctx.fillRect(-15,-12,30,24);
+          ctx.fillRect(-15, -12, 30, 24);
           ctx.shadowBlur = 0;
           ctx.fillStyle = '#fff5d8';
-          ctx.fillRect(-9,-8,12,8);
+          ctx.fillRect(-9, -8, 12, 8);
           ctx.fillStyle = skin.wing;
-          ctx.fillRect(-20,2,12,8);
-          ctx.fillRect(-18,-3,8,5);
+          ctx.fillRect(-20, 2, 12, 8);
+          ctx.fillRect(-18, -3, 8, 5);
           ctx.fillStyle = skin.beak;
-          ctx.fillRect(14,-3,9,6);
+          ctx.fillRect(14, -3, 9, 6);
           ctx.fillStyle = '#020403';
-          ctx.fillRect(5,-7,4,4);
+          ctx.fillRect(5, -7, 4, 4);
         }
 
         if (skin.type === 'bat') {
           ctx.fillStyle = skin.body;
-          ctx.fillRect(-12,-10,24,20);
+          ctx.fillRect(-12, -10, 24, 20);
           ctx.fillStyle = skin.wing;
           ctx.beginPath();
-          ctx.moveTo(-12,0);
-          ctx.lineTo(-30,-12);
-          ctx.lineTo(-26,10);
+          ctx.moveTo(-12, 0);
+          ctx.lineTo(-30, -12);
+          ctx.lineTo(-26, 10);
           ctx.fill();
           ctx.beginPath();
-          ctx.moveTo(12,0);
-          ctx.lineTo(30,-12);
-          ctx.lineTo(26,10);
+          ctx.moveTo(12, 0);
+          ctx.lineTo(30, -12);
+          ctx.lineTo(26, 10);
           ctx.fill();
           ctx.fillStyle = '#fff';
-          ctx.fillRect(-6,-4,4,4);
-          ctx.fillRect(2,-4,4,4);
+          ctx.fillRect(-6, -4, 4, 4);
+          ctx.fillRect(2, -4, 4, 4);
         }
 
         if (skin.type === 'cube') {
           ctx.fillStyle = skin.body;
-          ctx.fillRect(-16,-16,32,32);
+          ctx.fillRect(-16, -16, 32, 32);
           ctx.strokeStyle = skin.wing;
           ctx.lineWidth = 4;
-          ctx.strokeRect(-16,-16,32,32);
+          ctx.strokeRect(-16, -16, 32, 32);
           ctx.fillStyle = skin.beak;
-          ctx.fillRect(-6,-6,12,12);
+          ctx.fillRect(-6, -6, 12, 12);
         }
 
         if (skin.type === 'drone') {
           ctx.fillStyle = skin.body;
-          ctx.fillRect(-14,-8,28,16);
+          ctx.fillRect(-14, -8, 28, 16);
           ctx.fillStyle = skin.wing;
-          ctx.fillRect(-24,-18,8,8);
-          ctx.fillRect(16,-18,8,8);
-          ctx.fillRect(-24,10,8,8);
-          ctx.fillRect(16,10,8,8);
+          ctx.fillRect(-24, -18, 8, 8);
+          ctx.fillRect(16, -18, 8, 8);
+          ctx.fillRect(-24, 10, 8, 8);
+          ctx.fillRect(16, 10, 8, 8);
           ctx.strokeStyle = '#d8ffe8';
           ctx.beginPath();
-          ctx.moveTo(-20,-10);
-          ctx.lineTo(-20,14);
-          ctx.moveTo(20,-10);
-          ctx.lineTo(20,14);
+          ctx.moveTo(-20, -10);
+          ctx.lineTo(-20, 14);
+          ctx.moveTo(20, -10);
+          ctx.lineTo(20, 14);
           ctx.stroke();
           ctx.fillStyle = '#fff';
-          ctx.fillRect(-5,-3,10,6);
+          ctx.fillRect(-5, -3, 10, 6);
         }
 
         if (skin.type === 'bug') {
           ctx.fillStyle = skin.body;
           ctx.beginPath();
-          ctx.arc(0,0,15,0,Math.PI*2);
+          ctx.arc(0, 0, 15, 0, Math.PI * 2);
           ctx.fill();
           ctx.fillStyle = skin.wing;
           ctx.beginPath();
-          ctx.arc(-12,-12,8,0,Math.PI*2);
-          ctx.arc(12,-12,8,0,Math.PI*2);
+          ctx.arc(-12, -12, 8, 0, Math.PI * 2);
+          ctx.arc(12, -12, 8, 0, Math.PI * 2);
           ctx.fill();
           ctx.strokeStyle = skin.beak;
-          for (let i=-1;i<=1;i+=2) {
+          for (let i = -1; i <= 1; i += 2) {
             ctx.beginPath();
-            ctx.moveTo(i*10,10);
-            ctx.lineTo(i*18,18);
+            ctx.moveTo(i * 10, 10);
+            ctx.lineTo(i * 18, 18);
             ctx.stroke();
           }
         }
 
         if (skin.type === 'rocket') {
           ctx.fillStyle = skin.body;
-          ctx.fillRect(-10,-18,20,36);
+          ctx.fillRect(-10, -18, 20, 36);
           ctx.fillStyle = skin.wing;
           ctx.beginPath();
-          ctx.moveTo(-10,10);
-          ctx.lineTo(-24,18);
-          ctx.lineTo(-10,-2);
+          ctx.moveTo(-10, 10);
+          ctx.lineTo(-24, 18);
+          ctx.lineTo(-10, -2);
           ctx.fill();
           ctx.beginPath();
-          ctx.moveTo(10,10);
-          ctx.lineTo(24,18);
-          ctx.lineTo(10,-2);
+          ctx.moveTo(10, 10);
+          ctx.lineTo(24, 18);
+          ctx.lineTo(10, -2);
           ctx.fill();
           ctx.fillStyle = '#fff';
-          ctx.fillRect(-5,-10,10,10);
+          ctx.fillRect(-5, -10, 10, 10);
           ctx.fillStyle = '#ffe66d';
-          ctx.fillRect(-6,18,12,10);
+          ctx.fillRect(-6, 18, 12, 10);
         }
 
         ctx.restore();
       }
 
-      function drawTrail() {
-        const skin = skins[skinIndex];
-        for (let i = 0; i < 6; i++) {
-          ctx.globalAlpha = 0.12 - i * 0.018;
-          ctx.fillStyle = skin.wing;
-          ctx.fillRect(player.x - 14 - i * 8, player.y + i * 2, 12 - i, 6 - i * 0.5);
+      function drawParticles() {
+        ctx.save();
+        for (const p of state.particles) {
+          ctx.globalAlpha = Math.max(0, p.life / p.max);
+          ctx.fillStyle = p.colour;
+          ctx.fillRect(p.x, p.y, p.size, p.size);
         }
-        ctx.globalAlpha = 1;
+        ctx.restore();
       }
-
-      function drawParticles() { ctx.save(); for (const p of state.particles) { ctx.globalAlpha = Math.max(0,p.life/p.max); ctx.fillStyle = p.colour; ctx.fillRect(p.x,p.y,p.size,p.size); } ctx.restore(); }
 
       function drawHUD() {
-        ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.font = 'bold 58px Consolas, Monaco, monospace';
-        ctx.fillStyle = 'rgba(2,4,3,.42)'; ctx.fillText(state.score, W/2+3, 25+3); ctx.fillStyle = '#d8ffe8'; ctx.fillText(state.score, W/2, 25);
-        ctx.font = 'bold 16px Consolas, Monaco, monospace'; ctx.fillStyle = '#ffe66d';
-        if (state.combo > 0 && state.comboTimer > 0) ctx.fillText(`COMBO x${state.combo}`, W/2, 91);
-        if (state.messageTimer > 0) { ctx.font = 'bold 22px Consolas, Monaco, monospace'; ctx.fillStyle = state.message.includes('NEAR') ? '#52d7ff' : '#ffe66d'; ctx.fillText(state.message, W/2, 122); }
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.font = 'bold 58px Consolas, Monaco, monospace';
+        ctx.fillStyle = 'rgba(2,4,3,.42)';
+        ctx.fillText(state.score, W / 2 + 3, 25 + 3);
+        ctx.fillStyle = '#d8ffe8';
+        ctx.fillText(state.score, W / 2, 25);
+
+        ctx.font = 'bold 16px Consolas, Monaco, monospace';
+        ctx.fillStyle = '#ffe66d';
+        if (state.combo > 0 && state.comboTimer > 0) ctx.fillText(`COMBO x${state.combo}`, W / 2, 91);
+
+        if (state.messageTimer > 0) {
+          ctx.font = 'bold 22px Consolas, Monaco, monospace';
+          ctx.fillStyle = state.message.includes('NEAR') ? '#52d7ff' : '#ffe66d';
+          ctx.fillText(state.message, W / 2, 122);
+        }
         ctx.restore();
       }
 
-      function drawReadyGhost() { if (state.mode !== 'ready') return; player.y = H*.43 + Math.sin(state.frame*.045)*8; player.rot = Math.sin(state.frame*.04)*.12; }
+      function drawReadyGhost() {
+        if (state.mode !== 'ready') return;
+        player.y = H * 0.43 + Math.sin(state.frame * 0.045) * 8;
+        player.rot = Math.sin(state.frame * 0.04) * 0.12;
+      }
 
       function render() {
-        update(); ctx.save(); if (state.shake > 0) ctx.translate(rand(-state.shake,state.shake), rand(-state.shake,state.shake));
-        drawBackground(); drawReadyGhost(); drawGates(); drawTrail(); drawParticles(); drawPlayer(); drawGround(); drawHUD();
-        if (state.flash > 0) { ctx.fillStyle = `rgba(255,56,100,${state.flash/45})`; ctx.fillRect(0,0,W,H); }
-        ctx.restore(); requestAnimationFrame(render);
+        update();
+        ctx.save();
+        if (state.shake > 0) ctx.translate(rand(-state.shake, state.shake), rand(-state.shake, state.shake));
+        drawBackground();
+        drawReadyGhost();
+        drawGates();
+        drawTrail();
+        drawParticles();
+        drawPlayer();
+        drawGround();
+        drawHUD();
+        if (state.flash > 0) {
+          ctx.fillStyle = `rgba(255,56,100,${state.flash / 45})`;
+          ctx.fillRect(0, 0, W, H);
+        }
+        ctx.restore();
+        requestAnimationFrame(render);
       }
 
       function handleKey(e) {
-        if (['Space','ArrowUp','KeyW'].includes(e.code)) { e.preventDefault(); flap(); }
+        if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) {
+          e.preventDefault();
+          flap();
+        }
         if (e.code === 'KeyP') togglePause();
         if (e.code === 'KeyM') toggleSound();
         if (e.code === 'KeyS') changeSkin();
         if (e.code === 'KeyT') cycleTheme();
       }
-      function toggleSound() { soundOn = !soundOn; localStorage.setItem(keys.sound, soundOn ? 'on' : 'off'); soundBtn.textContent = soundOn ? '🔊' : '🔇'; beep(620,.06,'square',.025); }
 
       canvas.addEventListener('pointerdown', flap);
+      panel.addEventListener('pointerdown', () => {
+        if ((state.mode === 'paused' || state.mode === 'gameover') && panel.scrollHeight > panel.clientHeight) {
+          const nearBottom = panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 8;
+          if (!nearBottom) return;
+        }
+        flap();
+      });
       document.addEventListener('keydown', handleKey);
       soundBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSound(); });
       pauseBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePause(); });
 
-      resetSky(); spawnGate(W+260); render();
+      resetSky();
+      spawnGate(W + 260);
+      render();
     })();
   </script>
 </body>
