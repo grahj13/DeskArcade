@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ghost Pixel v1.1</title>
+  <style>
+    :root {
+      --bg: #020805;
+      --panel: rgba(5, 25, 16, 0.86);
+      --panel-strong: rgba(10, 40, 25, 0.96);
+      --green: #2dff88;
+      --green-soft: rgba(45, 255, 136, 0.22);
+      --cyan: #20e6ff;
+      --red: #ff315a;
+      --yellow: #ffd166;
+      --purple: #b967ff;
+      --text: #d9ffe9;
+      --muted: #7da891;
+      --danger: #ff4d6d;
+      --shadow: 0 0 24px rgba(45, 255, 136, 0.28);
+      --mega-glow: 0 0 18px rgba(45,255,136,0.45), 0 0 48px rgba(32,230,255,0.16), 0 0 90px rgba(185,103,255,0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(32, 230, 255, 0.18), transparent 28%),
+        radial-gradient(circle at 82% 12%, rgba(185, 103, 255, 0.15), transparent 25%),
+        radial-gradient(circle at 50% 82%, rgba(45, 255, 136, 0.16), transparent 34%),
+        linear-gradient(135deg, #010302 0%, #03140c 42%, #02070d 78%, #010403 100%);
+      color: var(--text);
+      font-family: Consolas, Monaco, 'Courier New', monospace;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(45, 255, 136, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45, 255, 136, 0.12) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(circle at center, black 30%, transparent 82%);
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,255,0.03) 0,
+          rgba(255,255,255,0.03) 1px,
+          transparent 1px,
+          transparent 4px
+        ),
+        linear-gradient(90deg, transparent, rgba(32,230,255,0.06), transparent);
+      opacity: 0.28;
+      animation: scanDrift 7s linear infinite;
+    }
+
+    .app {
+      position: relative;
+      height: 100vh;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    header {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      background: linear-gradient(135deg, rgba(5, 25, 16, 0.92), rgba(3, 12, 18, 0.88));
+      border: 1px solid rgba(45,255,136,0.34);
+      border-radius: 22px;
+      box-shadow: var(--mega-glow);
+      backdrop-filter: blur(8px);
+      z-index: 2;
+    }
+
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .game-logo {
+      display: block;
+      height: clamp(50px, 8vw, 86px);
+      max-width: min(420px, 48vw);
+      object-fit: contain;
+      filter: drop-shadow(0 0 14px rgba(45,255,136,0.72)) drop-shadow(0 0 34px rgba(32,230,255,0.24));
+      animation: logoPulse 2.6s ease-in-out infinite alternate;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(26px, 4vw, 46px);
+      letter-spacing: 2px;
+      color: var(--green);
+      text-shadow: 0 0 18px rgba(45, 255, 136, 0.75);
+      line-height: 1;
+    }
+
+    .brand p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: 1px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(82px, 1fr));
+      gap: 10px;
+      width: min(680px, 100%);
+    }
+
+    .stat {
+      padding: 9px 10px;
+      border: 1px solid rgba(45, 255, 136, 0.28);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(45,255,136,0.12), rgba(0,0,0,0.28));
+      box-shadow: inset 0 0 18px rgba(45,255,136,0.045);
+      text-align: center;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 3px;
+    }
+
+    .stat strong {
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    main {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      border: 1px solid rgba(45,255,136,0.34);
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(32,230,255,0.08), transparent 28%),
+        radial-gradient(circle at 70% 80%, rgba(185,103,255,0.08), transparent 28%),
+        rgba(0, 0, 0, 0.24);
+      box-shadow: inset 0 0 70px rgba(45,255,136,0.13), inset 0 0 120px rgba(32,230,255,0.055), var(--mega-glow);
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    #playfield {
+      position: absolute;
+      inset: 0;
+      cursor: crosshair;
+    }
+
+    #playfield.input-locked {
+      cursor: none;
+      pointer-events: none;
+    }
+
+    body.cursor-hidden,
+    body.cursor-hidden * {
+      cursor: none !important;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at center, rgba(45,255,136,0.08), transparent 35%),
+        radial-gradient(circle at center, rgba(0,0,0,0.46), rgba(0,0,0,0.88));
+      z-index: 10;
+    }
+
+    .menu {
+      width: min(760px, 100%);
+      padding: 28px;
+      border: 1px solid var(--green-soft);
+      border-radius: 24px;
+      background:
+        linear-gradient(135deg, rgba(10, 40, 25, 0.96), rgba(4, 13, 21, 0.96)),
+        var(--panel-strong);
+      box-shadow: 0 0 38px rgba(45,255,136,0.28), 0 0 90px rgba(32,230,255,0.12);
+      text-align: center;
+    }
+
+    .menu h2 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 6vw, 66px);
+      color: var(--green);
+      text-shadow: 0 0 22px rgba(45,255,136,0.78);
+      letter-spacing: 3px;
+    }
+
+    .menu-logo {
+      width: min(520px, 86%);
+      max-height: 170px;
+      object-fit: contain;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 0 18px rgba(45,255,136,0.78)) drop-shadow(0 0 44px rgba(32,230,255,0.22));
+      animation: logoPulse 2.6s ease-in-out infinite alternate;
+    }
+
+    .menu .tagline {
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    button {
+      border: 1px solid rgba(45,255,136,0.35);
+      color: var(--text);
+      background:
+        linear-gradient(180deg, rgba(45,255,136,0.24), rgba(0,0,0,0.22)),
+        radial-gradient(circle at top left, rgba(32,230,255,0.18), transparent 42%);
+      border-radius: 17px;
+      padding: 14px 16px;
+      font-family: inherit;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 0 14px rgba(45,255,136,0.18), inset 0 0 20px rgba(255,255,255,0.025);
+      transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      border-color: var(--green);
+      box-shadow: 0 0 26px rgba(45,255,136,0.38), 0 0 54px rgba(32,230,255,0.13);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .mode-card {
+      min-height: 150px;
+      text-align: left;
+    }
+
+    .mode-card strong {
+      display: block;
+      color: var(--green);
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    .mode-card small {
+      display: block;
+      color: var(--muted);
+      line-height: 1.45;
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+
+    .top-actions, .nav-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .nav-actions {
+      margin-top: 0;
+      min-width: 160px;
+    }
+
+    .nav-actions button {
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+
+    .dot {
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      left: var(--x);
+      top: var(--y);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: var(--dot-color, var(--green));
+      box-shadow: 0 0 14px var(--dot-color, var(--green)), 0 0 28px var(--dot-color, var(--green));
+      animation: pulse 0.75s ease-in-out infinite alternate;
+    }
+
+    .grid-dot {
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      left: var(--x);
+      top: var(--y);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px rgba(45,255,136,0.5);
+      transition: background 220ms ease, box-shadow 220ms ease, transform 120ms ease;
+    }
+
+    .grid-dot.target-visible {
+      background: var(--red);
+      box-shadow: 0 0 12px rgba(255,49,90,0.9), 0 0 24px rgba(255,49,90,0.45);
+    }
+
+    .grid-dot.selected {
+      transform: translate(-50%, -50%) scale(1.42);
+      background: var(--cyan);
+      box-shadow: 0 0 14px rgba(32,230,255,0.95), 0 0 28px rgba(32,230,255,0.45);
+    }
+
+    .marker {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--cyan);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      animation: ring 520ms ease-out forwards;
+    }
+
+    .target-ring {
+      position: absolute;
+      width: 38px;
+      height: 38px;
+      border: 2px solid var(--red);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      box-shadow: 0 0 14px rgba(255,49,90,0.7);
+    }
+
+    .message {
+      position: absolute;
+      left: 50%;
+      top: 22px;
+      transform: translateX(-50%);
+      padding: 10px 18px;
+      border: 1px solid var(--green-soft);
+      border-radius: 999px;
+      background: rgba(0,0,0,0.66);
+      color: var(--text);
+      box-shadow: var(--shadow);
+      z-index: 5;
+      text-align: center;
+      max-width: calc(100% - 32px);
+    }
+
+    .danger {
+      color: var(--danger) !important;
+    }
+
+    .success {
+      color: var(--green) !important;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @keyframes pulse {
+      from { transform: translate(-50%, -50%) scale(0.94); opacity: 0.8; }
+      to { transform: translate(-50%, -50%) scale(1.08); opacity: 1; }
+    }
+
+    @keyframes ring {
+      from { opacity: 1; transform: translate(-50%, -50%) scale(0.65); }
+      to { opacity: 0; transform: translate(-50%, -50%) scale(2.1); }
+    }
+
+    @keyframes logoPulse {
+      from { transform: scale(0.985); filter: drop-shadow(0 0 12px rgba(45,255,136,0.62)) drop-shadow(0 0 26px rgba(32,230,255,0.18)); }
+      to { transform: scale(1.015); filter: drop-shadow(0 0 20px rgba(45,255,136,0.86)) drop-shadow(0 0 46px rgba(32,230,255,0.28)); }
+    }
+
+    @keyframes scanDrift {
+      from { background-position: 0 0, -120vw 0; }
+      to { background-position: 0 28px, 120vw 0; }
+    }
+
+    @media (max-width: 860px) {
+      .app { padding: 10px; }
+      header { flex-direction: column; align-items: stretch; min-height: auto; }
+      .stats { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+      .stat { padding: 7px 5px; }
+      .stat span { font-size: 9px; }
+      .stat strong { font-size: 13px; }
+      .mode-grid { grid-template-columns: 1fr; }
+      .mode-card { min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo-wrap">
+          <img src="ghostpixellogo.png" alt="Ghost Pixel" class="game-logo" />
+        </div>
+        <p>Trust Your Memory. / Created by Jason / build v1.1</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><span>MODE</span><strong id="modeStat">MENU</strong></div>
+        <div class="stat"><span>SCORE</span><strong id="scoreStat">0</strong></div>
+        <div class="stat"><span>ROUND</span><strong id="roundStat">0</strong></div>
+        <div class="stat"><span>LIVES</span><strong id="livesStat">3</strong></div>
+        <div class="stat"><span>COMBO</span><strong id="comboStat">0</strong></div>
+      </div>
+      <div class="nav-actions">
+        <button onclick="showMenu()">Menu</button>
+        <button onclick="returnToArcade()">Return to Arcade</button>
+      </div>
+    </header>
+
+    <main>
+      <div id="playfield"></div>
+      <div id="message" class="message hidden">Ready</div>
+
+      <div id="overlay" class="overlay">
+        <section class="menu">
+          <img src="ghostpixellogo.png" alt="Ghost Pixel" class="menu-logo" />
+          <p class="tagline">Trust Your Memory.</p>
+          <div class="mode-grid">
+            <button class="mode-card" onclick="startGame('classic')">
+              <strong>Classic</strong>
+              <small>One pixel flashes. Remember the position and click where it vanished.</small>
+            </button>
+            <button class="mode-card" onclick="startGame('sequence')">
+              <strong>Sequence</strong>
+              <small>Pixels flash in order. Repeat the pattern without losing your nerve.</small>
+            </button>
+            <button class="mode-card" onclick="startGame('grid')">
+              <strong>Grid Mode</strong>
+              <small>Find the odd pixels before they blend into the grid. Then pick the right ones.</small>
+            </button>
+          </div>
+          <div class="top-actions">
+            <button onclick="showMenu()">Reset</button>
+            <button onclick="returnToArcade()">Return to Arcade</button>
+          </div>
+          <p class="footer-note">Tip: accuracy matters. Random clicking will punish you. Focus properly.</p>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const playfield = document.getElementById('playfield');
+    const overlay = document.getElementById('overlay');
+    const message = document.getElementById('message');
+
+    const stats = {
+      mode: document.getElementById('modeStat'),
+      score: document.getElementById('scoreStat'),
+      round: document.getElementById('roundStat'),
+      lives: document.getElementById('livesStat'),
+      combo: document.getElementById('comboStat')
+    };
+
+    let state = {
+      mode: 'menu',
+      score: 0,
+      round: 0,
+      lives: 3,
+      combo: 0,
+      active: false,
+      phase: 'idle',
+      inputReady: false,
+      answerArmed: false,
+      armStart: null,
+      target: null,
+      sequence: [],
+      sequenceInput: 0,
+      gridTargets: [],
+      gridSelected: new Set(),
+      timer: null
+    };
+
+    function updateStats() {
+      stats.mode.textContent = state.mode.toUpperCase();
+      stats.score.textContent = state.score;
+      stats.round.textContent = state.round;
+      stats.lives.textContent = state.lives;
+      stats.combo.textContent = state.combo;
+    }
+
+    function clearTimers() {
+      if (state.timer) clearTimeout(state.timer);
+      state.timer = null;
+    }
+
+    function clearField() {
+      playfield.innerHTML = '';
+      clearTimers();
+    }
+
+    function setInputReady(isReady) {
+      state.inputReady = isReady;
+      playfield.classList.toggle('input-locked', !isReady);
+      document.body.classList.toggle('cursor-hidden', !isReady);
+    }
+
+    function returnToArcade() {
+      window.location.href = '../../index.html';
+    }
+
+    function armSelectionAfterMovement() {
+      state.answerArmed = false;
+      state.armStart = null;
+      showMessage('MOVE MOUSE, THEN SELECT');
+    }
+
+    function showMessage(text, type = '') {
+      message.textContent = text;
+      message.className = 'message';
+      if (type) message.classList.add(type);
+      message.classList.remove('hidden');
+    }
+
+    function hideMessage() {
+      message.classList.add('hidden');
+    }
+
+    function showMenu() {
+      state = {
+        mode: 'menu', score: 0, round: 0, lives: 3, combo: 0, active: false,
+        phase: 'idle', inputReady: true, answerArmed: true, armStart: null, target: null, sequence: [], sequenceInput: 0,
+        gridTargets: [], gridSelected: new Set(), timer: null
+      };
+      clearField();
+      hideMessage();
+      setInputReady(true);
+      overlay.classList.remove('hidden');
+      updateStats();
+    }
+
+    function startGame(mode) {
+      clearField();
+      overlay.classList.add('hidden');
+      state.mode = mode;
+      state.score = 0;
+      state.round = 0;
+      state.lives = 3;
+      state.combo = 0;
+      state.active = true;
+      state.phase = 'idle';
+      updateStats();
+      nextRound();
+    }
+
+    function nextRound() {
+      if (!state.active) return;
+      state.round++;
+      state.phase = 'show';
+      setInputReady(false);
+      clearField();
+      updateStats();
+
+      if (state.mode === 'classic') runClassicRound();
+      if (state.mode === 'sequence') runSequenceRound();
+      if (state.mode === 'grid') runGridRound();
+    }
+
+    function fieldRect() {
+      return playfield.getBoundingClientRect();
+    }
+
+    function randomPoint(margin = 50) {
+      const rect = fieldRect();
+      return {
+        x: margin + Math.random() * Math.max(20, rect.width - margin * 2),
+        y: margin + Math.random() * Math.max(20, rect.height - margin * 2)
+      };
+    }
+
+    function makeDot(x, y, size = 22, color = 'var(--green)', className = 'dot') {
+      const dot = document.createElement('div');
+      dot.className = className;
+      dot.style.setProperty('--x', x + 'px');
+      dot.style.setProperty('--y', y + 'px');
+      dot.style.setProperty('--size', size + 'px');
+      dot.style.setProperty('--dot-color', color);
+      playfield.appendChild(dot);
+      return dot;
+    }
+
+    function addRing(x, y, className = 'marker') {
+      const ring = document.createElement('div');
+      ring.className = className;
+      ring.style.left = x + 'px';
+      ring.style.top = y + 'px';
+      playfield.appendChild(ring);
+      setTimeout(() => ring.remove(), 650);
+    }
+
+    function revealTime(base = 1100, min = 360) {
+      return Math.max(min, base - state.round * 42);
+    }
+
+    function loseLife(reason = 'MISS') {
+      state.lives--;
+      state.combo = 0;
+      showMessage(reason, 'danger');
+      updateStats();
+      if (state.lives <= 0) {
+        gameOver();
+      } else {
+        state.timer = setTimeout(nextRound, 900);
+      }
+    }
+
+    function award(points, text = 'PERFECT') {
+      state.combo++;
+      state.score += points + (state.combo * 10);
+      showMessage(text, 'success');
+      updateStats();
+      state.timer = setTimeout(nextRound, 750);
+    }
+
+    function gameOver() {
+      state.active = false;
+      clearTimers();
+      showMessage('GAME OVER — Score: ' + state.score, 'danger');
+      overlay.classList.remove('hidden');
+      const menu = overlay.querySelector('.menu');
+      menu.querySelector('.tagline').textContent = 'Final Score: ' + state.score + ' / Round: ' + state.round;
+    }
+
+    function runClassicRound() {
+      showMessage('MEMORISE THE PIXEL');
+      const size = Math.max(10, 26 - state.round * 0.55);
+      const p = randomPoint(58);
+      state.target = p;
+      makeDot(p.x, p.y, size, 'var(--green)');
+
+      state.timer = setTimeout(() => {
+        clearField();
+        showMessage('CLICK WHERE IT WAS');
+        state.phase = 'answer';
+        setInputReady(true);
+        armSelectionAfterMovement();
+      }, revealTime(1150, 330));
+    }
+
+    function handleClassicClick(x, y) {
+      if (state.phase !== 'answer' || !state.target || !state.answerArmed) return;
+      const dist = Math.hypot(x - state.target.x, y - state.target.y);
+      addRing(x, y);
+      addRing(state.target.x, state.target.y, 'target-ring');
+      state.phase = 'locked';
+
+      const perfect = Math.max(18, 42 - state.round * 0.7);
+      const close = perfect * 2.2;
+
+      if (dist <= perfect) award(120, 'PERFECT');
+      else if (dist <= close) award(55, 'CLOSE');
+      else loseLife('MISS');
+    }
+
+    function runSequenceRound() {
+      const length = Math.min(8, 2 + Math.floor(state.round / 2));
+      const size = Math.max(11, 25 - state.round * 0.4);
+      state.sequence = Array.from({ length }, () => randomPoint(58));
+      state.sequenceInput = 0;
+      showMessage('WATCH THE SEQUENCE');
+
+      let i = 0;
+      const flash = () => {
+        clearField();
+        if (i >= state.sequence.length) {
+          clearField();
+          showMessage('REPEAT THE SEQUENCE');
+          state.phase = 'answer';
+        setInputReady(true);
+        armSelectionAfterMovement();
+          return;
+        }
+        const p = state.sequence[i];
+        makeDot(p.x, p.y, size, i % 2 ? 'var(--cyan)' : 'var(--green)');
+        i++;
+        state.timer = setTimeout(flash, Math.max(270, 620 - state.round * 18));
+      };
+      flash();
+    }
+
+    function handleSequenceClick(x, y) {
+      if (state.phase !== 'answer' || !state.answerArmed) return;
+      const target = state.sequence[state.sequenceInput];
+      const dist = Math.hypot(x - target.x, y - target.y);
+      const tolerance = Math.max(20, 46 - state.round * 0.55);
+      addRing(x, y);
+
+      if (dist <= tolerance) {
+        state.sequenceInput++;
+        state.score += 35 + state.combo * 4;
+        showMessage('GOOD / ' + state.sequenceInput + ' OF ' + state.sequence.length, 'success');
+        updateStats();
+        if (state.sequenceInput >= state.sequence.length) {
+          state.phase = 'locked';
+          award(140 + state.sequence.length * 25, 'SEQUENCE COMPLETE');
+        }
+      } else {
+        addRing(target.x, target.y, 'target-ring');
+        state.phase = 'locked';
+        loseLife('WRONG PIXEL');
+      }
+    }
+
+    function runGridRound() {
+      showMessage('FIND THE RED PIXELS');
+      state.gridTargets = [];
+      state.gridSelected = new Set();
+      const rect = fieldRect();
+      const cols = 10;
+      const rows = 10;
+      const total = cols * rows;
+      const targetCount = Math.min(12, state.round);
+      const size = Math.max(11, Math.min(rect.width / 32, rect.height / 22));
+      const gapX = rect.width / (cols + 1);
+      const gapY = rect.height / (rows + 1);
+      const targetIndexes = new Set();
+
+      while (targetIndexes.size < targetCount) {
+        targetIndexes.add(Math.floor(Math.random() * total));
+      }
+
+      let index = 0;
+      for (let r = 1; r <= rows; r++) {
+        for (let c = 1; c <= cols; c++) {
+          const x = c * gapX;
+          const y = r * gapY;
+          const dot = makeDot(x, y, size, 'var(--green)', 'grid-dot');
+          dot.dataset.index = index;
+          dot.dataset.x = x;
+          dot.dataset.y = y;
+          if (targetIndexes.has(index)) {
+            dot.classList.add('target-visible');
+            state.gridTargets.push(index);
+          }
+          index++;
+        }
+      }
+
+      state.timer = setTimeout(() => {
+        document.querySelectorAll('.grid-dot').forEach(dot => dot.classList.remove('target-visible'));
+        showMessage('SELECT ' + targetCount + ' HIDDEN PIXEL' + (targetCount > 1 ? 'S' : ''));
+        state.phase = 'answer';
+        setInputReady(true);
+        armSelectionAfterMovement();
+      }, revealTime(1700, 520));
+    }
+
+    function handleGridClick(target) {
+      if (state.phase !== 'answer' || !state.answerArmed || !target.classList.contains('grid-dot')) return;
+      const index = Number(target.dataset.index);
+      if (state.gridSelected.has(index)) return;
+
+      state.gridSelected.add(index);
+      target.classList.add('selected');
+
+      const correct = state.gridTargets.includes(index);
+      if (!correct) {
+        state.phase = 'locked';
+        revealGridTargets();
+        loseLife('WRONG DOT');
+        return;
+      }
+
+      state.score += 70 + state.combo * 5;
+      updateStats();
+
+      const correctSelected = [...state.gridSelected].filter(i => state.gridTargets.includes(i)).length;
+      if (correctSelected >= state.gridTargets.length) {
+        state.phase = 'locked';
+        revealGridTargets();
+        award(180 + state.gridTargets.length * 35, 'GRID CLEARED');
+      } else {
+        showMessage('GOOD / ' + correctSelected + ' OF ' + state.gridTargets.length, 'success');
+      }
+    }
+
+    function revealGridTargets() {
+      document.querySelectorAll('.grid-dot').forEach(dot => {
+        if (state.gridTargets.includes(Number(dot.dataset.index))) {
+          dot.classList.add('target-visible');
+        }
+      });
+    }
+
+    playfield.addEventListener('mousemove', (event) => {
+      if (!state.active || state.phase !== 'answer' || state.answerArmed) return;
+      const rect = fieldRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      if (!state.armStart) {
+        state.armStart = { x, y };
+        return;
+      }
+
+      const moved = Math.hypot(x - state.armStart.x, y - state.armStart.y);
+      if (moved >= 60) {
+        state.answerArmed = true;
+        showMessage(state.mode === 'grid' ? 'SELECT THE HIDDEN PIXELS' : 'SELECT NOW');
+      }
+    });
+
+    playfield.addEventListener('click', (event) => {
+      if (!state.active || !state.inputReady) return;
+      const rect = fieldRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      if (state.mode === 'classic') handleClassicClick(x, y);
+      if (state.mode === 'sequence') handleSequenceClick(x, y);
+      if (state.mode === 'grid') handleGridClick(event.target);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') showMenu();
+    });
+
+    updateStats();
+  </script>
+</body>
+</html>
