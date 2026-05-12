@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Word Trap</title>
+  <style>
+    :root {
+      --bg: #020806;
+      --panel: #071a10;
+      --line: #18482c;
+      --text: #d8ffe7;
+      --muted: #87dca5;
+      --neon: #39ff88;
+      --danger: #ff5f6d;
+      --shadow: 0 0 12px rgba(57, 255, 136, 0.25), 0 0 32px rgba(57, 255, 136, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Consolas, Monaco, 'Courier New', monospace;
+      display: flex;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(57, 255, 136, 0.14), transparent 32%),
+        radial-gradient(circle at 10% 20%, rgba(57, 255, 136, 0.06), transparent 26%),
+        radial-gradient(circle at 90% 80%, rgba(255, 95, 109, 0.08), transparent 26%),
+        linear-gradient(180deg, #010403 0%, #031109 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(180deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 2px, transparent 5px);
+      opacity: 0.18;
+      mix-blend-mode: screen;
+      z-index: 2;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at center, transparent 45%, rgba(0,0,0,0.48) 100%);
+      z-index: 3;
+    }
+
+    .game-shell {
+      position: relative;
+      width: 100%;
+      max-width: 1060px;
+      border: 1px solid rgba(57, 255, 136, 0.24);
+      background: linear-gradient(180deg, rgba(3, 16, 9, 0.95), rgba(2, 9, 5, 0.96));
+      box-shadow: var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.02);
+      border-radius: 22px;
+      overflow: hidden;
+      z-index: 4;
+    }
+
+    .game-shell::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(90deg, rgba(57,255,136,0.06), transparent 18%, transparent 82%, rgba(57,255,136,0.04));
+    }
+
+    .header {
+      position: relative;
+      padding: 24px 24px 16px;
+      border-bottom: 1px solid rgba(57, 255, 136, 0.2);
+      background: linear-gradient(180deg, rgba(57, 255, 136, 0.08), transparent), rgba(5, 20, 11, 0.48);
+      text-align: center;
+    }
+
+    .logo {
+      display: block;
+      max-width: min(100%, 520px);
+      width: 100%;
+      height: auto;
+      margin: 0 auto 10px;
+      filter: drop-shadow(0 0 18px rgba(57, 255, 136, 0.24));
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      letter-spacing: 0.4px;
+    }
+
+    .build {
+      margin-top: 8px;
+      color: #94e7b1;
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .top-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .content {
+      position: relative;
+      display: grid;
+      grid-template-columns: 375px 1fr;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .panel {
+      position: relative;
+      border: 1px solid rgba(57, 255, 136, 0.18);
+      background: linear-gradient(180deg, rgba(8, 25, 15, 0.96), rgba(4, 14, 9, 0.96));
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: inset 0 0 14px rgba(57, 255, 136, 0.035), 0 0 24px rgba(0,0,0,0.18);
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(57, 255, 136, 0.04), transparent 34%, transparent 66%, rgba(57, 255, 136, 0.025));
+      pointer-events: none;
+    }
+
+    .panel > * { position: relative; z-index: 1; }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 0 0 12px;
+      color: var(--neon);
+      font-size: 1rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px;
+      border: 1px solid rgba(57,255,136,0.22);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      background: rgba(57,255,136,0.045);
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--neon);
+      box-shadow: 0 0 10px rgba(57,255,136,0.8);
+      animation: pulseDot 1s ease-in-out infinite alternate;
+    }
+
+    .hangman-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 326px;
+      border: 1px solid rgba(57, 255, 136, 0.14);
+      border-radius: 16px;
+      background: radial-gradient(circle at 50% 20%, rgba(57, 255, 136, 0.08), transparent 40%), linear-gradient(180deg, rgba(57, 255, 136, 0.04), rgba(0, 0, 0, 0.06));
+      box-shadow: inset 0 0 22px rgba(57, 255, 136, 0.045);
+    }
+
+    svg {
+      width: 100%;
+      max-width: 285px;
+      height: auto;
+      overflow: visible;
+    }
+
+    .gallows,
+    .part {
+      stroke: var(--neon);
+      stroke-width: 4;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 7px rgba(57, 255, 136, 0.32));
+    }
+
+    .gallows { opacity: 0.8; }
+
+    .part {
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      transform-origin: center;
+    }
+
+    .part.hidden {
+      opacity: 0.07;
+      transform: scale(0.96);
+    }
+
+    .danger-mode .part:not(.hidden),
+    .danger-mode .gallows {
+      stroke: var(--danger);
+      filter: drop-shadow(0 0 8px rgba(255,95,109,0.35));
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .stat-box {
+      border: 1px solid rgba(57, 255, 136, 0.18);
+      border-radius: 14px;
+      padding: 12px;
+      background: linear-gradient(180deg, rgba(57, 255, 136, 0.065), rgba(57, 255, 136, 0.025));
+      box-shadow: inset 0 0 10px rgba(57, 255, 136, 0.035);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-size: 1.25rem;
+      color: var(--text);
+      font-weight: bold;
+    }
+
+    .difficulty-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .difficulty-btn {
+      border: 1px solid rgba(57, 255, 136, 0.18);
+      border-radius: 12px;
+      padding: 10px 8px;
+      background: rgba(57,255,136,0.04);
+      color: var(--muted);
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .difficulty-btn.active {
+      color: var(--text);
+      border-color: rgba(57,255,136,0.5);
+      background: rgba(57,255,136,0.12);
+      box-shadow: 0 0 14px rgba(57,255,136,0.12);
+    }
+
+    .word-display {
+      min-height: 84px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      margin: 20px 0 16px;
+      padding: 18px 16px;
+      border: 1px dashed rgba(57, 255, 136, 0.28);
+      border-radius: 16px;
+      background: radial-gradient(circle at 50% 0%, rgba(57, 255, 136, 0.08), transparent 45%), rgba(57, 255, 136, 0.026);
+      box-shadow: inset 0 0 20px rgba(57, 255, 136, 0.035);
+    }
+
+    .letter-slot {
+      width: 42px;
+      border-bottom: 3px solid var(--neon);
+      text-align: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      line-height: 1.4;
+      color: var(--text);
+      text-transform: uppercase;
+      text-shadow: 0 0 8px rgba(57, 255, 136, 0.25);
+    }
+
+    .space-slot {
+      width: 18px;
+      border-bottom: none;
+    }
+
+    .message {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 10px 12px;
+      border: 1px solid rgba(57, 255, 136, 0.18);
+      border-radius: 14px;
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(57, 255, 136, 0.065), rgba(57, 255, 136, 0.03));
+      margin-bottom: 18px;
+      box-shadow: inset 0 0 12px rgba(57, 255, 136, 0.035);
+    }
+
+    .message.win {
+      color: var(--neon);
+      border-color: rgba(57, 255, 136, 0.45);
+    }
+
+    .message.lose,
+    .message.warning {
+      color: #ff9c9c;
+      border-color: rgba(255, 95, 109, 0.45);
+      background: linear-gradient(180deg, rgba(255, 95, 109, 0.12), rgba(255, 95, 109, 0.04));
+    }
+
+    .keyboard {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .key {
+      border: 1px solid rgba(57, 255, 136, 0.18);
+      background: linear-gradient(180deg, rgba(57, 255, 136, 0.12), rgba(57, 255, 136, 0.04)), rgba(5, 16, 10, 0.95);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 6px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease, border-color 0.12s ease;
+      box-shadow: inset 0 0 0 1px rgba(57, 255, 136, 0.03), 0 0 8px rgba(0,0,0,0.14);
+    }
+
+    .key:hover:not(:disabled) {
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 0 14px rgba(57, 255, 136, 0.2);
+      border-color: rgba(57, 255, 136, 0.4);
+    }
+
+    .key:disabled {
+      cursor: not-allowed;
+      opacity: 0.58;
+      text-decoration: line-through;
+    }
+
+    .key.correct:disabled {
+      color: #afffcf;
+      border-color: rgba(57, 255, 136, 0.5);
+      background: rgba(57, 255, 136, 0.13);
+    }
+
+    .key.wrong:disabled {
+      color: #ffb2b2;
+      border-color: rgba(255, 95, 109, 0.45);
+      background: rgba(255, 95, 109, 0.1);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      position: relative;
+      border: 1px solid rgba(57, 255, 136, 0.35);
+      background: linear-gradient(180deg, rgba(57, 255, 136, 0.18), rgba(57, 255, 136, 0.06));
+      color: var(--text);
+      padding: 14px 22px;
+      border-radius: 14px;
+      font-family: inherit;
+      font-weight: bold;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+      box-shadow: 0 0 18px rgba(57, 255, 136, 0.14), inset 0 0 12px rgba(57, 255, 136, 0.05);
+      overflow: hidden;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.09), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.35s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 22px rgba(57, 255, 136, 0.2), inset 0 0 14px rgba(57, 255, 136, 0.08);
+      border-color: rgba(57, 255, 136, 0.6);
+    }
+
+    .btn:hover::before { transform: translateX(100%); }
+    .btn:active { transform: translateY(0); }
+
+    .btn.secondary {
+      background: rgba(57,255,136,0.045);
+      color: var(--muted);
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-align: center;
+      opacity: 0.9;
+      letter-spacing: 0.5px;
+    }
+
+    .end-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(7px);
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .end-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .end-card {
+      width: min(100%, 590px);
+      border-radius: 22px;
+      padding: 30px 24px;
+      border: 1px solid rgba(57,255,136,0.24);
+      background: linear-gradient(180deg, rgba(6, 18, 11, 0.98), rgba(2, 10, 6, 0.98));
+      box-shadow: 0 0 42px rgba(0,0,0,0.5);
+      text-align: center;
+      transform: scale(0.96);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .end-overlay.show .end-card { transform: scale(1); }
+
+    .end-card.win {
+      border-color: rgba(57, 255, 136, 0.48);
+      box-shadow: 0 0 38px rgba(57, 255, 136, 0.18);
+    }
+
+    .end-card.lose {
+      border-color: rgba(255, 95, 109, 0.55);
+      box-shadow: 0 0 40px rgba(255, 95, 109, 0.22);
+      animation: dangerPulse 1s ease-in-out infinite alternate;
+    }
+
+    .end-kicker {
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      color: var(--muted);
+    }
+
+    .end-card.lose .end-kicker { color: #ff9b9b; }
+
+    .end-title {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .end-card.win .end-title {
+      color: var(--neon);
+      text-shadow: 0 0 16px rgba(57, 255, 136, 0.28);
+    }
+
+    .end-card.lose .end-title {
+      color: #ff8f8f;
+      text-shadow: 0 0 18px rgba(255, 95, 109, 0.38);
+    }
+
+    .end-text {
+      margin: 14px 0 0;
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    .end-word {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(57,255,136,0.22);
+      background: rgba(57, 255, 136, 0.045);
+      color: var(--text);
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+    }
+
+    .end-card.lose .end-word {
+      border-color: rgba(255, 95, 109, 0.38);
+      background: rgba(255, 95, 109, 0.09);
+    }
+
+    .end-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 22px;
+      flex-wrap: wrap;
+    }
+
+    .screen-flash { animation: screenFlash 0.55s ease-out; }
+    .shake { animation: shake 0.25s linear; }
+
+    @keyframes pulseDot {
+      from { opacity: 0.45; transform: scale(0.86); }
+      to { opacity: 1; transform: scale(1.12); }
+    }
+
+    @keyframes dangerPulse {
+      from { box-shadow: 0 0 24px rgba(255, 95, 109, 0.14); }
+      to { box-shadow: 0 0 44px rgba(255, 95, 109, 0.3); }
+    }
+
+    @keyframes screenFlash {
+      0% { box-shadow: 0 0 0 rgba(255,0,0,0); }
+      30% { box-shadow: inset 0 0 140px rgba(255, 60, 60, 0.22); }
+      100% { box-shadow: 0 0 0 rgba(255,0,0,0); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      50% { transform: translateX(4px); }
+      75% { transform: translateX(-2px); }
+    }
+
+    @media (max-width: 900px) {
+      .content { grid-template-columns: 1fr; }
+      .hangman-wrap { min-height: 270px; }
+    }
+
+    @media (max-width: 560px) {
+      body { padding: 12px; }
+      .header, .content { padding-left: 14px; padding-right: 14px; }
+      .keyboard { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+      .letter-slot { width: 34px; font-size: 1.4rem; }
+      .difficulty-row { grid-template-columns: 1fr; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-shell" id="game-shell">
+    <header class="header">
+      <img src="wordtraplogo.png" alt="Word Trap" class="logo" />
+      <p class="subtitle">Guess the word before the trap closes.</p>
+      <div class="build">Created by Jason / build v1.1</div>
+      <div class="top-actions">
+        <a class="btn secondary" href="../../index.html">[ RETURN TO ARCADE ]</a>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="panel" id="trap-panel">
+        <h2 class="panel-title">
+          <span>TRAP STATUS</span>
+          <span class="status-pill"><span class="pulse-dot"></span><span id="status-text">ACTIVE</span></span>
+        </h2>
+
+        <div class="hangman-wrap">
+          <svg viewBox="0 0 220 260" aria-label="Hangman drawing">
+            <line class="gallows" x1="30" y1="235" x2="170" y2="235" />
+            <line class="gallows" x1="65" y1="235" x2="65" y2="20" />
+            <line class="gallows" x1="65" y1="20" x2="145" y2="20" />
+            <line class="gallows" x1="145" y1="20" x2="145" y2="48" />
+
+            <circle id="part-1" class="part hidden" cx="145" cy="72" r="24" />
+            <line id="part-2" class="part hidden" x1="145" y1="96" x2="145" y2="155" />
+            <line id="part-3" class="part hidden" x1="145" y1="112" x2="110" y2="136" />
+            <line id="part-4" class="part hidden" x1="145" y1="112" x2="180" y2="136" />
+            <line id="part-5" class="part hidden" x1="145" y1="155" x2="116" y2="196" />
+            <line id="part-6" class="part hidden" x1="145" y1="155" x2="174" y2="196" />
+          </svg>
+        </div>
+
+        <div class="stats">
+          <div class="stat-box">
+            <div class="stat-label">Wrong Guesses</div>
+            <div class="stat-value" id="wrong-count">0 / 6</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Lives Left</div>
+            <div class="stat-value" id="lives-left">6</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Score</div>
+            <div class="stat-value" id="score">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Streak</div>
+            <div class="stat-value" id="streak">0</div>
+          </div>
+        </div>
+
+        <div class="difficulty-row" aria-label="Difficulty selector">
+          <button class="difficulty-btn active" data-difficulty="easy">EASY</button>
+          <button class="difficulty-btn" data-difficulty="normal">NORMAL</button>
+          <button class="difficulty-btn" data-difficulty="hard">HARD</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">
+          <span>GUESS THE WORD</span>
+          <span class="status-pill" id="difficulty-label">EASY MODE</span>
+        </h2>
+
+        <div class="word-display" id="word-display"></div>
+
+        <div class="message" id="message">Pick a letter to start.</div>
+
+        <div class="keyboard" id="keyboard"></div>
+
+        <div class="actions">
+          <button class="btn" id="new-game-btn">[ RELOAD WORD TRAP ]</button>
+          <a class="btn secondary" id="return-btn" href="../../index.html">[ RETURN TO ARCADE ]</a>
+        </div>
+
+        <div class="footer-note">Clickable letters. 6 wrong guesses. No hints. No mercy.</div>
+      </section>
+    </main>
+  </div>
+
+  <div class="end-overlay" id="end-overlay" aria-hidden="true">
+    <div class="end-card" id="end-card">
+      <div class="end-kicker" id="end-kicker"></div>
+      <h2 class="end-title" id="end-title"></h2>
+      <p class="end-text" id="end-text"></p>
+      <div class="end-word" id="end-word"></div>
+      <div class="end-actions">
+        <button class="btn" id="overlay-new-game-btn">[ PLAY AGAIN ]</button>
+        <a class="btn secondary" href="../../index.html">[ RETURN TO ARCADE ]</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WORD_BANKS = {
+      easy: [
+        'arcade', 'server', 'cursor', 'matrix', 'packet', 'script', 'binary', 'reboot', 'browser', 'desktop',
+        'console', 'monitor', 'storage', 'scanner', 'gateway', 'network', 'keyboard', 'digital'
+      ],
+      normal: [
+        'firewall', 'debugger', 'compile', 'process', 'terminal', 'protocol', 'database', 'function', 'variable', 'software',
+        'hardware', 'download', 'password', 'interface', 'platform', 'shortcut', 'encryption', 'algorithm'
+      ],
+      hard: [
+        'javascript', 'synchronise', 'transmission', 'authentication', 'configuration', 'virtualisation', 'infrastructure',
+        'cybersecurity', 'administrator', 'architecture', 'microprocessor', 'decryption', 'motherboard', 'compression'
+      ]
+    };
+
+    const MAX_WRONG = 6;
+    const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+    const gameShell = document.getElementById('game-shell');
+    const trapPanel = document.getElementById('trap-panel');
+    const wordDisplay = document.getElementById('word-display');
+    const keyboard = document.getElementById('keyboard');
+    const message = document.getElementById('message');
+    const wrongCount = document.getElementById('wrong-count');
+    const livesLeft = document.getElementById('lives-left');
+    const scoreEl = document.getElementById('score');
+    const streakEl = document.getElementById('streak');
+    const statusText = document.getElementById('status-text');
+    const difficultyLabel = document.getElementById('difficulty-label');
+    const newGameBtn = document.getElementById('new-game-btn');
+    const overlayNewGameBtn = document.getElementById('overlay-new-game-btn');
+    const endOverlay = document.getElementById('end-overlay');
+    const endCard = document.getElementById('end-card');
+    const endKicker = document.getElementById('end-kicker');
+    const endTitle = document.getElementById('end-title');
+    const endText = document.getElementById('end-text');
+    const endWord = document.getElementById('end-word');
+    const difficultyButtons = Array.from(document.querySelectorAll('.difficulty-btn'));
+    const parts = Array.from({ length: 6 }, (_, i) => document.getElementById(`part-${i + 1}`));
+
+    let selectedWord = '';
+    let guessedLetters = new Set();
+    let wrongLetters = new Set();
+    let usedWords = new Set();
+    let gameOver = false;
+    let difficulty = 'easy';
+    let score = 0;
+    let streak = 0;
+
+    function pickWord() {
+      const pool = WORD_BANKS[difficulty];
+      if (usedWords.size >= pool.length) usedWords.clear();
+
+      let word;
+      do {
+        word = pool[Math.floor(Math.random() * pool.length)].toUpperCase();
+      } while (usedWords.has(word) && usedWords.size < pool.length);
+
+      usedWords.add(word);
+      return word;
+    }
+
+    function createKeyboard() {
+      keyboard.innerHTML = '';
+      ALPHABET.forEach(letter => {
+        const btn = document.createElement('button');
+        btn.className = 'key';
+        btn.textContent = letter;
+        btn.setAttribute('data-letter', letter);
+        btn.addEventListener('click', () => handleGuess(letter));
+        keyboard.appendChild(btn);
+      });
+    }
+
+    function renderWord() {
+      wordDisplay.innerHTML = '';
+
+      selectedWord.split('').forEach(char => {
+        const slot = document.createElement('div');
+
+        if (char === ' ') {
+          slot.className = 'space-slot';
+          wordDisplay.appendChild(slot);
+          return;
+        }
+
+        slot.className = 'letter-slot';
+        slot.textContent = guessedLetters.has(char) || (gameOver && wrongLetters.size >= MAX_WRONG) ? char : '';
+        wordDisplay.appendChild(slot);
+      });
+    }
+
+    function updateStats() {
+      const wrong = wrongLetters.size;
+      const lives = Math.max(0, MAX_WRONG - wrong);
+      wrongCount.textContent = `${wrong} / ${MAX_WRONG}`;
+      livesLeft.textContent = lives;
+      scoreEl.textContent = score;
+      streakEl.textContent = streak;
+
+      parts.forEach((part, index) => {
+        part.classList.toggle('hidden', index >= wrong);
+      });
+
+      trapPanel.classList.toggle('danger-mode', lives <= 2 && !gameOver);
+      statusText.textContent = gameOver ? 'LOCKED' : lives <= 2 ? 'DANGER' : 'ACTIVE';
+    }
+
+    function updateKeyboard(letter, isCorrect) {
+      const btn = keyboard.querySelector(`[data-letter="${letter}"]`);
+      if (!btn) return;
+      btn.disabled = true;
+      btn.classList.add(isCorrect ? 'correct' : 'wrong');
+    }
+
+    function getUniqueLetters() {
+      return [...new Set(selectedWord.replace(/\s/g, '').split(''))];
+    }
+
+    function checkWin() {
+      return getUniqueLetters().every(letter => guessedLetters.has(letter));
+    }
+
+    function calculateWinScore() {
+      const difficultyBonus = difficulty === 'hard' ? 300 : difficulty === 'normal' ? 200 : 100;
+      const livesBonus = (MAX_WRONG - wrongLetters.size) * 50;
+      const wordBonus = selectedWord.length * 10;
+      return difficultyBonus + livesBonus + wordBonus;
+    }
+
+    function shakeGame() {
+      gameShell.classList.remove('shake');
+      void gameShell.offsetWidth;
+      gameShell.classList.add('shake');
+    }
+
+    function showEndOverlay(won) {
+      endOverlay.classList.add('show');
+      endOverlay.setAttribute('aria-hidden', 'false');
+      endCard.className = `end-card ${won ? 'win' : 'lose'}`;
+
+      if (won) {
+        const roundScore = calculateWinScore();
+        score += roundScore;
+        streak += 1;
+        updateStats();
+        endKicker.textContent = 'System Clear';
+        endTitle.textContent = 'You Escaped';
+        endText.textContent = `You beat the trap and banked ${roundScore} points. Keep the streak alive.`;
+        endWord.textContent = `Solved Word: ${selectedWord}`;
+      } else {
+        streak = 0;
+        updateStats();
+        document.body.classList.remove('screen-flash');
+        void document.body.offsetWidth;
+        document.body.classList.add('screen-flash');
+        endKicker.textContent = 'Critical Failure';
+        endTitle.textContent = 'Trap Sprung';
+        endText.textContent = 'Too many bad guesses. The gallows finished, the lights died, and the trap closed on you.';
+        endWord.textContent = `The Word Was: ${selectedWord}`;
+      }
+    }
+
+    function hideEndOverlay() {
+      endOverlay.classList.remove('show');
+      endOverlay.setAttribute('aria-hidden', 'true');
+    }
+
+    function endGame(won) {
+      gameOver = true;
+      Array.from(keyboard.querySelectorAll('.key')).forEach(btn => {
+        btn.disabled = true;
+      });
+
+      renderWord();
+
+      if (won) {
+        message.textContent = 'You Escaped!';
+        message.className = 'message win';
+        showEndOverlay(true);
+      } else {
+        message.textContent = `Trap Sprung! The word was ${selectedWord}.`;
+        message.className = 'message lose';
+        setTimeout(() => showEndOverlay(false), 420);
+      }
+
+      updateStats();
+    }
+
+    function handleGuess(letter) {
+      if (gameOver || guessedLetters.has(letter) || wrongLetters.has(letter)) return;
+
+      if (selectedWord.includes(letter)) {
+        guessedLetters.add(letter);
+        updateKeyboard(letter, true);
+        renderWord();
+
+        if (checkWin()) {
+          endGame(true);
+        } else {
+          message.textContent = `${letter} is in the word.`;
+          message.className = 'message';
+        }
+      } else {
+        wrongLetters.add(letter);
+        updateKeyboard(letter, false);
+        updateStats();
+        shakeGame();
+
+        if (wrongLetters.size >= MAX_WRONG) {
+          endGame(false);
+        } else {
+          const lives = MAX_WRONG - wrongLetters.size;
+          message.textContent = lives <= 2 ? `${letter} missed. The trap is nearly closed.` : `${letter} is not in the word.`;
+          message.className = lives <= 2 ? 'message warning' : 'message';
+        }
+      }
+    }
+
+    function setDifficulty(nextDifficulty) {
+      difficulty = nextDifficulty;
+      difficultyButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.difficulty === difficulty);
+      });
+      difficultyLabel.textContent = `${difficulty.toUpperCase()} MODE`;
+      startGame();
+    }
+
+    function startGame() {
+      selectedWord = pickWord();
+      guessedLetters = new Set();
+      wrongLetters = new Set();
+      gameOver = false;
+      hideEndOverlay();
+      trapPanel.classList.remove('danger-mode');
+      message.textContent = 'Pick a letter to start.';
+      message.className = 'message';
+      createKeyboard();
+      renderWord();
+      updateStats();
+    }
+
+    document.addEventListener('keydown', (event) => {
+      const letter = event.key.toUpperCase();
+      if (/^[A-Z]$/.test(letter)) {
+        handleGuess(letter);
+      }
+    });
+
+    difficultyButtons.forEach(btn => {
+      btn.addEventListener('click', () => setDifficulty(btn.dataset.difficulty));
+    });
+
+    newGameBtn.addEventListener('click', startGame);
+    overlayNewGameBtn.addEventListener('click', startGame);
+
+    startGame();
+  </script>
+</body>
+</html>
