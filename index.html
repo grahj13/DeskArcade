@@ -16,12 +16,8 @@
       --bg: #071106;
       --bg-deep: #020402;
       --panel: rgba(7, 24, 8, 0.94);
-      --panel-hover: rgba(10, 32, 11, 0.98);
       --border: rgba(140,255,106,0.22);
       --border-strong: rgba(140,255,106,0.46);
-      --frame-glow:
-        0 0 18px rgba(140,255,106,0.08),
-        0 0 36px rgba(140,255,106,0.05);
       --radius-large: 18px;
       --radius-medium: 14px;
       --radius-small: 10px;
@@ -45,6 +41,23 @@
       padding: 24px;
     }
 
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(140,255,106,0.025),
+          rgba(140,255,106,0.025) 1px,
+          transparent 2px,
+          transparent 4px
+        );
+      opacity: 0.35;
+      z-index: 999;
+    }
+
     .page {
       max-width: 1180px;
       margin: 0 auto;
@@ -53,7 +66,9 @@
     .frame {
       border: 1px solid var(--border);
       background: rgba(4, 14, 5, 0.72);
-      box-shadow: var(--frame-glow);
+      box-shadow:
+        0 0 18px rgba(140,255,106,0.08),
+        0 0 36px rgba(140,255,106,0.05);
       padding: 18px;
       border-radius: var(--radius-large);
     }
@@ -61,9 +76,9 @@
     .hero {
       position: relative;
       text-align: center;
-      margin-bottom: 16px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid rgba(140,255,106,0.10);
+      margin-bottom: 20px;
+      padding: 18px 12px 20px;
+      border-bottom: 1px solid rgba(140,255,106,0.12);
       overflow: hidden;
     }
 
@@ -71,7 +86,7 @@
       content: "";
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at center, rgba(140,255,106,0.08) 0%, transparent 65%);
+      background: radial-gradient(circle at center, rgba(140,255,106,0.10), transparent 65%);
       pointer-events: none;
     }
 
@@ -82,13 +97,13 @@
 
     .main-logo {
       display: block;
-      max-width: 420px;
+      max-width: 430px;
       width: 100%;
       height: auto;
       margin: 0 auto 14px;
       filter:
-        drop-shadow(0 0 10px rgba(140,255,106,0.25))
-        drop-shadow(0 0 22px rgba(140,255,106,0.12));
+        drop-shadow(0 0 10px rgba(140,255,106,0.28))
+        drop-shadow(0 0 24px rgba(140,255,106,0.14));
     }
 
     .subline {
@@ -98,71 +113,184 @@
       text-shadow: 0 0 10px rgba(140,255,106,0.12);
     }
 
+    .section-title {
+      margin: 0 0 14px;
+      font-size: 18px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
     .games-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
     }
 
     .game-card {
+      position: relative;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      min-height: 150px;
-      padding: 14px;
+      min-height: 230px;
+      padding: 18px;
       text-decoration: none;
       color: var(--green);
       border: 1px solid var(--border);
       border-radius: var(--radius-medium);
-      background: var(--panel);
+      background:
+        linear-gradient(180deg, rgba(10,32,11,0.96), rgba(3,11,4,0.96));
       box-shadow:
-        inset 0 0 18px rgba(140,255,106,0.03),
-        0 0 12px rgba(140,255,106,0.10);
+        inset 0 0 22px rgba(140,255,106,0.04),
+        0 0 16px rgba(140,255,106,0.10);
+      overflow: hidden;
       transition:
         transform 0.18s ease,
         border-color 0.18s ease,
-        background 0.18s ease;
+        box-shadow 0.18s ease;
+    }
+
+    .game-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(140,255,106,0.10), transparent 55%);
+      opacity: 0.7;
+      pointer-events: none;
     }
 
     .game-card:hover {
-      transform: translateY(-4px);
-      background: var(--panel-hover);
+      transform: translateY(-5px);
       border-color: var(--border-strong);
-      animation: tilePulse 1.4s ease-in-out infinite;
+      box-shadow:
+        inset 0 0 24px rgba(140,255,106,0.06),
+        0 0 22px rgba(140,255,106,0.22);
+    }
+
+    .game-logo-wrap,
+    .game-info,
+    .play-chip {
+      position: relative;
+      z-index: 1;
     }
 
     .game-logo-wrap {
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 78px;
-      width: 100%;
-      padding: 8px;
-      border-radius: var(--radius-small);
+      min-height: 82px;
+      margin-bottom: 14px;
     }
 
     .game-logo {
       max-width: 100%;
-      max-height: 58px;
-      width: auto;
-      height: auto;
+      max-height: 68px;
       object-fit: contain;
-      display: block;
-      filter: drop-shadow(0 0 8px rgba(140,255,106,0.14));
+      filter: drop-shadow(0 0 10px rgba(140,255,106,0.18));
       transition: transform 0.18s ease;
     }
 
     .game-card:hover .game-logo {
-      transform: scale(1.04);
+      transform: scale(1.05);
     }
 
-    .logo-large .game-logo {
-      max-height: 72px;
+    .game-info {
+      flex: 1;
+      text-align: center;
     }
 
-    .logo-medium .game-logo {
-      max-height: 64px;
+    .game-info h2 {
+      margin: 0 0 8px;
+      font-size: 17px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .game-info p {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--green-soft);
+      opacity: 0.82;
+    }
+
+    .play-chip {
+      align-self: center;
+      margin-top: 16px;
+      padding: 7px 14px;
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--green);
+      background: rgba(0,0,0,0.28);
+    }
+
+    .game-card:hover .play-chip {
+      background: var(--green);
+      color: #061206;
+    }
+
+    .feedback-panel {
+      margin-top: 24px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-medium);
+      background: var(--panel);
+      box-shadow:
+        inset 0 0 18px rgba(140,255,106,0.03),
+        0 0 12px rgba(140,255,106,0.10);
+    }
+
+    .feedback-panel h2 {
+      margin: 0 0 14px;
+      font-size: 20px;
+      text-transform: uppercase;
+    }
+
+    .feedback-panel label {
+      display: block;
+      margin: 12px 0 6px;
+      font-size: 13px;
+      color: var(--green-soft);
+    }
+
+    #gameSelect,
+    #feedbackBox {
+      width: 100%;
+      padding: 11px;
+      background: #001507;
+      color: var(--green);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-small);
+      font-family: inherit;
+    }
+
+    #feedbackBox {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    #sendFeedbackBtn {
+      margin-top: 14px;
+      padding: 11px 16px;
+      background: var(--green);
+      color: #061206;
+      border: none;
+      border-radius: var(--radius-small);
+      font-family: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    #sendFeedbackBtn:hover {
+      filter: brightness(1.15);
+    }
+
+    #feedbackStatus {
+      margin: 12px 0 0;
+      font-size: 13px;
+      color: var(--green-soft);
     }
 
     .footer {
@@ -172,90 +300,6 @@
       color: rgba(200,255,216,0.72);
     }
 
-    @keyframes tilePulse {
-      0% {
-        box-shadow:
-          inset 0 0 18px rgba(140,255,106,0.04),
-          0 0 10px rgba(140,255,106,0.14),
-          0 0 18px rgba(140,255,106,0.10);
-      }
-      50% {
-        box-shadow:
-          inset 0 0 22px rgba(140,255,106,0.05),
-          0 0 18px rgba(140,255,106,0.22),
-          0 0 30px rgba(140,255,106,0.14);
-      }
-      100% {
-        box-shadow:
-          inset 0 0 18px rgba(140,255,106,0.04),
-          0 0 12px rgba(140,255,106,0.16),
-          0 0 24px rgba(140,255,106,0.11);
-      }
-    }
-
-.feedback-panel {
-  margin-top: 24px;
-  padding: 18px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-medium);
-  background: var(--panel);
-  box-shadow:
-    inset 0 0 18px rgba(140,255,106,0.03),
-    0 0 12px rgba(140,255,106,0.10);
-}
-
-.feedback-panel h2 {
-  margin: 0 0 14px;
-  font-size: 20px;
-  text-transform: uppercase;
-}
-
-.feedback-panel label {
-  display: block;
-  margin: 12px 0 6px;
-  font-size: 13px;
-  color: var(--green-soft);
-}
-
-#gameSelect,
-#feedbackBox {
-  width: 100%;
-  padding: 11px;
-  background: #001507;
-  color: var(--green);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-small);
-  font-family: inherit;
-}
-
-#feedbackBox {
-  min-height: 110px;
-  resize: vertical;
-}
-
-#sendFeedbackBtn {
-  margin-top: 14px;
-  padding: 11px 16px;
-  background: var(--green);
-  color: #061206;
-  border: none;
-  border-radius: var(--radius-small);
-  font-family: inherit;
-  font-weight: 700;
-  cursor: pointer;
-  text-transform: uppercase;
-}
-
-#sendFeedbackBtn:hover {
-  filter: brightness(1.15);
-}
-
-#feedbackStatus {
-  margin: 12px 0 0;
-  font-size: 13px;
-  color: var(--green-soft);
-}
-    
     @media (max-width: 640px) {
       body {
         padding: 14px;
@@ -270,39 +314,17 @@
         max-width: 320px;
       }
 
-      .hero {
-        margin-bottom: 14px;
-        padding-bottom: 12px;
-      }
-
       .games-grid {
-        gap: 12px;
+        grid-template-columns: 1fr;
       }
 
       .game-card {
-        min-height: 140px;
-        padding: 12px;
-        border-radius: 12px;
-      }
-
-      .game-logo-wrap {
-        min-height: 70px;
-      }
-
-      .game-logo {
-        max-height: 52px;
-      }
-
-      .logo-large .game-logo {
-        max-height: 64px;
-      }
-
-      .logo-medium .game-logo {
-        max-height: 58px;
+        min-height: 220px;
       }
     }
   </style>
 </head>
+
 <body>
   <main class="page">
     <div class="frame">
@@ -312,190 +334,276 @@
         <p class="subline">Pick a game. Waste a few minutes.</p>
       </section>
 
+      <h1 class="section-title">Available Games</h1>
+
       <section class="games-grid">
-        <a class="game-card logo-large" href="games/keystorm/index.html" aria-label="Play KeyStorm">
+
+        <a class="game-card" href="games/keystorm/index.html" aria-label="Play KeyStorm">
           <div class="game-logo-wrap">
             <img src="games/keystorm/keystorm-logo.png" alt="KeyStorm logo" class="game-logo">
           </div>
+          <div class="game-info">
+            <h2>KeyStorm</h2>
+            <p>Type fast, clear the words, and keep your streak alive under pressure.</p>
+          </div>
+          <span class="play-chip">Play</span>
         </a>
 
         <a class="game-card" href="games/snake/index.html" aria-label="Play Grid Viper">
           <div class="game-logo-wrap">
             <img src="games/snake/gridviperlogov2.png" alt="Grid Viper logo" class="game-logo">
           </div>
+          <div class="game-info">
+            <h2>Grid Viper</h2>
+            <p>Classic snake-style grid survival. Catch the node, avoid the crash.</p>
+          </div>
+          <span class="play-chip">Play</span>
         </a>
 
         <a class="game-card" href="games/shockline/index.html" aria-label="Play Shockline">
           <div class="game-logo-wrap">
             <img src="games/shockline/shocklinelogo.png" alt="Shockline logo" class="game-logo">
           </div>
+          <div class="game-info">
+            <h2>Shockline</h2>
+            <p>React quickly, follow the signal, and survive the electric chaos.</p>
+          </div>
+          <span class="play-chip">Play</span>
         </a>
 
         <a class="game-card" href="games/neonreels/index.html" aria-label="Play NeonReels">
           <div class="game-logo-wrap">
             <img src="games/neonreels/neonreelslogo.png" alt="NeonReels logo" class="game-logo">
           </div>
+          <div class="game-info">
+            <h2>NeonReels</h2>
+            <p>A quick neon slot-style game built for short bursts and lucky spins.</p>
+          </div>
+          <span class="play-chip">Play</span>
         </a>
 
         <a class="game-card" href="games/reacto/index.html" aria-label="Play Reacto">
           <div class="game-logo-wrap">
             <img src="games/reacto/reactologo.png" alt="Reacto logo" class="game-logo">
           </div>
+          <div class="game-info">
+            <h2>Reacto</h2>
+            <p>Test your reaction speed. Wait, focus, and hit at the perfect moment.</p>
+          </div>
+          <span class="play-chip">Play</span>
         </a>
 
-        <a class="game-card logo-large" href="games/perfect10/index.html" aria-label="Play Perfect 10">
+        <a class="game-card" href="games/perfect10/index.html" aria-label="Play Perfect 10">
           <div class="game-logo-wrap">
             <img src="games/perfect10/perfect10logo.png" alt="Perfect 10 logo" class="game-logo">
           </div>
+          <div class="game-info">
+            <h2>Perfect 10</h2>
+            <p>Stop the timer as close to ten seconds as you can. Precision wins.</p>
+          </div>
+          <span class="play-chip">Play</span>
         </a>
 
         <a class="game-card" href="games/lanedash/index.html" aria-label="Play Lane Dash">
           <div class="game-logo-wrap">
             <img src="games/lanedash/lanedashlogo.png" alt="Lane Dash logo" class="game-logo">
           </div>
+          <div class="game-info">
+            <h2>Lane Dash</h2>
+            <p>Dodge, move, and survive the lanes as the pressure keeps climbing.</p>
+          </div>
+          <span class="play-chip">Play</span>
         </a>
 
-        <a class="game-card logo-medium" href="games/neonsearch/index.html" aria-label="Play Neon Search">
+        <a class="game-card" href="games/neonsearch/index.html" aria-label="Play Neon Search">
           <div class="game-logo-wrap">
             <img src="games/neonsearch/neonsearchlogo.png" alt="Neon Search logo" class="game-logo">
           </div>
+          <div class="game-info">
+            <h2>Neon Search</h2>
+            <p>Scan the grid, spot the target, and beat the clock.</p>
+          </div>
+          <span class="play-chip">Play</span>
         </a>
 
-<a class="game-card logo-large" href="games/fracture/index.html" aria-label="Play Fracture">
-         <div class="game-logo-wrap">
+        <a class="game-card" href="games/fracture/index.html" aria-label="Play Fracture">
+          <div class="game-logo-wrap">
             <img src="games/fracture/fracturelogo.png" alt="Fracture logo" class="game-logo">
           </div>
-          </a>
-        
-        <a class="game-card logo-large" href="games/signalscan/index.html" aria-label="Play Signal Scan">
+          <div class="game-info">
+            <h2>Fracture</h2>
+            <p>Break through the pattern, react fast, and stay in control.</p>
+          </div>
+          <span class="play-chip">Play</span>
+        </a>
+
+        <a class="game-card" href="games/signalscan/index.html" aria-label="Play Signal Scan">
           <div class="game-logo-wrap">
             <img src="games/signalscan/signalscanlogo.png" alt="Signal Scan logo" class="game-logo">
           </div>
+          <div class="game-info">
+            <h2>Signal Scan</h2>
+            <p>Find the correct signal, ignore the noise, and lock on fast.</p>
+          </div>
+          <span class="play-chip">Play</span>
         </a>
 
-            <a class="game-card logo-large" href="games/wordforge/index.html" aria-label="Play Word Forge">
+        <a class="game-card" href="games/wordforge/index.html" aria-label="Play Word Forge">
           <div class="game-logo-wrap">
             <img src="games/wordforge/wordforgelogo.png" alt="Word Forge logo" class="game-logo">
           </div>
+          <div class="game-info">
+            <h2>Word Forge</h2>
+            <p>Build words, sharpen your typing, and forge points from quick thinking.</p>
+          </div>
+          <span class="play-chip">Play</span>
         </a>
 
-                    <a class="game-card logo-large" href="games/runexe/index.html" aria-label="Play Run.exe">
+        <a class="game-card" href="games/runexe/index.html" aria-label="Play Run.exe">
           <div class="game-logo-wrap">
             <img src="games/runexe/runexelogo.png" alt="Run.exe logo" class="game-logo">
           </div>
+          <div class="game-info">
+            <h2>Run.exe</h2>
+            <p>Dash through digital danger in a fast office-friendly runner.</p>
+          </div>
+          <span class="play-chip">Play</span>
         </a>
 
-        <a class="game-card logo-large" href="games/perfecttrace/index.html" aria-label="Play Perfect Trace">
+        <a class="game-card" href="games/perfecttrace/index.html" aria-label="Play Perfect Trace">
           <div class="game-logo-wrap">
             <img src="games/perfecttrace/perfecttracelogo.png" alt="Perfect Trace logo" class="game-logo">
           </div>
+          <div class="game-info">
+            <h2>Perfect Trace</h2>
+            <p>Follow the line, stay steady, and prove your control is sharp.</p>
+          </div>
+          <span class="play-chip">Play</span>
         </a>
 
-                <a class="game-card logo-large" href="games/pixelglide/index.html" aria-label="Play Pixel Glide">
+        <a class="game-card" href="games/pixelglide/index.html" aria-label="Play Pixel Glide">
           <div class="game-logo-wrap">
             <img src="games/pixelglide/pixelglidelogo.png" alt="Pixel Glide logo" class="game-logo">
           </div>
+          <div class="game-info">
+            <h2>Pixel Glide</h2>
+            <p>Glide through tight gaps with smooth timing and clean movement.</p>
+          </div>
+          <span class="play-chip">Play</span>
         </a>
 
-                <a class="game-card logo-large" href="games/wordtrap/index.html" aria-label="Play Word Trap">
+        <a class="game-card" href="games/wordtrap/index.html" aria-label="Play Word Trap">
           <div class="game-logo-wrap">
             <img src="games/wordtrap/wordtraplogo.png" alt="Word Trap logo" class="game-logo">
           </div>
-        </a>
-
-             <a class="game-card logo-large" href="games/ghostpixel/index.html" aria-label="Ghost Pixel">
-          <div class="game-logo-wrap">
-            <img src="games/ghostpixel/ghostpixellogo.png" alt="Ghost Pixel" class="game-logo">
+          <div class="game-info">
+            <h2>Word Trap</h2>
+            <p>A neon hangman-style word game. Guess smart or get trapped.</p>
           </div>
+          <span class="play-chip">Play</span>
         </a>
-        
+
+        <a class="game-card" href="games/ghostpixel/index.html" aria-label="Play Ghost Pixel">
+          <div class="game-logo-wrap">
+            <img src="games/ghostpixel/ghostpixellogo.png" alt="Ghost Pixel logo" class="game-logo">
+          </div>
+          <div class="game-info">
+            <h2>Ghost Pixel</h2>
+            <p>Track hidden movement, spot the ghost, and react before it vanishes.</p>
+          </div>
+          <span class="play-chip">Play</span>
+        </a>
+
       </section>
-    <section class="feedback-panel">
-  <h2>Feedback & Suggestions</h2>
 
-  <label for="gameSelect">Game</label>
-<select id="gameSelect">
-  <option value="">Select a game</option>
-  <option value="General">General</option>
-  <option value="DeskArcade Home">Home Page</option>
-  <option value="KeyStorm">KeyStorm</option>
-  <option value="Grid Viper">Grid Viper</option>
-  <option value="Shockline">Shockline</option>
-  <option value="NeonReels">NeonReels</option>
-  <option value="Reacto">Reacto</option>
-  <option value="Perfect 10">Perfect 10</option>
-  <option value="Lane Dash">Lane Dash</option>
-  <option value="Neon Search">Neon Search</option>
-  <option value="Fracture">Fracture</option>
-  <option value="Signal Scan">Signal Scan</option>
-  <option value="Word Forge">Word Forge</option>
-  <option value="Run.exe">Run.exe</option>
-  <option value="Perfect Trace">Perfect Trace</option>
-  <option value="Pixel Glide">Pixel Glide</option>
-  <option value="Word Trap">Word Trap</option>
-  <option value="Ghost Pixel">Ghost Pixel</option>
-</select>
+      <section class="feedback-panel">
+        <h2>Feedback & Suggestions</h2>
 
-  <label for="feedbackBox">Feedback/Suggestions</label>
-  <textarea id="feedbackBox" placeholder="Drop your feedback here or suggestions here..."></textarea>
+        <label for="gameSelect">Game</label>
+        <select id="gameSelect">
+          <option value="">Select a game</option>
+          <option value="General">General</option>
+          <option value="DeskArcade Home">Home Page</option>
+          <option value="KeyStorm">KeyStorm</option>
+          <option value="Grid Viper">Grid Viper</option>
+          <option value="Shockline">Shockline</option>
+          <option value="NeonReels">NeonReels</option>
+          <option value="Reacto">Reacto</option>
+          <option value="Perfect 10">Perfect 10</option>
+          <option value="Lane Dash">Lane Dash</option>
+          <option value="Neon Search">Neon Search</option>
+          <option value="Fracture">Fracture</option>
+          <option value="Signal Scan">Signal Scan</option>
+          <option value="Word Forge">Word Forge</option>
+          <option value="Run.exe">Run.exe</option>
+          <option value="Perfect Trace">Perfect Trace</option>
+          <option value="Pixel Glide">Pixel Glide</option>
+          <option value="Word Trap">Word Trap</option>
+          <option value="Ghost Pixel">Ghost Pixel</option>
+        </select>
 
-  <button id="sendFeedbackBtn">Send Feedback/Suggestion</button>
-  <p id="feedbackStatus"></p>
-</section>
+        <label for="feedbackBox">Feedback/Suggestions</label>
+        <textarea id="feedbackBox" placeholder="Drop your feedback or suggestions here..."></textarea>
+
+        <button id="sendFeedbackBtn">Send Feedback/Suggestion</button>
+        <p id="feedbackStatus"></p>
+      </section>
+
       <footer class="footer">
         Built by Jason
       </footer>
 
     </div>
   </main>
+
   <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxKN2_C2XJU8ozndhiZQmYYjoRzwrytxe3LcxsEjs6AeVIL_LY0K9fcUfN0sOJzJ2pC/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxKN2_C2XJU8ozndhiZQmYYjoRzwrytxe3LcxsEjs6AeVIL_LY0K9fcUfN0sOJzJ2pC/exec";
 
-  document.getElementById("sendFeedbackBtn").addEventListener("click", async () => {
-    const game = document.getElementById("gameSelect").value;
-    const feedback = document.getElementById("feedbackBox").value.trim();
-    const status = document.getElementById("feedbackStatus");
+    document.getElementById("sendFeedbackBtn").addEventListener("click", async () => {
+      const game = document.getElementById("gameSelect").value;
+      const feedback = document.getElementById("feedbackBox").value.trim();
+      const status = document.getElementById("feedbackStatus");
 
-    if (!game) {
-      status.textContent = "Pick a game first.";
-      return;
-    }
-
-    if (!feedback) {
-      status.textContent = "Write something first.";
-      return;
-    }
-
-    status.textContent = "Sending...";
-
-    try {
-      const response = await fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8"
-        },
-        body: JSON.stringify({
-          game: game,
-          page: document.title,
-          feedback: feedback,
-          userAgent: navigator.userAgent
-        })
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        document.getElementById("feedbackBox").value = "";
-        status.textContent = "Thanks. Feedback sent.";
-      } else {
-        status.textContent = "Failed to send feedback.";
-        console.error(result.error);
+      if (!game) {
+        status.textContent = "Pick a game first.";
+        return;
       }
-    } catch (error) {
-      status.textContent = "Failed to send feedback.";
-      console.error(error);
-    }
-  });
-</script>
+
+      if (!feedback) {
+        status.textContent = "Write something first.";
+        return;
+      }
+
+      status.textContent = "Sending...";
+
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify({
+            game: game,
+            page: document.title,
+            feedback: feedback,
+            userAgent: navigator.userAgent
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          document.getElementById("feedbackBox").value = "";
+          status.textContent = "Thanks. Feedback sent.";
+        } else {
+          status.textContent = "Failed to send feedback.";
+          console.error(result.error);
+        }
+      } catch (error) {
+        status.textContent = "Failed to send feedback.";
+        console.error(error);
+      }
+    });
+  </script>
 </body>
 </html>
