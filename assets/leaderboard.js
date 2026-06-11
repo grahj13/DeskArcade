@@ -3,7 +3,7 @@
  *
  * Usage in a game page:
  *   <link rel="stylesheet" href="../../assets/leaderboard.css">
- *   <script src="../../assets/leaderboard.js"></script>
+ *   <script src="../../assets/leaderboard.js?v=3"></script>
  *
  *   DeskArcadeLeaderboard.mountPanel(document.getElementById('lbMount'), 'snake');
  *
@@ -31,8 +31,6 @@
     ghostpixel:   { label: 'Ghost Pixel',   higher: true,  format: v => String(v) }
   };
 
-  let apiAvailable = null;
-
   function formatMs(ms) {
     const s = Math.floor(ms / 1000);
     const m = Math.floor(s / 60);
@@ -47,27 +45,13 @@
     return !isLocalPreview();
   }
 
-  async function checkApi() {
-    if (apiAvailable !== null) return apiAvailable;
-    if (!isEnabled()) {
-      apiAvailable = false;
-      return false;
-    }
-    try {
-      const res = await fetch(API + '?game=snake&board=default');
-      apiAvailable = res.ok || res.status === 400;
-    } catch (_) {
-      apiAvailable = false;
-    }
-    return apiAvailable;
-  }
-
   async function apiPost(body) {
     const res = await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
+    if (!res.ok) throw new Error('leaderboard request failed');
     return res.json();
   }
 
@@ -78,7 +62,7 @@
   }
 
   async function fetchTop10(gameSlug, boardKey = 'default') {
-    if (!(await checkApi())) return [];
+    if (!isEnabled()) return [];
 
     const meta = GAME_META[gameSlug];
     if (!meta) return [];
@@ -89,7 +73,7 @@
     });
 
     const res = await fetch(API + '?' + params.toString());
-    if (!res.ok) return [];
+    if (!res.ok) throw new Error('leaderboard unavailable');
 
     const data = await res.json();
     return Array.isArray(data.entries) ? data.entries : [];
@@ -97,16 +81,19 @@
 
   async function qualifies(gameSlug, score, boardKey = 'default') {
     const meta = GAME_META[gameSlug];
-    if (!meta || !(await checkApi())) return false;
+    if (!meta || !isEnabled()) return false;
 
-    const result = await apiPost({
-      action: 'qualifies',
-      game: gameSlug,
-      boardKey,
-      score
-    });
-
-    return result.qualifies === true;
+    try {
+      const result = await apiPost({
+        action: 'qualifies',
+        game: gameSlug,
+        boardKey,
+        score
+      });
+      return result.qualifies === true;
+    } catch (_) {
+      return false;
+    }
   }
 
   function ensureModal() {
@@ -183,17 +170,21 @@
         }
 
         submitBtn.disabled = true;
-        const result = await apiPost({
-          action: 'submit',
-          game: gameSlug,
-          boardKey,
-          initials,
-          score
-        });
-        submitBtn.disabled = false;
-
-        if (result && result.ok) close({ initials, score });
-        else close(null);
+        try {
+          const result = await apiPost({
+            action: 'submit',
+            game: gameSlug,
+            boardKey,
+            initials,
+            score
+          });
+          if (result && result.ok) close({ initials, score });
+          else close(null);
+        } catch (_) {
+          close(null);
+        } finally {
+          submitBtn.disabled = false;
+        }
       };
     });
   }
@@ -208,7 +199,7 @@
           <div class="da-lb-head">
             <span class="da-lb-title">Top 10</span>
           </div>
-          <div class="da-lb-offline">Leaderboard offline — deploy to Vercel with Upstash to enable.</div>
+          <div class="da-lb-offline">Leaderboard unavailable — refresh the page or try again shortly.</div>
         </div>`;
       return;
     }
@@ -242,10 +233,15 @@
     if (!container) return;
     container.dataset.lbGame = gameSlug;
     container.dataset.lbBoard = boardKey;
+
+    if (!isEnabled()) {
+      renderPanel(container, [], gameSlug, true);
+      return;
+    }
+
     try {
-      const offline = !(await checkApi());
-      const rows = offline ? [] : await fetchTop10(gameSlug, boardKey);
-      renderPanel(container, rows, gameSlug, offline);
+      const rows = await fetchTop10(gameSlug, boardKey);
+      renderPanel(container, rows, gameSlug, false);
     } catch (_) {
       renderPanel(container, [], gameSlug, true);
     }
@@ -258,7 +254,7 @@
 
   async function trySubmit(gameSlug, rawScore, options = {}) {
     const meta = GAME_META[gameSlug];
-    if (!meta || !(await checkApi())) return false;
+    if (!meta || !isEnabled()) return false;
 
     const boardKey = options.boardKey || 'default';
     const score = normalizeScore(gameSlug, rawScore, meta);

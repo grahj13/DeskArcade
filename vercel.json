@@ -3,6 +3,12 @@
   "trailingSlash": false,
   "headers": [
     {
+      "source": "/assets/leaderboard.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }
+      ]
+    },
+    {
       "source": "/assets/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
