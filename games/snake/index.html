@@ -219,6 +219,10 @@
       animation: levelFlash 0.45s ease-in-out;
     }
 
+    .stat.score-pop {
+      animation: scorePop 0.35s ease-out;
+    }
+
     @keyframes levelFlash {
       0% { box-shadow: 0 0 0 rgba(251,191,36,0); }
       50% {
@@ -226,6 +230,19 @@
         box-shadow: 0 0 18px rgba(251,191,36,0.4);
       }
       100% { box-shadow: 0 0 0 rgba(251,191,36,0); }
+    }
+
+    @keyframes scorePop {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    .canvas-wrap.running {
+      box-shadow:
+        inset 0 2px 12px rgba(0,0,0,0.55),
+        0 0 0 1px var(--accent-border),
+        0 0 28px var(--accent-glow);
     }
 
     .stat-label {
@@ -432,7 +449,7 @@
             <div class="stat-value" id="score">0</div>
           </div>
           <div class="stat">
-            <div class="stat-label">Best</div>
+            <div class="stat-label" id="bestLabel">Best (Normal)</div>
             <div class="stat-value" id="best">0</div>
           </div>
           <div class="stat">
@@ -510,6 +527,8 @@
 
     const scoreEl = document.getElementById('score');
     const bestEl = document.getElementById('best');
+    const bestLabelEl = document.getElementById('bestLabel');
+    const scoreStat = scoreEl.closest('.stat');
     const speedEl = document.getElementById('speed');
     const messageEl = document.getElementById('message');
     const overlay = document.getElementById('overlay');
@@ -542,15 +561,39 @@ const homeBtn = document.getElementById('homeBtn');
     let direction;
     let nextDirection;
     let score;
-    let bestScore = Number(localStorage.getItem('gridViperBestScore') || 0);
+    let bestScore = 0;
     let gameLoop;
+    let renderLoop = null;
     let running = false;
     let paused = false;
     let gameOver = false;
     let currentDelay = difficultySettings.normal.baseDelay;
     let lastDisplayedLevel = 1;
+    let runStartedAt = 0;
+    let eatPopups = [];
+    const SOFT_OPEN_MS = 4500;
 
-    bestEl.textContent = bestScore;
+    function bestStorageKey(diff = difficultyEl.value) {
+      return `gridViperBest_${diff}`;
+    }
+
+    function loadBestScore(diff = difficultyEl.value) {
+      const stored = Number(localStorage.getItem(bestStorageKey(diff)) || 0);
+      const legacy = Number(localStorage.getItem('gridViperBestScore') || 0);
+      return Math.max(stored, legacy);
+    }
+
+    function saveBestScore() {
+      localStorage.setItem(bestStorageKey(difficultyEl.value), String(bestScore));
+    }
+
+    function syncBestForDifficulty() {
+      bestScore = loadBestScore();
+      bestEl.textContent = bestScore;
+      bestLabelEl.textContent = `Best (${difficultySettings[difficultyEl.value].label})`;
+    }
+
+    syncBestForDifficulty();
 
     function resetState() {
       snake = [
@@ -572,6 +615,20 @@ const homeBtn = document.getElementById('homeBtn');
       draw();
     }
 
+    function getSoftOpenProgress() {
+      if (!runStartedAt) return 1;
+      const elapsed = Date.now() - runStartedAt;
+      if (elapsed >= SOFT_OPEN_MS) return 1;
+      return elapsed / SOFT_OPEN_MS;
+    }
+
+    function getTickDelay() {
+      const progress = getSoftOpenProgress();
+      const eased = progress * progress;
+      const slowMult = 1.65 - eased * 0.65;
+      return Math.round(currentDelay * slowMult);
+    }
+
     function updateStats() {
       scoreEl.textContent = score;
       bestEl.textContent = bestScore;
@@ -586,6 +643,44 @@ const homeBtn = document.getElementById('homeBtn');
         messageEl.textContent = `SPEED ${speedLevel}`;
         flashLevel();
       }
+    }
+
+    function flashScore() {
+      scoreStat.classList.remove('score-pop');
+      void scoreStat.offsetWidth;
+      scoreStat.classList.add('score-pop');
+    }
+
+    function startRenderLoop() {
+      cancelAnimationFrame(renderLoop);
+      const frame = () => {
+        if (running && !paused) {
+          decayPopups();
+          draw();
+          renderLoop = requestAnimationFrame(frame);
+        }
+      };
+      renderLoop = requestAnimationFrame(frame);
+    }
+
+    function stopRenderLoop() {
+      cancelAnimationFrame(renderLoop);
+      renderLoop = null;
+    }
+
+    function decayPopups() {
+      eatPopups = eatPopups
+        .map(p => ({ ...p, life: p.life - 0.04 }))
+        .filter(p => p.life > 0);
+    }
+
+    function addEatPopup(x, y) {
+      eatPopups.push({
+        x: x * gridSize + gridSize / 2,
+        y: y * gridSize + gridSize / 2,
+        life: 1,
+        text: '+10'
+      });
     }
 
     function flashLevel() {
@@ -617,9 +712,13 @@ const homeBtn = document.getElementById('homeBtn');
 
       running = true;
       paused = false;
+      runStartedAt = Date.now();
+      eatPopups = [];
+      canvasWrap.classList.add('running');
       hideOverlay();
       messageEl.textContent = 'Hunt the data node.';
       clearTimeout(gameLoop);
+      startRenderLoop();
       tick();
     }
 
@@ -629,17 +728,21 @@ const homeBtn = document.getElementById('homeBtn');
 
       if (paused) {
         clearTimeout(gameLoop);
+        stopRenderLoop();
+        draw();
         messageEl.textContent = 'Paused.';
         showOverlay('Paused', 'Take a breath. Then get back to it.', 'Resume');
       } else {
         hideOverlay();
         messageEl.textContent = 'Back in the grid.';
+        startRenderLoop();
         tick();
       }
     }
 
     function restartGame() {
       clearTimeout(gameLoop);
+      stopRenderLoop();
       resetState();
       startGame();
     }
@@ -647,8 +750,7 @@ const homeBtn = document.getElementById('homeBtn');
     function tick() {
       if (!running || paused || gameOver) return;
       update();
-      draw();
-      gameLoop = setTimeout(tick, currentDelay);
+      gameLoop = setTimeout(tick, getTickDelay());
     }
 
     function update() {
@@ -671,6 +773,8 @@ const homeBtn = document.getElementById('homeBtn');
 
       if (head.x === food.x && head.y === food.y) {
         score += 10;
+        addEatPopup(food.x, food.y);
+        flashScore();
         messageEl.textContent = randomEatMessage();
         food = createFood();
         increaseSpeed();
@@ -690,7 +794,7 @@ const homeBtn = document.getElementById('homeBtn');
     function updateBestScore() {
       if (score > bestScore) {
         bestScore = score;
-        localStorage.setItem('gridViperBestScore', String(bestScore));
+        saveBestScore();
       }
     }
 
@@ -698,6 +802,8 @@ const homeBtn = document.getElementById('homeBtn');
       gameOver = true;
       running = false;
       clearTimeout(gameLoop);
+      stopRenderLoop();
+      canvasWrap.classList.remove('running');
       shakeScreen();
       updateBestScore();
       updateStats();
@@ -723,13 +829,20 @@ const homeBtn = document.getElementById('homeBtn');
       drawBackground();
       drawFood();
       drawSnake();
+      drawEatPopups();
     }
 
     function drawBackground() {
-      ctx.fillStyle = '#0c0c17';
+      const grad = ctx.createRadialGradient(
+        canvas.width / 2, canvas.height / 2, 40,
+        canvas.width / 2, canvas.height / 2, canvas.width * 0.72
+      );
+      grad.addColorStop(0, '#10101c');
+      grad.addColorStop(1, '#080810');
+      ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      ctx.strokeStyle = 'rgba(16,185,129,0.06)';
       ctx.lineWidth = 1;
       for (let i = 0; i <= tileCount; i++) {
         const pos = i * gridSize;
@@ -743,22 +856,38 @@ const homeBtn = document.getElementById('homeBtn');
         ctx.lineTo(canvas.width, pos);
         ctx.stroke();
       }
+
+      ctx.fillStyle = 'rgba(52,211,153,0.12)';
+      for (let x = 0; x < tileCount; x++) {
+        for (let y = 0; y < tileCount; y++) {
+          if ((x + y) % 2 === 0) continue;
+          ctx.fillRect(x * gridSize + gridSize / 2 - 1, y * gridSize + gridSize / 2 - 1, 2, 2);
+        }
+      }
     }
 
     function drawSnake() {
+      const dead = gameOver;
       snake.forEach((segment, index) => {
         const px = segment.x * gridSize;
         const py = segment.y * gridSize;
         const inset = index === 0 ? 2 : 3;
+        const t = index / Math.max(snake.length - 1, 1);
 
-        ctx.fillStyle = index === 0 ? '#34d399' : '#10b981';
-        ctx.shadowColor = '#10b981';
-        ctx.shadowBlur = index === 0 ? 18 : 10;
+        if (dead) {
+          ctx.fillStyle = index === 0 ? '#f87171' : '#ef4444';
+          ctx.shadowColor = '#ef4444';
+        } else {
+          ctx.fillStyle = index === 0 ? '#6ee7b7' : `rgb(${16 + t * 20}, ${185 - t * 40}, ${129 - t * 20})`;
+          ctx.shadowColor = '#10b981';
+        }
+
+        ctx.shadowBlur = index === 0 ? 18 : 8;
         roundRect(px + inset, py + inset, gridSize - inset * 2, gridSize - inset * 2, 6);
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        if (index === 0) {
+        if (index === 0 && !dead) {
           ctx.fillStyle = '#0c0c17';
           const eyeSize = 3;
           const eyeOne = getEyePosition(segment, 1);
@@ -785,14 +914,46 @@ const homeBtn = document.getElementById('homeBtn');
     function drawFood() {
       const px = food.x * gridSize;
       const py = food.y * gridSize;
-      const pulse = Math.sin(Date.now() / 130) * 2;
+      const cx = px + gridSize / 2;
+      const cy = py + gridSize / 2;
+      const pulse = Math.sin(Date.now() / 140) * 2;
+      const size = 11 + pulse;
+
+      ctx.strokeStyle = 'rgba(251,191,36,0.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, size + 4, 0, Math.PI * 2);
+      ctx.stroke();
 
       ctx.fillStyle = '#fbbf24';
       ctx.shadowColor = '#fbbf24';
-      ctx.shadowBlur = 18;
-      roundRect(px + 5 - pulse / 2, py + 5 - pulse / 2, 14 + pulse, 14 + pulse, 5);
+      ctx.shadowBlur = 20;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - size);
+      ctx.lineTo(cx + size, cy);
+      ctx.lineTo(cx, cy + size);
+      ctx.lineTo(cx - size, cy);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#fff7d6';
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 3, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
+    }
+
+    function drawEatPopups() {
+      eatPopups.forEach(popup => {
+        ctx.save();
+        ctx.globalAlpha = popup.life;
+        ctx.font = 'bold 16px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#6ee7b7';
+        ctx.textAlign = 'center';
+        ctx.fillText(popup.text, popup.x, popup.y - (1 - popup.life) * 28);
+        ctx.restore();
+      });
     }
 
     function roundRect(x, y, w, h, r) {
@@ -854,12 +1015,16 @@ const homeBtn = document.getElementById('homeBtn');
     pauseBtn.addEventListener('click', pauseGame);
     resetBtn.addEventListener('click', () => {
       clearTimeout(gameLoop);
+      stopRenderLoop();
+      canvasWrap.classList.remove('running');
+      runStartedAt = 0;
+      eatPopups = [];
       resetState();
       showOverlay('Grid Viper', 'Eat the data nodes. Avoid the walls. Do not crash into yourself.', 'Start Game');
     });
     homeBtn.addEventListener('click', () => {
-  window.location.href = '../../index.html';
-});
+      window.location.href = '../../';
+    });
     overlayButton.addEventListener('click', () => {
       if (paused) {
         pauseGame();
@@ -870,7 +1035,12 @@ const homeBtn = document.getElementById('homeBtn');
 
     difficultyEl.addEventListener('change', () => {
       clearTimeout(gameLoop);
+      stopRenderLoop();
+      canvasWrap.classList.remove('running');
+      runStartedAt = 0;
+      eatPopups = [];
       resetState();
+      syncBestForDifficulty();
       refreshLeaderboard();
       showOverlay('Difficulty Changed', `${difficultySettings[difficultyEl.value].label} mode loaded. Start when ready.`, 'Start Game');
     });
