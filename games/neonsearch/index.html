@@ -120,8 +120,8 @@ button:hover {
 .main-game {
   flex:1;
   display:grid;
-  grid-template-columns:1fr 200px;
-  gap:10px;
+  grid-template-columns:1fr 260px;
+  gap:12px;
   overflow:hidden;
 }
 
@@ -131,6 +131,9 @@ button:hover {
   grid-template-columns:repeat(12, 1fr);
   grid-template-rows:repeat(12, 1fr);
   gap:4px;
+  user-select:none;
+  touch-action:none;
+  cursor:crosshair;
 }
 
 .cell {
@@ -157,6 +160,13 @@ button:hover {
   background:var(--accent);
   border-color:var(--accent);
   color:#fff;
+  box-shadow:0 0 10px var(--accent-glow);
+}
+
+.cell.preview {
+  background:color-mix(in srgb, var(--accent) 55%, transparent);
+  border-color:var(--accent-border);
+  color:#fff;
 }
 
 .cell.found {
@@ -167,13 +177,37 @@ button:hover {
 
 .word-panel {
   overflow:auto;
-  font-size:0.85rem;
-  color:var(--text-dim);
+  padding:4px 2px;
+}
+
+.word-list {
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.word-list li {
+  font-family:var(--font-display);
+  font-size:1.12rem;
+  font-weight:700;
+  letter-spacing:0.1em;
+  color:var(--text);
+  padding:10px 12px;
+  border-radius:var(--radius-sm);
+  background:var(--surface-strong);
+  border:1px solid var(--border);
+  transition:background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 }
 
 .word-list li.found {
   text-decoration:line-through;
   color:var(--text-faint);
+  opacity:0.45;
+  border-color:transparent;
+  background:transparent;
 }
 
 .message {
@@ -240,7 +274,7 @@ button:hover {
 
   <div class="header">
     <img src="neonsearchlogo.png" class="game-logo">
-    <div class="subtitle">Click first letter, then last</div>
+    <div class="subtitle">Drag across a word — or click first letter, then last</div>
   </div>
 
   <div class="game-panel">
@@ -281,9 +315,20 @@ DeskArcadeLeaderboard.mountPanel(lbPanel, 'neonsearch', 'default');
 
 const size = 12;
 
-const bank = ["ARCADE","NEON","SEARCH","PIXEL","BUTTON","PLAYER","SCREEN","WINNER","LASER","VECTOR","CYBER","MATRIX","ROBOT","CIRCUIT","BINARY","SERVER","LOGIN","SYSTEM","CODING","SCRIPT","LEVEL","PUZZLE","TARGET","POWER","ENERGY","GALAXY","ROCKET","FLASH","STORM","DRAGON","QUEST","MAGIC","BATTLE","RACING","TURBO","ENGINE","SPEED","MEMORY","REACTION","LETTER","NUMBER","HIDDEN","RUNNER","CHASE","BLOCK","BRICK","CLOUD","FROST","FLAME","LIGHT","DARK","GHOST","PORTAL","SECRET","COOKIE","PIZZA","OFFICE","DESK","CHAIR","MOUSE","LAPTOP","EMAIL"];
+const bank = [...new Set([
+  "ARCADE","NEON","PIXEL","LASER","CYBER","MATRIX","ROBOT","BINARY","SERVER","CODING","SCRIPT","VECTOR","PORTAL","TURBO","ENGINE","MEMORY","CIRCUIT","LOGIN","SYSTEM","SCREEN","BUTTON",
+  "PUZZLE","QUEST","LEVEL","PLAYER","WINNER","TARGET","BATTLE","RACING","RUNNER","CHASE","DRAGON","MAGIC","GHOST","STORM","FLASH","POWER","ENERGY","GALAXY","ROCKET","SPEED","GAMES","SCORE",
+  "DESK","OFFICE","EMAIL","LAPTOP","MOUSE","CHAIR","COFFEE","MEETING","NOTES","PHONE","PAPER","STAPLE","BREAK","FOCUS","INBOX","TASKS",
+  "FOREST","RIVER","OCEAN","CLOUD","FROST","FLAME","EAGLE","TIGER","WOLF","MAPLE","CORAL","BLOOM","MOSSY","CANYON","MEADOW","SUNSET",
+  "PIZZA","BREAD","APPLE","GRAPE","MANGO","SUSHI","TACOS","BACON","CHEESE","COOKIE","MELON","PEACH","BERRY","TOAST","CREAM","SPICE",
+  "SPORT","TRACK","MEDAL","TEAM","SPRINT","TENNIS","RUGBY","KICKS","CYCLE","CLIMB","JUMPS","RALLY",
+  "LIGHT","DARK","SECRET","HIDDEN","CLOCK","MUSIC","DANCE","BOOKS","WORDS","SEARCH","BRICK","BLOCK","START","FINISH","QUICK","BRAVE",
+  "CROWN","SWORD","SHIELD","STONE","WHEEL","SPACE","ORBIT","COMET","LUNAR","SOLAR","PHASE","ATLAS","FORGE","BLAZE","SPARK","GLOW",
+  "PRISM","VIVID","VAULT","WALTZ","YACHT","ZESTY","JAZZY","OXIDE","QUART","BLINK","GRIND","SHIFT","CRISP","NORTH","SOUTH","EAST"
+])];
 
-let grid=[], words=[], placed=[], found=[], first=null;
+let grid=[], words=[], placed=[], found=[], clickFirst=null;
+let dragStart=null, dragActive=false, dragMoved=false;
 let startTime=0, timerId=null, elapsedMs=0;
 let bestMs=Number(localStorage.getItem("neonsearchBest"))||null;
 
@@ -333,8 +378,9 @@ function newGame(){
 
   do{
     grid=Array.from({length:size},()=>Array(size).fill(""));
-    words=[...bank].sort(()=>Math.random()-0.5).slice(0,12);
-    placed=[]; found=[]; first=null;
+    words=[...bank].sort(()=>Math.random()-0.5).slice(0,14);
+    placed=[]; found=[]; clickFirst=null;
+    dragStart=null; dragActive=false; dragMoved=false;
     words.forEach(placeWord);
     attempts++;
   } while(placed.length<words.length && attempts<30);
@@ -347,7 +393,7 @@ function newGame(){
   draw();
   drawWords();
   update();
-  flashMsg("Find all words — click first letter, then last");
+  flashMsg("Find all words — drag or click first & last letter");
   startTimer();
 }
 
@@ -388,6 +434,16 @@ function fill(){
   }
 }
 
+function getCell(r,c){
+  return gridEl.children[r*size+c];
+}
+
+function cellFromPoint(x,y){
+  const el=document.elementFromPoint(x,y);
+  if(!el || !el.classList.contains("cell")) return null;
+  return { r:+el.dataset.r, c:+el.dataset.c, el };
+}
+
 function draw(){
   gridEl.innerHTML="";
   for(let r=0;r<size;r++){
@@ -395,10 +451,26 @@ function draw(){
       let d=document.createElement("div");
       d.className="cell";
       d.textContent=grid[r][c];
-      d.onclick=()=>clickCell(d,r,c);
+      d.dataset.r=r;
+      d.dataset.c=c;
       gridEl.appendChild(d);
     }
   }
+}
+
+function highlightPath(path, cls="selected"){
+  clearHighlight(cls);
+  if(!path) return;
+  path.forEach(([r,c])=>getCell(r,c).classList.add(cls));
+}
+
+function clearHighlight(cls="selected"){
+  gridEl.querySelectorAll("."+cls).forEach(e=>e.classList.remove(cls));
+}
+
+function clearSel(){
+  clearHighlight("selected");
+  clearHighlight("preview");
 }
 
 function drawWords(){
@@ -412,30 +484,23 @@ function drawWords(){
   totalEl.textContent=words.length;
 }
 
-function clickCell(el,r,c){
-  if(!first){
-    clearSel();
-    first=[r,c];
-    el.classList.add("selected");
+function resolveWord(path){
+  if(!path || path.length<2){
+    flashMsg("Select at least two letters", true);
     return;
   }
 
-  let path=getPath(first,[r,c]);
-  if(!path){
-    flashMsg("Words must follow a straight line", true);
-    pathCells(first,[r,c]).forEach(i=>shakeCell(i));
-    clearSel(); first=null; return;
-  }
-
   let str=path.map(([r,c])=>grid[r][c]).join("");
-  let match=placed.find(p=>p.word==str && !found.includes(str));
-  let already=found.includes(str);
+  let rev=str.split("").reverse().join("");
+  let match=placed.find(p=>(p.word===str||p.word===rev) && !found.includes(p.word));
+  let word=match?match.word:null;
+  let already=found.includes(str)||found.includes(rev);
 
-  if(match){
-    found.push(str);
-    path.forEach(([r,c])=>gridEl.children[r*size+c].classList.add("found"));
-    document.getElementById("w"+str).classList.add("found");
-    flashMsg("Found: "+str);
+  if(match && word){
+    found.push(word);
+    match.cells.forEach(([r,c])=>getCell(r,c).classList.add("found"));
+    document.getElementById("w"+word).classList.add("found");
+    flashMsg("Found: "+word);
     update();
     if(found.length===words.length){
       stopTimer();
@@ -450,15 +515,101 @@ function clickCell(el,r,c){
     }
   } else if(already){
     flashMsg("Already found that word", true);
-    shakeCell(r*size+c);
+    path.forEach(([rr,cc])=>shakeCell(rr*size+cc));
   } else {
     flashMsg("Not on the list", true);
     path.forEach(([rr,cc])=>shakeCell(rr*size+cc));
   }
-
-  clearSel();
-  first=null;
 }
+
+function submitSelection(start,end){
+  let path=getPath(start,end);
+  if(!path){
+    flashMsg("Words must follow a straight line", true);
+    pathCells(start,end).forEach(i=>shakeCell(i));
+    clearSel();
+    return;
+  }
+  resolveWord(path);
+  clearSel();
+}
+
+function onPointerDown(e){
+  if(e.button!==0) return;
+  const hit=cellFromPoint(e.clientX,e.clientY);
+  if(!hit) return;
+
+  dragStart=[hit.r,hit.c];
+  dragActive=true;
+  dragMoved=false;
+  if(clickFirst){
+    getCell(clickFirst[0],clickFirst[1]).classList.add("selected");
+  } else {
+    clearSel();
+    hit.el.classList.add("selected");
+  }
+  gridEl.setPointerCapture(e.pointerId);
+  e.preventDefault();
+}
+
+function onPointerMove(e){
+  if(!dragActive || !dragStart) return;
+  const hit=cellFromPoint(e.clientX,e.clientY);
+  if(!hit) return;
+
+  if(hit.r!==dragStart[0] || hit.c!==dragStart[1]) dragMoved=true;
+
+  const anchor=clickFirst && !dragMoved ? clickFirst : dragStart;
+  const path=getPath(anchor,[hit.r,hit.c]);
+  clearHighlight("preview");
+  if(path){
+    if(clickFirst) getCell(clickFirst[0],clickFirst[1]).classList.add("selected");
+    path.forEach(([r,c])=>{
+      const cell=getCell(r,c);
+      if(clickFirst && clickFirst[0]===r && clickFirst[1]===c) return;
+      cell.classList.remove("selected");
+      cell.classList.add("preview");
+    });
+  } else if(clickFirst){
+    getCell(clickFirst[0],clickFirst[1]).classList.add("selected");
+  } else {
+    getCell(dragStart[0],dragStart[1]).classList.add("selected");
+  }
+}
+
+function onPointerUp(e){
+  if(!dragActive) return;
+  dragActive=false;
+  try{ gridEl.releasePointerCapture(e.pointerId); }catch(_){}
+
+  const hit=cellFromPoint(e.clientX,e.clientY);
+  const end=hit?[hit.r,hit.c]:dragStart;
+
+  if(dragMoved || (dragStart[0]!==end[0] || dragStart[1]!==end[1])){
+    const anchor=clickFirst||dragStart;
+    submitSelection(anchor,end);
+    clickFirst=null;
+  } else {
+    clearSel();
+    if(!clickFirst){
+      clickFirst=[end[0],end[1]];
+      getCell(end[0],end[1]).classList.add("selected");
+    } else if(clickFirst[0]===end[0] && clickFirst[1]===end[1]){
+      clickFirst=null;
+    } else {
+      submitSelection(clickFirst,end);
+      clickFirst=null;
+    }
+  }
+
+  dragStart=null;
+  dragMoved=false;
+}
+
+gridEl.addEventListener("pointerdown", onPointerDown);
+gridEl.addEventListener("pointermove", onPointerMove);
+gridEl.addEventListener("pointerup", onPointerUp);
+gridEl.addEventListener("pointercancel", onPointerUp);
 
 function pathCells(a,b){
   const p=getPath(a,b);
@@ -481,10 +632,6 @@ function getPath(a,b){
 
   let len=Math.max(Math.abs(r2-r1),Math.abs(c2-c1))+1;
   return Array.from({length:len},(_,i)=>[r1+dr*i,c1+dc*i]);
-}
-
-function clearSel(){
-  document.querySelectorAll(".selected").forEach(e=>e.classList.remove("selected"));
 }
 
 function update(){
