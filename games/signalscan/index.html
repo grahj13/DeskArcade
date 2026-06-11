@@ -5,43 +5,60 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Signal Scan | DeskArcade</title>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/leaderboard.css">
+
 <style>
 :root{
-  --green:#8cff6a;
-  --green-soft:#c8ffd8;
-  --yellow:#ffd86b;
-  --red:#ff6b4a;
-  --panel:rgba(7,24,8,0.94);
-  --border:rgba(140,255,106,0.35);
+  --accent:#14b8a6;
+  --accent-2:#2dd4bf;
+  --green:var(--accent);
+  --green-soft:var(--text-dim);
+  --yellow:#f59e0b;
+  --red:#ef4444;
+  --panel:var(--surface);
 }
 
-*{box-sizing:border-box;}
-
 .digit.wrong{
-  background:rgba(255,107,74,0.3);
+  background:rgba(239,68,68,0.3);
   color:#fff;
 }
 
 .board-correct{
-  box-shadow:0 0 30px rgba(140,255,106,0.6);
+  box-shadow:0 0 0 1px var(--accent-border), 0 8px 22px var(--accent-glow);
+  border-radius:var(--radius-md);
 }
 
 .board-wrong{
-  box-shadow:0 0 30px rgba(255,107,74,0.7);
+  box-shadow:0 0 0 1px rgba(239,68,68,0.45), 0 8px 22px rgba(239,68,68,0.22);
+  border-radius:var(--radius-md);
 }
+
 body{
-  margin:0;
-  background:
-    radial-gradient(circle at top,rgba(140,255,106,0.15),transparent 40%),
-    linear-gradient(180deg,#071106,#020402);
-  color:var(--green);
-  font-family:Consolas, Monaco, monospace;
+  color:var(--text);
+  font-family:var(--font-ui);
   display:flex;
   justify-content:center;
   padding:20px;
 }
 
-.wrap{max-width:1000px;width:100%;}
+.wrap{
+  position:relative;
+  z-index:1;
+  max-width:1000px;
+  width:100%;
+  padding:22px 24px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012) 38%),
+    var(--surface-strong);
+  backdrop-filter:blur(18px);
+  box-shadow:var(--shadow-2);
+}
 
 .topbar{
   display:flex;
@@ -49,28 +66,28 @@ body{
   margin-bottom:15px;
 }
 
-.arcade-btn{
-  text-decoration:none;
-  border:1px solid var(--border);
-  padding:10px 16px;
-  border-radius:12px;
-  background:rgba(0,0,0,0.25);
-  color:var(--green);
-  transition:0.2s;
-}
-
-.arcade-btn:hover{
-  transform:translateY(-1px);
-  box-shadow:0 0 18px rgba(140,255,106,0.4);
-}
-
 .secondary{
-  border:1px solid var(--border);
-  padding:10px 16px;
-  border-radius:12px;
-  background:rgba(0,0,0,0.25);
-  color:var(--green);
+  box-shadow:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid var(--border-strong);
+  padding:10px 18px;
+  border-radius:var(--radius-sm);
+  background:var(--surface);
+  color:var(--text);
+  font-family:var(--font-display);
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:0.03em;
   cursor:pointer;
+  transition:border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.secondary:hover{
+  border-color:var(--accent-border);
+  background:var(--accent-soft);
+  transform:translateY(-1px);
 }
 
 .logo{
@@ -78,32 +95,30 @@ body{
 }
 
 .logo img{
-  height:140px;
-  animation:glow 2s infinite ease-in-out;
-}
-
-@keyframes glow{
-  0%,100%{filter:drop-shadow(0 0 8px rgba(140,255,106,0.5));}
-  50%{filter:drop-shadow(0 0 25px rgba(140,255,106,1));}
+  height:54px;
+  width:auto;
+  max-width:min(420px, 55vw);
+  object-fit:contain;
+  filter:drop-shadow(0 4px 14px rgba(0,0,0,0.55));
 }
 
 .subtitle{
   text-align:center;
-  color:var(--green-soft);
+  color:var(--text-dim);
 }
 
 .creator{
   text-align:center;
   margin-bottom:20px;
   font-size:0.8rem;
-  color:rgba(200,255,216,0.6);
+  color:var(--text-faint);
 }
 
 .panel{
   position:relative;
-  background:var(--panel);
+  background:var(--surface);
   border:1px solid var(--border);
-  border-radius:22px;
+  border-radius:var(--radius-md);
   padding:28px;
 }
 
@@ -117,18 +132,26 @@ body{
 .stat{
   text-align:center;
   padding:14px;
-  border-radius:14px;
+  border-radius:var(--radius-md);
   border:1px solid var(--border);
+  background:var(--surface);
 }
 
 .stat span{
   display:block;
-  font-size:0.75rem;
-  color:var(--green-soft);
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+  margin-bottom:2px;
 }
 
 .stat strong{
+  font-family:var(--font-mono);
   font-size:1.5rem;
+  font-weight:700;
+  color:var(--accent-text);
 }
 
 .message{
@@ -148,19 +171,23 @@ body{
 .digit{
   width:50px;
   height:50px;
-  border-radius:14px;
+  border-radius:var(--radius-sm);
   display:flex;
   align-items:center;
   justify-content:center;
+  font-family:var(--font-mono);
+  font-weight:700;
   font-size:1.7rem;
-  border:1px solid rgba(140,255,106,0.2);
-  background:rgba(140,255,106,0.05);
+  color:var(--accent-text);
+  border:1px solid var(--border);
+  background:linear-gradient(180deg, #0b0b15, #07070f);
 }
 
 .digit.target{
   color:var(--yellow);
-  background:rgba(255,216,107,0.2);
-  box-shadow:0 0 15px rgba(255,216,107,0.8);
+  background:rgba(245,158,11,0.16);
+  border-color:rgba(245,158,11,0.45);
+  box-shadow:0 0 0 1px rgba(245,158,11,0.25);
 }
 
 .digit.hidden{
@@ -180,6 +207,8 @@ body{
   position:absolute;
   top:15px;
   right:20px;
+  font-family:var(--font-mono);
+  font-weight:700;
   font-size:2.2rem;
   color:var(--yellow);
   opacity:0;
@@ -199,14 +228,22 @@ body{
 .answer-area.active{display:block;}
 
 input{
+  font-family:var(--font-mono);
   font-size:1.4rem;
   padding:12px;
   width:240px;
   text-align:center;
-  border-radius:12px;
-  border:1px solid var(--border);
-  background:rgba(0,0,0,0.4);
-  color:var(--green);
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border-strong);
+  background:rgba(10,10,20,0.7);
+  color:var(--text);
+  transition:border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+input:focus{
+  outline:none;
+  border-color:var(--accent-border);
+  box-shadow:0 0 0 3px var(--accent-soft);
 }
 
 .controls{
@@ -215,22 +252,34 @@ input{
 }
 
 button{
-  padding:12px 18px;
+  padding:12px 22px;
   margin:5px;
   border:none;
-  border-radius:12px;
-  background:var(--green);
-  color:#041005;
-  font-weight:bold;
+  border-radius:var(--radius-sm);
+  background:linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--accent-2)));
+  color:#fff;
+  font-family:var(--font-display);
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:0.03em;
   cursor:pointer;
+  box-shadow:0 8px 22px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.22);
+  transition:transform 0.18s ease, filter 0.18s ease;
 }
 
-button:disabled{opacity:0.5;}
+button:hover:not(:disabled){
+  transform:translateY(-1px);
+  filter:brightness(1.08);
+}
+
+button:disabled{opacity:0.5;cursor:default;}
 
 .history{
   margin-top:18px;
   text-align:center;
-  color:var(--green-soft);
+  font-family:var(--font-mono);
+  font-size:13px;
+  color:var(--text-dim);
 }
 </style>
 </head>
@@ -239,7 +288,7 @@ button:disabled{opacity:0.5;}
 <div class="wrap">
 
 <div class="topbar">
-<a class="arcade-btn" href="../../index.html">← Back to Arcade</a>
+<a class="arcade-btn da-back" href="../../index.html">Back to Arcade</a>
 <button class="secondary" onclick="resetGame()">Reset</button>
 </div>
 
@@ -277,13 +326,20 @@ button:disabled{opacity:0.5;}
 
 <div id="history" class="history">None yet</div>
 
+<div id="leaderboard"></div>
+
 </div>
 </div>
 
+<script src="../../assets/deskarcade-config.js"></script>
+<script src="../../assets/leaderboard.js"></script>
 <script>
+const lbPanel = document.getElementById('leaderboard');
+DeskArcadeLeaderboard.mountPanel(lbPanel, 'signalscan', 'default');
+
 let round = 1;
 let streak = 0;
-let best = Number(localStorage.best) || 0;
+let best = Number(localStorage.getItem("signalscanBest")) || 0;
 
 let digits = [];
 let targets = [];
@@ -408,7 +464,7 @@ async function nextRound(){
   answerInput.value = "";
   answerInput.maxLength = answer.length;
 
-  message.textContent = "Memorise the highlighted digits in order";
+  message.textContent = "Memorise " + answer.length + " highlighted digits in order";
 
   await new Promise(r => setTimeout(r, getTime() - 2000));
 
@@ -446,17 +502,19 @@ function submit(){
 
     if(round - 1 > best){
       best = round - 1;
-      localStorage.best = best;
+      localStorage.setItem("signalscanBest", String(best));
     }
 
     message.textContent = "✔ Correct";
+
+    DeskArcadeLeaderboard.trySubmit('signalscan', best, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
 
   } else {
     digitBoard.classList.add("board-wrong");
 
     // highlight correct digits
     targets.forEach(i => {
-      digitBoard.children[i].classList.add("correct");
+      digitBoard.children[i].classList.add("wrong");
     });
 
     streak = 0;
@@ -501,8 +559,12 @@ submitBtn.onclick = submit;
 
 nextBtn.onclick = nextRound;
 
-answerInput.addEventListener("keydown", e=>{
-  if(e.key === "Enter") submit();
+answerInput.addEventListener("input", () => {
+  answerInput.value = answerInput.value.replace(/\D/g, "");
+});
+
+answerInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") submit();
 });
 
 updateUI();

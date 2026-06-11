@@ -4,38 +4,31 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KeyStorm</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/theme.css">
+  <link rel="stylesheet" href="../../assets/leaderboard.css">
   <style>
     :root {
-      --green: #00ff66;
-      --dark-green: #007a33;
-      --red: #ff3b3b;
-      --yellow: #ffd447;
-      --blue: #00d9ff;
-      --bg: #020403;
-      --panel: rgba(0, 30, 12, 0.9);
+      --accent: #3b82f6;
+      --accent-2: #60a5fa;
+      --green: var(--accent);
+      --dark-green: var(--accent-border);
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --blue: #38bdf8;
+      --panel: var(--surface-strong);
     }
 	  
-@keyframes logoGlow {
-  0%, 100% {
-    filter:
-      drop-shadow(0 0 10px rgba(0,255,102,0.5))
-      drop-shadow(0 0 20px rgba(0,255,102,0.3));
-  }
-  50% {
-    filter:
-      drop-shadow(0 0 18px rgba(0,255,102,0.8))
-      drop-shadow(0 0 30px rgba(0,255,102,0.5));
-  }
-}
     * {
       box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      background: radial-gradient(circle at center, #062010 0%, #020403 55%, #000 100%);
-      color: var(--green);
-      font-family: Consolas, Monaco, monospace;
+      color: var(--text);
+      font-family: var(--font-ui);
       overflow: hidden;
       height: 100vh;
       user-select: none;
@@ -47,13 +40,13 @@
       height: 100vh;
       margin: 0 auto;
       overflow: hidden;
-      border-left: 1px solid rgba(0,255,102,0.15);
-      border-right: 1px solid rgba(0,255,102,0.15);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
       transition: background 0.3s ease;
     }
 
     #game.powerup-active {
-      background: radial-gradient(circle at center, rgba(0,120,255,0.15), rgba(0,0,0,0.9));
+      background: radial-gradient(circle at center, rgba(56,189,248,0.14), rgba(6,6,12,0.9));
     }
 
     #hud {
@@ -66,10 +59,11 @@
       grid-template-columns: 180px minmax(320px, 1fr) 360px 260px 130px;
       align-items: stretch;
       gap: 0;
-      background: rgba(0, 0, 0, 0.62);
-      border: 1px solid rgba(0,255,102,0.35);
-      border-radius: 10px;
-      box-shadow: 0 0 18px rgba(0,255,102,0.12), inset 0 0 18px rgba(0,255,102,0.05);
+      background: rgba(16, 16, 28, 0.72);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-1);
+      backdrop-filter: blur(12px);
       z-index: 5;
       font-size: 18px;
       pointer-events: none;
@@ -83,7 +77,7 @@
       white-space: nowrap;
       min-width: 0;
       padding: 12px 18px;
-      border-right: 1px solid rgba(0,255,102,0.18);
+      border-right: 1px solid var(--border);
     }
 
     .hud-score {
@@ -136,39 +130,39 @@
       min-width: 145px;
       text-align: center;
       padding: 10px 14px;
-      border-radius: 8px;
-      background: rgba(0,0,0,0.55);
-      border: 1px solid rgba(0,255,102,0.35);
-      box-shadow: 0 0 12px rgba(0,255,102,0.16);
+      border-radius: var(--radius-sm);
+      background: rgba(10,10,20,0.6);
+      border: 1px solid var(--border-strong);
+      font-family: var(--font-mono);
       font-size: 18px;
       font-weight: 700;
     }
 
     .freeze-bank {
       color: var(--blue);
-      border-color: rgba(0,217,255,0.6);
-      text-shadow: 0 0 10px rgba(0,217,255,0.8);
+      border-color: rgba(56,189,248,0.4);
     }
 
     .wipe-bank {
       color: var(--yellow);
-      border-color: rgba(255,212,71,0.6);
-      text-shadow: 0 0 10px rgba(255,212,71,0.8);
+      border-color: rgba(245,158,11,0.4);
     }
 
     #score {
       display: inline-block;
       min-width: 110px;
       font-size: 34px;
-      color: var(--green);
+      font-family: var(--font-mono);
+      color: var(--accent-text);
       text-align: left;
-      text-shadow: 0 0 12px rgba(0,255,102,0.9), 0 0 25px rgba(0,255,102,0.6);
     }
 
     #scoreLabel {
-      font-size: 14px;
-      opacity: 0.7;
-      letter-spacing: 1px;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: var(--text-faint);
     }
 
     #powerupStatus {
@@ -177,8 +171,9 @@
       left: 50%;
       transform: translateX(-50%);
       font-size: 20px;
+      font-family: var(--font-display);
+      font-weight: 600;
       color: var(--blue);
-      text-shadow: 0 0 12px rgba(0,217,255,0.9);
       opacity: 0;
       transition: opacity 0.3s ease;
       z-index: 8;
@@ -198,12 +193,13 @@
       max-width: 90vw;
       text-align: center;
       font-size: 30px;
-      color: var(--green);
-      border: 1px solid var(--dark-green);
-      background: rgba(0, 0, 0, 0.72);
+      font-family: var(--font-mono);
+      color: var(--text);
+      border: 1px solid var(--accent-border);
+      background: rgba(10, 10, 20, 0.8);
       padding: 12px 18px;
-      border-radius: 12px;
-      box-shadow: 0 0 18px rgba(0, 255, 102, 0.15);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 8px 22px var(--accent-glow);
       z-index: 6;
     }
 
@@ -211,35 +207,44 @@
       opacity: 0.45;
     }
 
+    #inputBar.shake {
+      animation: inputShake 0.28s ease;
+      border-color: rgba(239, 68, 68, 0.55);
+    }
+
+    @keyframes inputShake {
+      0%, 100% { transform: translateX(-50%); }
+      25% { transform: translateX(calc(-50% - 6px)); }
+      75% { transform: translateX(calc(-50% + 6px)); }
+    }
+
     .enemy {
       position: absolute;
       font-size: 24px;
+      font-family: var(--font-mono);
       padding: 6px 12px;
-      border: 1px solid rgba(0, 255, 102, 0.65);
-      border-radius: 8px;
-      background: rgba(0, 0, 0, 0.66);
-      text-shadow: 0 0 10px rgba(0, 255, 102, 0.85);
-      box-shadow: 0 0 16px rgba(0, 255, 102, 0.26), inset 0 0 12px rgba(0,255,102,0.06);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius-sm);
+      background: rgba(10, 10, 20, 0.78);
+      color: var(--accent-text);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
       white-space: nowrap;
     }
 
     .powerup {
       color: var(--blue);
-      border-color: var(--blue);
-      text-shadow: 0 0 14px rgba(0, 217, 255, 0.95);
-      box-shadow: 0 0 22px rgba(0, 217, 255, 0.45), inset 0 0 14px rgba(0,217,255,0.12);
+      border-color: rgba(56, 189, 248, 0.55);
+      box-shadow: 0 4px 16px rgba(56, 189, 248, 0.22);
     }
 
     .enemy.targeted {
-      color: var(--yellow);
-      border-color: var(--yellow);
-      text-shadow: 0 0 12px rgba(255, 212, 71, 0.8);
+      color: #fbbf24;
+      border-color: rgba(245, 158, 11, 0.6);
     }
 
     .enemy.danger {
       color: var(--red);
-      border-color: var(--red);
-      text-shadow: 0 0 12px rgba(255, 59, 59, 0.8);
+      border-color: rgba(239, 68, 68, 0.6);
     }
 
     #deadline {
@@ -249,7 +254,7 @@
       width: 100%;
       height: 2px;
       background: linear-gradient(to right, transparent, var(--red), transparent);
-      box-shadow: 0 0 12px rgba(255, 59, 59, 0.8);
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.45);
       pointer-events: none;
       z-index: 2;
     }
@@ -262,7 +267,6 @@
       color: var(--red);
       opacity: 0.7;
       letter-spacing: 1px;
-      text-shadow: 0 0 8px rgba(255,59,59,0.8);
       pointer-events: none;
       z-index: 3;
     }
@@ -273,10 +277,12 @@
       left: 50%;
       transform: translate(-50%, -50%);
       font-size: 42px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: var(--accent-text);
       opacity: 0;
       z-index: 10;
       pointer-events: none;
-      text-shadow: 0 0 20px rgba(0, 255, 102, 0.8);
       transition: opacity 0.35s ease;
     }
 
@@ -289,7 +295,7 @@
       left: 16px;
       top: 115px;
       width: 230px;
-      color: var(--green);
+      color: var(--text-dim);
       font-size: 13px;
       opacity: 0.94;
       z-index: 4;
@@ -300,7 +306,7 @@
       right: 16px;
       bottom: 24px;
       width: 250px;
-      color: var(--green);
+      color: var(--text-dim);
       font-size: 12px;
       opacity: 0.9;
       z-index: 4;
@@ -310,10 +316,10 @@
     #notesContent {
       margin-bottom: 20px;
       padding: 14px 16px;
-      border: 1px solid rgba(0,255,102,0.38);
-      border-radius: 10px;
-      background: rgba(0,0,0,0.52);
-      box-shadow: 0 0 18px rgba(0,255,102,0.12), inset 0 0 14px rgba(0,255,102,0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: rgba(14,14,24,0.66);
+      box-shadow: var(--shadow-1);
     }
 
 
@@ -321,20 +327,20 @@
     #notesContent {
       margin-bottom: 20px;
       padding: 14px 16px;
-      border: 1px solid rgba(0,255,102,0.38);
-      border-radius: 10px;
-      background: rgba(0,0,0,0.52);
-      box-shadow: 0 0 18px rgba(0,255,102,0.12), inset 0 0 14px rgba(0,255,102,0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: rgba(14,14,24,0.66);
+      box-shadow: var(--shadow-1);
     }
 
     .side-title,
     .notes-header {
-      font-size: 18px;
+      font-size: 16px;
       margin-bottom: 12px;
-      opacity: 0.95;
       letter-spacing: 1px;
       font-weight: 700;
-      text-shadow: 0 0 10px rgba(0,255,102,0.8);
+      font-family: var(--font-display);
+      color: var(--text);
     }
 
     .side-text,
@@ -348,10 +354,12 @@
       padding: 2px 6px;
       margin-right: 6px;
       text-align: center;
-      border: 1px solid var(--green);
+      border: 1px solid var(--border-strong);
       border-radius: 5px;
-      background: rgba(0,0,0,0.6);
-      box-shadow: 0 0 8px rgba(0,255,102,0.25);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 11px;
     }
 
     .power-list {
@@ -366,17 +374,14 @@
 
     .life-text {
       color: var(--red);
-      text-shadow: 0 0 8px rgba(255,59,59,0.7);
     }
 
     .freeze-text {
       color: var(--blue);
-      text-shadow: 0 0 8px rgba(0,217,255,0.7);
     }
 
     .wipe-text {
       color: var(--yellow);
-      text-shadow: 0 0 8px rgba(255,212,71,0.7);
     }
 
     .screen {
@@ -385,7 +390,8 @@
       display: none;
       justify-content: center;
       align-items: center;
-      background: rgba(0, 0, 0, 0.78);
+      background: rgba(6, 6, 12, 0.78);
+      backdrop-filter: blur(6px);
       z-index: 20;
       padding: 24px;
     }
@@ -396,12 +402,15 @@
 
     .panel {
       width: min(760px, 94vw);
-      background: linear-gradient(180deg, rgba(0, 34, 14, 0.94), rgba(0, 10, 5, 0.94));
-      border: 1px solid rgba(0,255,102,0.55);
-      border-radius: 20px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012) 38%),
+        var(--surface-strong);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(18px);
       padding: 30px;
       text-align: center;
-      box-shadow: 0 0 40px rgba(0, 255, 102, 0.22), inset 0 0 22px rgba(0,255,102,0.06);
+      box-shadow: var(--shadow-2);
       position: relative;
       overflow: hidden;
     }
@@ -409,24 +418,21 @@
     .panel::before {
       content: "";
       position: absolute;
-      inset: 0;
-      background: linear-gradient(120deg, transparent, rgba(0,255,102,0.07), transparent);
-      transform: translateX(-100%);
-      animation: panelSweep 5s infinite;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-border), transparent);
       pointer-events: none;
-    }
-
-    @keyframes panelSweep {
-      0%, 45% { transform: translateX(-100%); }
-      65%, 100% { transform: translateX(100%); }
     }
 
     h1 {
       margin: 0;
       font-size: 58px;
+      font-family: var(--font-display);
       letter-spacing: 4px;
       line-height: 1;
-      text-shadow: 0 0 12px rgba(0,255,102,0.9), 0 0 30px rgba(0,255,102,0.45);
+      color: var(--text);
     }
 
     .menu-title-wrap {
@@ -436,12 +442,13 @@
     }
 
 .logo {
-  width: 380px;
-  max-width: 100%;
+  height: 56px;
+  width: auto;
+  max-width: min(420px, 55vw);
+  object-fit: contain;
   display: block;
   margin: 0 auto 8px;
-
-  animation: logoGlow 3s ease-in-out infinite;
+  filter: drop-shadow(0 4px 14px rgba(0,0,0,0.55));
 }
 	  
 	  
@@ -449,19 +456,19 @@
       display: inline-block;
       margin-top: 10px;
       padding: 4px 10px;
-      border: 1px solid rgba(0,217,255,0.55);
-      border-radius: 999px;
+      border: 1px solid rgba(56,189,248,0.45);
+      border-radius: var(--radius-pill);
       color: var(--blue);
       font-size: 12px;
       letter-spacing: 1px;
-      background: rgba(0,0,0,0.35);
-      box-shadow: 0 0 12px rgba(0,217,255,0.16);
+      font-family: var(--font-mono);
+      background: var(--surface);
     }
 
     .tagline {
       margin: 12px auto 0;
       max-width: 560px;
-      color: #b9ffd2;
+      color: var(--text-dim);
       font-size: 15px;
       opacity: 0.92;
     }
@@ -469,11 +476,13 @@
     h2 {
       margin-top: 0;
       font-size: 32px;
+      font-family: var(--font-display);
+      color: var(--text);
     }
 
     p {
       line-height: 1.5;
-      color: #b9ffd2;
+      color: var(--text-dim);
     }
 
     .settings {
@@ -488,28 +497,34 @@
 
     .setting-card {
       padding: 14px;
-      border: 1px solid rgba(0,255,102,0.28);
-      border-radius: 12px;
-      background: rgba(0,0,0,0.32);
-      box-shadow: 0 0 18px rgba(0,255,102,0.1), inset 0 0 12px rgba(0,255,102,0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
     }
 
     label {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      color: #b9ffd2;
+      color: var(--text-dim);
       font-size: 14px;
     }
 
     select {
-      font-family: inherit;
+      font-family: var(--font-ui);
       font-size: 16px;
       padding: 9px;
-      border-radius: 8px;
-      border: 1px solid var(--dark-green);
-      color: var(--green);
-      background: #001507;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-strong);
+      color: var(--text);
+      background: rgba(10, 10, 20, 0.7);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: var(--accent-border);
+      box-shadow: 0 0 0 3px var(--accent-soft);
     }
 
     .button-row {
@@ -522,35 +537,46 @@
 
     button {
       cursor: pointer;
-      font-family: inherit;
-      font-size: 18px;
-      color: #001f0c;
-      background: var(--green);
+      font-family: var(--font-display);
+      font-size: 16px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--accent-2)));
       border: none;
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       padding: 12px 18px;
-      font-weight: 700;
-      box-shadow: 0 0 18px rgba(0,255,102,0.28);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      box-shadow: 0 8px 22px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.22);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease, border-color 0.18s ease, background 0.18s ease;
     }
 
     #startButton {
       min-width: 220px;
-      font-size: 22px;
+      font-size: 20px;
       letter-spacing: 2px;
       padding: 15px 28px;
-      border-radius: 12px;
       text-transform: uppercase;
-      box-shadow: 0 0 22px rgba(0,255,102,0.38), inset 0 0 12px rgba(255,255,255,0.22);
     }
 
     button.secondary {
-      color: var(--green);
-      background: transparent;
-      border: 1px solid var(--green);
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      box-shadow: none;
+    }
+
+    button.secondary:hover {
+      border-color: var(--accent-border);
+      background: var(--accent-soft);
     }
 
     button:hover {
-      filter: brightness(1.15);
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
     }
 
     .small {
@@ -569,17 +595,17 @@
     }
 
     .info-card {
-      border: 1px solid rgba(0,255,102,0.28);
-      border-radius: 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
       padding: 14px;
-      background: rgba(0,0,0,0.28);
-      box-shadow: 0 0 16px rgba(0,255,102,0.08), inset 0 0 12px rgba(0,255,102,0.04);
+      background: var(--surface);
     }
 
     .info-card strong {
       display: block;
       margin-bottom: 6px;
-      color: var(--green);
+      color: var(--accent-text);
+      font-family: var(--font-display);
       letter-spacing: 1px;
       font-size: 13px;
     }
@@ -630,7 +656,7 @@
         justify-content: center;
         flex-wrap: wrap;
         border-right: none;
-        border-bottom: 1px solid rgba(0,255,102,0.14);
+        border-bottom: 1px solid var(--border);
       }
 
       .hud-score {
@@ -724,6 +750,8 @@
         </ul>
       </div>
     </div>
+
+    <div id="leaderboard"></div>
   </div>
 
   <div id="notesPanel">
@@ -790,7 +818,7 @@
         </div>
       </div>
 
-      <p class="small" style="margin-top:14px;">Green targets crossing the red line cost 1 life.</p>
+      <p class="small" style="margin-top:14px;">Targets crossing the red line cost 1 life.</p>
       <p class="small" style="margin-top:12px; opacity:0.6; position:relative; z-index:1;">Created by Jason</p>
     </div>
   </div>
@@ -819,7 +847,12 @@
     </div>
   </div>
 
+  <script src="../../assets/deskarcade-config.js"></script>
+  <script src="../../assets/leaderboard.js"></script>
   <script>
+    const lbPanel = document.getElementById('leaderboard');
+    DeskArcadeLeaderboard.mountPanel(lbPanel, 'keystorm', 'default');
+
     const game = document.getElementById("game");
     const scoreEl = document.getElementById("score");
     const waveEl = document.getElementById("wave");
@@ -1352,6 +1385,7 @@
       finalStatsEl.innerHTML = `Mode: <strong>${selectedMode.toUpperCase()}</strong><br>Difficulty: <strong>${selectedDifficulty.toUpperCase()}</strong><br>Final Score: <strong>${score}</strong><br>Wave Reached: <strong>${wave}</strong><br>Best Streak: <strong>${bestStreak}</strong><br>Accuracy: <strong>${accuracy}%</strong><br>High Score: <strong>${highScore}</strong>`;
       gameOverScreen.classList.add("active");
       updateHud();
+      DeskArcadeLeaderboard.trySubmit('keystorm', score, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
     }
 
     function quitToMenu() {
@@ -1392,6 +1426,15 @@
       if (gameState !== "playing") return;
 
       if (/^[a-z0-9]$/.test(key)) {
+        const nextInput = input + key;
+        const hasPrefix = enemies.some(enemy => enemy.text.startsWith(nextInput));
+        if (!hasPrefix && enemies.length > 0) {
+          const inputBar = document.getElementById("inputBar");
+          inputBar.classList.remove("shake");
+          void inputBar.offsetWidth;
+          inputBar.classList.add("shake");
+          setTimeout(() => inputBar.classList.remove("shake"), 280);
+        }
         input += key;
       } else if (event.key === "Backspace") {
         event.preventDefault();

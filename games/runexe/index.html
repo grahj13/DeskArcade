@@ -4,39 +4,47 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Run.exe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/theme.css">
+  <link rel="stylesheet" href="../../assets/leaderboard.css">
   <style>
     :root {
-      --bg: #020403;
-      --panel: rgba(0, 18, 10, 0.82);
-      --green: #39ff88;
-      --green-soft: rgba(57, 255, 136, 0.25);
-      --green-dim: rgba(57, 255, 136, 0.12);
-      --text: #d8ffe8;
-      --danger: #ff3b6b;
-      --warning: #ffd166;
+      --accent: #84cc16;
+      --accent-2: #a3e635;
+      --green: var(--accent);
+      --green-soft: var(--accent-border);
+      --green-dim: var(--accent-soft);
+      --danger: #ef4444;
+      --warning: #f59e0b;
     }
 
     * {
-      box-sizing: border-box;
       user-select: none;
     }
 
     body {
-      margin: 0;
-      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      background:
-        radial-gradient(circle at center, rgba(57, 255, 136, 0.08), transparent 35%),
-        linear-gradient(180deg, #020403 0%, #000 100%);
       color: var(--text);
-      font-family: Consolas, Monaco, 'Courier New', monospace;
+      font-family: var(--font-ui);
       overflow: hidden;
     }
 
     .wrap {
+      position: relative;
+      z-index: 1;
       width: min(1100px, 94vw);
+      padding: 20px 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012) 38%),
+        var(--surface-strong);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow-2);
     }
 
     .topbar {
@@ -59,31 +67,23 @@
   display: inline-block;
 }
 
-.logo-wrap::after {
-  content: '';
-  position: absolute;
-  inset: -28px;
-  background: radial-gradient(circle, rgba(57,255,136,0.18), transparent 70%);
-  filter: blur(22px);
-  z-index: -1;
-}
-
 .game-logo {
-  width: clamp(200px, 24vw, 360px);
-  height: auto;
+  height: 50px;
+  width: auto;
+  max-width: min(420px, 55vw);
+  object-fit: contain;
   display: block;
-  filter: drop-shadow(0 0 32px rgba(57,255,136,0.4));
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.55));
 }
-
-
 
     h1 {
       margin: 0;
-      color: var(--green);
+      font-family: var(--font-display);
+      color: var(--accent-text);
       font-size: clamp(2rem, 5vw, 4.5rem);
+      font-weight: 700;
       line-height: 0.9;
       letter-spacing: 0.08em;
-      text-shadow: 0 0 18px var(--green-soft), 0 0 38px var(--green-soft);
       text-transform: uppercase;
     }
 
@@ -91,6 +91,7 @@
   margin-top: 6px;
   margin-left: 6px;
   white-space: nowrap;
+  color: var(--text-dim);
   font-size: clamp(0.8rem, 1vw, 0.95rem);
   letter-spacing: 0.05em;
 }
@@ -98,24 +99,22 @@
     .meta {
       text-align: right;
       font-size: 0.9rem;
-      color: rgba(216, 255, 232, 0.8);
+      color: var(--text-dim);
       line-height: 1.55;
     }
 
     .meta strong {
-      color: var(--green);
+      font-family: var(--font-mono);
+      color: var(--accent-text);
       font-weight: 700;
     }
 
     .game-shell {
       position: relative;
-      border: 2px solid var(--green-soft);
-      border-radius: 18px;
-      background: var(--panel);
-      box-shadow:
-        0 0 0 1px rgba(57, 255, 136, 0.08) inset,
-        0 0 40px rgba(57, 255, 136, 0.14),
-        0 22px 80px rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: #0c0c17;
+      box-shadow: var(--shadow-1);
       overflow: hidden;
     }
 
@@ -123,27 +122,11 @@
       display: block;
       width: 100%;
       height: auto;
-      background:
-        linear-gradient(rgba(57, 255, 136, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(57, 255, 136, 0.035) 1px, transparent 1px),
-        radial-gradient(circle at 20% 10%, rgba(57, 255, 136, 0.06), transparent 30%),
-        #020403;
-      background-size: 42px 42px, 42px 42px, auto, auto;
+      background: #0c0c17;
     }
 
     .scanline {
-      pointer-events: none;
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(
-        to bottom,
-        rgba(255, 255, 255, 0.025),
-        rgba(255, 255, 255, 0.025) 1px,
-        transparent 1px,
-        transparent 4px
-      );
-      opacity: 0.45;
-      mix-blend-mode: screen;
+      display: none;
     }
 
     .overlay {
@@ -159,23 +142,25 @@
     .card {
       max-width: 560px;
       padding: 28px;
-      border: 1px solid var(--green-soft);
-      border-radius: 18px;
-      background: rgba(0, 8, 4, 0.76);
-      box-shadow: 0 0 35px rgba(57, 255, 136, 0.12);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      background: rgba(14, 14, 24, 0.96);
+      box-shadow: var(--shadow-2);
     }
 
     .card h2 {
       margin: 0 0 12px;
-      color: var(--green);
+      font-family: var(--font-display);
+      color: var(--accent-text);
       font-size: clamp(1.6rem, 4vw, 2.6rem);
+      font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
     .card p {
       margin: 8px 0;
-      color: rgba(216, 255, 232, 0.82);
+      color: var(--text-dim);
       line-height: 1.5;
     }
 
@@ -183,31 +168,33 @@
       display: inline-block;
       min-width: 34px;
       padding: 4px 8px;
-      border: 1px solid var(--green-soft);
+      border: 1px solid var(--accent-border);
       border-radius: 8px;
-      color: var(--green);
-      background: rgba(57, 255, 136, 0.08);
-      box-shadow: 0 0 12px rgba(57, 255, 136, 0.08) inset;
+      font-family: var(--font-mono);
+      color: var(--accent-text);
+      background: var(--accent-soft);
     }
 
     .arcade-btn {
       display: inline-block;
       margin-top: 16px;
-      padding: 10px 14px;
-      border: 1px solid var(--green-soft);
-      border-radius: 10px;
-      color: var(--green);
-      background: rgba(57, 255, 136, 0.08);
+      padding: 10px 18px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--surface);
       text-decoration: none;
       letter-spacing: 0.04em;
-      box-shadow: 0 0 16px rgba(57, 255, 136, 0.08) inset;
-      transition: transform 120ms ease, background 120ms ease, box-shadow 120ms ease;
+      transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
     }
 
     .arcade-btn:hover {
       transform: translateY(-1px);
-      background: rgba(57, 255, 136, 0.14);
-      box-shadow: 0 0 20px rgba(57, 255, 136, 0.18);
+      border-color: var(--accent-border);
+      background: var(--accent-soft);
     }
 
     .footer-btn {
@@ -225,7 +212,7 @@
       justify-content: space-between;
       gap: 16px;
       margin-top: 12px;
-      color: rgba(216, 255, 232, 0.58);
+      color: var(--text-faint);
       font-size: 0.82rem;
     }
 
@@ -276,12 +263,19 @@
 
     <footer class="footer">
       <span>Created by Jason / build v1.6</span>
-      <span>Controls: ↑ Jump / ↓ Crouch / Space Start / Enter Restart</span>
+      <span>Controls: ↑ Jump / ↓ Crouch / P Pause / Space Start</span>
       <a id="footerArcadeBtn" class="arcade-btn footer-btn hidden" href="../../index.html">Return to Arcade</a>
     </footer>
+
+    <div id="leaderboard"></div>
   </main>
 
+  <script src="../../assets/deskarcade-config.js"></script>
+  <script src="../../assets/leaderboard.js"></script>
   <script>
+    const lbPanel = document.getElementById('leaderboard');
+    DeskArcadeLeaderboard.mountPanel(lbPanel, 'runexe', 'default');
+
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
 
@@ -362,7 +356,9 @@
       overlayText.innerHTML = `System uptime reached: <span class="key">${formatScore(distance)}</span>`;
       overlay.classList.remove('hidden');
       footerArcadeBtn.classList.add('hidden');
-      burst(player.x + player.w / 2, player.y + player.h / 2, 24, '#ff3b6b');
+      burst(player.x + player.w / 2, player.y + player.h / 2, 24, '#f43f5e');
+
+      DeskArcadeLeaderboard.trySubmit('runexe', Math.floor(distance), { panel: lbPanel, boardKey: 'default' }).catch(() => {});
     }
 
     function jump() {
@@ -370,7 +366,7 @@
       if (player.grounded && !player.crouching) {
         player.vy = -17;
         player.grounded = false;
-        burst(player.x + 8, groundY, 8, '#39ff88');
+        burst(player.x + 8, groundY, 8, '#a3e635');
       }
     }
 
@@ -534,15 +530,15 @@
     function drawGrid() {
       ctx.save();
       const intensity = Math.min(1, distance / 2500);
-      ctx.strokeStyle = `rgba(57,255,136,${0.08 + intensity * 0.06})`;
+      ctx.strokeStyle = `rgba(132,204,22,${0.08 + intensity * 0.06})`;
       for (let x = -42 - (frame * speed * 0.35) % 42; x < W; x += 42) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, H);
         ctx.stroke();
       }
-      ctx.font = '14px Consolas, Monaco, monospace';
-      ctx.fillStyle = `rgba(57,255,136,${0.10 + intensity * 0.06})`;
+      ctx.font = "14px 'JetBrains Mono', monospace";
+      ctx.fillStyle = `rgba(132,204,22,${0.10 + intensity * 0.06})`;
       const bits = ['0x7F', 'PATCH', 'PING', 'SCAN', 'PORT', 'AUTH', 'DNS', 'LOG'];
       for (let i = 0; i < bits.length; i++) {
         const x = W - ((frame * (0.6 + i * 0.08)) + i * 170) % (W + 220);
@@ -557,7 +553,7 @@
       const intensity = Math.min(1, (distance - 600) / 3000);
       ctx.save();
       ctx.globalAlpha = 0.05 + intensity * 0.1;
-      ctx.fillStyle = '#39ff88';
+      ctx.fillStyle = '#84cc16';
       for (let i = 0; i < 5; i++) {
         const y = ((frame * (2 + i)) + i * 93) % H;
         ctx.fillRect(0, y, W, 2);
@@ -572,9 +568,7 @@
 
     function drawGround() {
       ctx.save();
-      ctx.strokeStyle = '#39ff88';
-      ctx.shadowColor = '#39ff88';
-      ctx.shadowBlur = 14;
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(0, groundY);
@@ -601,31 +595,31 @@
       const bodyH = Math.max(10, vh - headH - 4);
 
       ctx.save();
-      ctx.shadowColor = '#39ff88';
+      ctx.shadowColor = '#a3e635';
       ctx.shadowBlur = 18;
 
       // head
-      ctx.fillStyle = '#39ff88';
+      ctx.fillStyle = '#a3e635';
       ctx.fillRect(drawX + 8, visualY, drawW - 16, headH);
 
       // hair/glasses
-      ctx.fillStyle = 'rgba(2,4,3,0.82)';
+      ctx.fillStyle = 'rgba(10,10,18,0.82)';
       ctx.fillRect(drawX + 10, visualY + 3, drawW - 20, 4);
       ctx.fillRect(drawX + 13, visualY + 9, 8, 4);
       ctx.fillRect(drawX + drawW - 21, visualY + 9, 8, 4);
       ctx.fillRect(drawX + 21, visualY + 10, drawW - 42, 2);
 
       // body
-      ctx.fillStyle = '#22c76d';
+      ctx.fillStyle = '#84cc16';
       ctx.fillRect(drawX + 4, bodyY, drawW - 8, bodyH);
 
       // tie/detail
-      ctx.fillStyle = 'rgba(2,4,3,0.82)';
+      ctx.fillStyle = 'rgba(10,10,18,0.82)';
       ctx.fillRect(drawX + drawW / 2 - 3, bodyY + 5, 6, Math.max(6, bodyH - 10));
 
       // crouch speed lines
       if (crouched) {
-        ctx.fillStyle = 'rgba(57,255,136,0.35)';
+        ctx.fillStyle = 'rgba(163,230,53,0.35)';
         ctx.fillRect(drawX + drawW + 5, visualY + 6, 22, 4);
         ctx.fillRect(drawX + drawW + 12, visualY + 15, 15, 4);
       }
@@ -643,9 +637,9 @@
       const wiggle = Math.sin(frame * 0.2 + ob.x * 0.05) * 2;
       const by = cy - bh / 2 + 2 + wiggle;
 
-      ctx.shadowColor = ob.variant === 'glitchBug' ? '#ff7aa2' : '#ff3b6b';
+      ctx.shadowColor = ob.variant === 'glitchBug' ? '#7dd3fc' : '#f43f5e';
       ctx.shadowBlur = ob.variant === 'glitchBug' ? 20 : 14;
-      ctx.strokeStyle = '#ff3b6b';
+      ctx.strokeStyle = ob.variant === 'glitchBug' ? '#38bdf8' : '#f43f5e';
       ctx.lineWidth = 3;
       [by + 5, by + bh / 2, by + bh - 5].forEach(ly => {
         ctx.beginPath();
@@ -655,19 +649,19 @@
         ctx.lineTo(bx + bw + 10, ly + 4);
         ctx.stroke();
       });
-      ctx.fillStyle = ob.variant === 'glitchBug' ? '#ff5f9a' : '#ff3b6b';
+      ctx.fillStyle = ob.variant === 'glitchBug' ? '#38bdf8' : '#f43f5e';
       roundedRect(bx, by, bw, bh, 7);
       ctx.fill();
-      ctx.fillStyle = ob.variant === 'glitchBug' ? '#ffd166' : '#ff6b8a';
+      ctx.fillStyle = ob.variant === 'glitchBug' ? '#7dd3fc' : '#fb7185';
       roundedRect(bx + 7, by - 8, bw - 14, 10, 4);
       ctx.fill();
-      ctx.fillStyle = '#020403';
+      ctx.fillStyle = '#0c0c17';
       ctx.fillRect(cx - 9, by - 4, 5, 4);
       ctx.fillRect(cx + 4, by - 4, 5, 4);
       ctx.fillRect(cx - 10, by + bh - 10, 20, 3);
       if (ob.variant === 'glitchBug') {
         const j = Math.sin(frame * 0.45) * 3;
-        ctx.fillStyle = 'rgba(255,209,102,0.85)';
+        ctx.fillStyle = 'rgba(125,211,252,0.85)';
         ctx.fillRect(bx - 7 + j, by + 5, 6, 5);
         ctx.fillRect(bx + bw + 2 - j, by + bh - 8, 7, 5);
       }
@@ -676,9 +670,9 @@
     function drawFirewall(ob) {
       const centerY = ob.y + ob.h / 2;
       const pulse = 5 + Math.sin(frame * 0.35) * 2;
-      ctx.shadowColor = '#ffd166';
+      ctx.shadowColor = '#f59e0b';
       ctx.shadowBlur = 18;
-      ctx.fillStyle = '#ffd166';
+      ctx.fillStyle = '#f59e0b';
       roundedRect(ob.x - 10, ob.y - 7, 10, ob.h + 14, 3);
       ctx.fill();
       roundedRect(ob.x + ob.w, ob.y - 7, 10, ob.h + 14, 3);
@@ -687,7 +681,7 @@
       ctx.fillStyle = 'rgba(255,255,255,0.25)';
       ctx.fillRect(ob.x, centerY - 1, ob.w, 2);
       const scanY = ob.y + ((frame * 2) % ob.h);
-      ctx.fillStyle = 'rgba(255,209,102,0.25)';
+      ctx.fillStyle = 'rgba(245,158,11,0.25)';
       ctx.fillRect(ob.x, scanY, ob.w, 3);
     }
 
@@ -715,8 +709,8 @@
     function drawStatusText() {
       if (state !== 'running') return;
       ctx.save();
-      ctx.fillStyle = 'rgba(216,255,232,0.42)';
-      ctx.font = '16px Consolas, Monaco, monospace';
+      ctx.fillStyle = 'rgba(155,155,176,0.5)';
+      ctx.font = "16px 'JetBrains Mono', monospace";
       ctx.fillText('RUNNING_PROCESS: ACTIVE', 24, 34);
       ctx.fillText(player.crouching ? 'MODE: CROUCH' : player.grounded ? 'MODE: GROUND' : 'MODE: AIRBORNE', 24, 58);
       ctx.restore();
@@ -739,21 +733,21 @@
 
         // inner screen pulse
         ctx.globalAlpha = alpha * 0.18;
-        ctx.fillStyle = '#39ff88';
+        ctx.fillStyle = '#84cc16';
         ctx.fillRect(0, 0, W, H);
 
         // strong border glow
         ctx.globalAlpha = alpha;
-        ctx.strokeStyle = '#39ff88';
+        ctx.strokeStyle = '#a3e635';
         ctx.lineWidth = 10;
-        ctx.shadowColor = '#39ff88';
+        ctx.shadowColor = '#a3e635';
         ctx.shadowBlur = 45;
         ctx.strokeRect(5, 5, W - 10, H - 10);
 
         // small speed-up text pulse
         ctx.globalAlpha = alpha * 0.85;
-        ctx.fillStyle = '#39ff88';
-        ctx.font = 'bold 28px Consolas, Monaco, monospace';
+        ctx.fillStyle = '#a3e635';
+        ctx.font = "bold 28px 'Space Grotesk', sans-serif";
         ctx.textAlign = 'center';
         ctx.fillText('SPEED UP', W / 2, 78);
         ctx.textAlign = 'left';
@@ -769,8 +763,31 @@
     }
 
     window.addEventListener('keydown', e => {
+      if (e.code === 'KeyP' || e.key === 'Escape') {
+        if (state === 'running') {
+          state = 'paused';
+          overlayTitle.textContent = 'Paused';
+          overlayText.innerHTML = 'Press <span class="key">P</span> or <span class="key">Space</span> to resume';
+          overlay.classList.remove('hidden');
+          footerArcadeBtn.classList.add('hidden');
+          return;
+        }
+        if (state === 'paused') {
+          state = 'running';
+          overlay.classList.add('hidden');
+          footerArcadeBtn.classList.remove('hidden');
+          return;
+        }
+      }
+
       if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar') {
         e.preventDefault();
+        if (state === 'paused') {
+          state = 'running';
+          overlay.classList.add('hidden');
+          footerArcadeBtn.classList.remove('hidden');
+          return;
+        }
         if (state === 'ready' || state === 'dead') resetGame();
         return;
       }

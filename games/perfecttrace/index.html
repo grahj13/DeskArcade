@@ -4,55 +4,337 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Perfect Trace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/theme.css">
+  <link rel="stylesheet" href="../../assets/leaderboard.css">
   <style>
-    :root{--bg:#050807;--panel:#0b1411;--panel2:#101d18;--neon:#00ff88;--danger:#ff365e;--text:#eafff5;--muted:#8fb8a5;--line:rgba(0,255,136,.35)}
-    *{box-sizing:border-box;user-select:none}body{margin:0;min-height:100vh;background:radial-gradient(circle at top,rgba(0,255,136,.14),transparent 35%),linear-gradient(180deg,#06110d 0%,var(--bg) 70%);color:var(--text);font-family:Consolas,Monaco,'Courier New',monospace;display:flex;align-items:center;justify-content:center;padding:20px}.game-shell{width:min(980px,100%);border:1px solid var(--line);background:rgba(5,12,9,.92);box-shadow:0 0 35px rgba(0,255,136,.12),inset 0 0 20px rgba(0,255,136,.04);border-radius:22px;overflow:hidden}header{padding:18px 22px 14px;border-bottom:1px solid rgba(0,255,136,.18);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}h1{margin:0;color:var(--neon);font-size:clamp(2rem,5vw,4rem);letter-spacing:2px;text-shadow:0 0 12px rgba(0,255,136,.45);line-height:1}.subtitle{margin-top:8px;color:var(--muted);font-size:.95rem}.badge{border:1px solid rgba(0,255,136,.35);color:var(--neon);padding:8px 12px;border-radius:999px;background:rgba(0,255,136,.07);font-size:.8rem;white-space:nowrap}main{padding:24px}.screen{display:none}.screen.active{display:block}.intro-copy,.hint,.breakdown{color:var(--muted);line-height:1.5;margin:0}.menu-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:24px}.shape-card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid rgba(0,255,136,.22);border-radius:18px;padding:22px;cursor:pointer;min-height:190px;display:flex;flex-direction:column;justify-content:space-between;transition:.15s}.shape-card:hover{transform:translateY(-4px);border-color:var(--neon);box-shadow:0 0 22px rgba(0,255,136,.14)}.shape-icon{height:90px;display:flex;align-items:center;justify-content:center}.shape-card h2{margin:16px 0 4px;font-size:1.4rem}.shape-card p{color:var(--muted);line-height:1.5;margin:0}.draw-topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}.target-label,.timer,.score-mini{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);padding:10px 14px;border-radius:14px;color:var(--neon);font-weight:700}.timer.low{color:var(--danger);border-color:rgba(255,54,94,.55);box-shadow:0 0 18px rgba(255,54,94,.16)}.canvas-wrap{position:relative;border:1px solid rgba(0,255,136,.25);background:#020504;border-radius:18px;overflow:hidden;box-shadow:inset 0 0 30px rgba(0,255,136,.05)}canvas{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair}.countdown{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,5,4,.82);color:var(--neon);font-size:clamp(5rem,18vw,12rem);font-weight:900;text-shadow:0 0 22px rgba(0,255,136,.75);z-index:5}.countdown.show{display:flex}.hint{margin-top:12px;font-size:.9rem}.results-layout{display:grid;grid-template-columns:1.3fr .7fr;gap:20px;align-items:stretch}.results-panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid rgba(0,255,136,.22);border-radius:18px;padding:22px}.score-number{font-size:clamp(3.5rem,11vw,7rem);color:var(--neon);line-height:1;text-shadow:0 0 18px rgba(0,255,136,.35);margin:12px 0}.verdict{font-size:1.5rem;font-weight:900;margin-bottom:12px}.verdict.pass{color:var(--neon)}.verdict.fail{color:var(--danger)}.buttons{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}button{border:1px solid rgba(0,255,136,.4);background:rgba(0,255,136,.08);color:var(--text);padding:12px 16px;border-radius:14px;font-family:inherit;font-weight:800;cursor:pointer}button:hover{background:rgba(0,255,136,.15);border-color:var(--neon)}button.primary{background:var(--neon);color:#021008;box-shadow:0 0 18px rgba(0,255,136,.24)}footer{padding:14px 24px 20px;color:rgba(234,255,245,.45);font-size:.8rem;border-top:1px solid rgba(0,255,136,.12)}@media(max-width:760px){.menu-grid,.results-layout{grid-template-columns:1fr}main{padding:16px}header{padding:18px 16px 14px}}
+    :root {
+      --accent: #0ea5e9;
+      --accent-2: #38bdf8;
+      --panel: var(--surface);
+      --panel2: var(--surface-strong);
+      --danger: #ef4444;
+      --muted: var(--text-dim);
+      --line: var(--border);
+    }
+
+    * { user-select: none; }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .game-shell {
+      position: relative;
+      width: min(980px, 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012) 38%),
+        var(--surface-strong);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow-2);
+      overflow: hidden;
+    }
+
+    header {
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: var(--font-display);
+      color: var(--accent-text);
+      font-size: clamp(2rem, 5vw, 4rem);
+      letter-spacing: 2px;
+      line-height: 1;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--text-dim);
+      font-size: 0.95rem;
+    }
+
+    .badge {
+      border: 1px solid var(--border-strong);
+      color: var(--text-dim);
+      padding: 8px 12px;
+      border-radius: var(--radius-pill);
+      background: var(--surface);
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+
+    main { padding: 24px; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .intro-copy, .hint, .breakdown {
+      color: var(--text-dim);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 24px;
+    }
+
+    .shape-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 22px;
+      cursor: pointer;
+      min-height: 190px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .shape-card:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent-border);
+      background: var(--accent-soft);
+      box-shadow: 0 8px 22px var(--accent-glow);
+    }
+
+    .shape-icon {
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .shape-card h2 {
+      margin: 16px 0 4px;
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+    }
+
+    .shape-card p {
+      color: var(--text-dim);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .draw-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .target-label, .timer, .score-mini {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      color: var(--accent-text);
+      font-family: var(--font-mono);
+      font-weight: 700;
+    }
+
+    .timer.low {
+      color: var(--danger);
+      border-color: rgba(239, 68, 68, 0.55);
+      box-shadow: 0 0 18px rgba(239, 68, 68, 0.16);
+    }
+
+    .canvas-wrap {
+      position: relative;
+      border: 1px solid var(--border);
+      background: #0c0c17;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.55);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .countdown {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(8, 8, 15, 0.82);
+      color: var(--accent-text);
+      font-family: var(--font-mono);
+      font-size: clamp(5rem, 18vw, 12rem);
+      font-weight: 700;
+      z-index: 5;
+    }
+
+    .countdown.show { display: flex; }
+
+    .hint { margin-top: 12px; font-size: 0.9rem; }
+
+    .results-layout {
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .results-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 22px;
+    }
+
+    .score-number {
+      font-family: var(--font-mono);
+      font-size: clamp(3.5rem, 11vw, 7rem);
+      color: var(--accent-text);
+      line-height: 1;
+      margin: 12px 0;
+    }
+
+    .verdict {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .verdict.pass { color: #34d399; }
+    .verdict.fail { color: var(--danger); }
+
+    .buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    button {
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+    }
+
+    button:hover {
+      background: var(--accent-soft);
+      border-color: var(--accent-border);
+      transform: translateY(-1px);
+    }
+
+    button.primary {
+      border: none;
+      background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--accent-2)));
+      color: #fff;
+      box-shadow: 0 8px 22px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    }
+
+    button.primary:hover {
+      filter: brightness(1.08);
+      background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--accent-2)));
+    }
+
+    footer {
+      padding: 14px 24px 20px;
+      color: var(--text-faint);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 760px) {
+      .menu-grid, .results-layout { grid-template-columns: 1fr; }
+      main { padding: 16px; }
+      header { padding: 18px 16px 14px; }
+    }
   </style>
 </head>
 <body>
   <div class="game-shell">
     <header style="display:flex;flex-direction:column;align-items:center;gap:12px;padding-top:16px;">
-  <img src="./perfecttracelogo.png" alt="Perfect Trace" style="height:140px; display:block; filter: drop-shadow(0 0 8px rgba(0,255,136,0.35)) drop-shadow(0 0 18px rgba(0,255,136,0.15));"/>
+  <img src="./perfecttracelogo.png" alt="Perfect Trace" style="height:52px; width:auto; max-width:min(420px,55vw); object-fit:contain; display:block; filter: drop-shadow(0 4px 14px rgba(0,0,0,0.55));"/>
   
   <div class="subtitle" style="text-align:center;">Pick a shape. Draw it blind. You get 5 seconds. No excuses.</div>
 </header>
 
 <div style="display:flex;justify-content:space-between;align-items:center;padding:0 24px 12px;">
-  <button onclick="window.location.href='../index.html'">Return to Arcade</button>
+  <a class="da-back" href="../../index.html">Back to Arcade</a>
   <div class="badge">Created by Jason / build v4.2</div>
 </div>
     <main style="padding:16px;">
       <section id="menuScreen" class="screen active">
         <p class="intro-copy">Choose your target shape. You get a 3–2–1 countdown, then a blank screen. Your ink is invisible until the result reveal.</p>
         <div class="menu-grid">
-          <div class="shape-card" data-shape="square" onclick="window.startPerfectTrace && window.startPerfectTrace('square')"><div class="shape-icon"><svg width="86" height="86" viewBox="0 0 100 100"><rect x="18" y="18" width="64" height="64" fill="none" stroke="#00ff88" stroke-width="7"/></svg></div><div><h2>Square</h2><p>Must have 4 sides. Equal length matters.</p></div></div>
-          <div class="shape-card" data-shape="triangle" onclick="window.startPerfectTrace && window.startPerfectTrace('triangle')"><div class="shape-icon"><svg width="96" height="86" viewBox="0 0 110 100"><polygon points="55,14 92,84 18,84" fill="none" stroke="#00ff88" stroke-width="7"/></svg></div><div><h2>Triangle</h2><p>Must have 3 sides. Lengths can vary.</p></div></div>
-          <div class="shape-card" data-shape="circle" onclick="window.startPerfectTrace && window.startPerfectTrace('circle')"><div class="shape-icon"><svg width="90" height="90" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="#00ff88" stroke-width="7"/></svg></div><div><h2>Circle</h2><p>No sides. Smooth and closed.</p></div></div>
+          <div class="shape-card" data-shape="square" onclick="window.startPerfectTrace && window.startPerfectTrace('square')"><div class="shape-icon"><svg width="86" height="86" viewBox="0 0 100 100"><rect x="18" y="18" width="64" height="64" fill="none" stroke="#0ea5e9" stroke-width="7"/></svg></div><div><h2>Square</h2><p>Must have 4 sides. Equal length matters.</p></div></div>
+          <div class="shape-card" data-shape="triangle" onclick="window.startPerfectTrace && window.startPerfectTrace('triangle')"><div class="shape-icon"><svg width="96" height="86" viewBox="0 0 110 100"><polygon points="55,14 92,84 18,84" fill="none" stroke="#0ea5e9" stroke-width="7"/></svg></div><div><h2>Triangle</h2><p>Must have 3 sides. Lengths can vary.</p></div></div>
+          <div class="shape-card" data-shape="circle" onclick="window.startPerfectTrace && window.startPerfectTrace('circle')"><div class="shape-icon"><svg width="90" height="90" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="#0ea5e9" stroke-width="7"/></svg></div><div><h2>Circle</h2><p>No sides. Smooth and closed.</p></div></div>
         </div>
+        <div id="leaderboard"></div>
       </section>
       <section id="drawScreen" class="screen"><div class="draw-topbar"><div id="targetLabel" class="target-label">Target: Square</div><div id="timer" class="timer">5.0s</div></div><div class="canvas-wrap"><canvas id="gameCanvas" width="900" height="440"></canvas><div id="countdown" class="countdown">3</div></div><div class="hint">Invisible ink mode: your drawing is hidden until the timer hits zero.</div></section>
-      <section id="resultsScreen" class="screen"><div class="results-layout"><div class="canvas-wrap"><canvas id="resultCanvas" width="900" height="440"></canvas></div><div class="results-panel"><div class="score-mini" id="resultShape">Square Attempt</div><div class="score-number" id="scoreNumber">0%</div><div class="verdict" id="verdict">FAIL</div><div class="breakdown" id="breakdown">Your result will appear here.</div><div class="buttons"><button class="primary" id="retryBtn">Retry Shape</button><button id="menuBtn">Change Shape</button><button onclick="window.location.href='../index.html'">Return to Arcade</button></div></div></div></section>
+      <section id="resultsScreen" class="screen"><div class="results-layout"><div class="canvas-wrap"><canvas id="resultCanvas" width="900" height="440"></canvas></div><div class="results-panel"><div class="score-mini" id="resultShape">Square Attempt</div><div class="score-number" id="scoreNumber">0%</div><div class="verdict" id="verdict">FAIL</div><div class="breakdown" id="breakdown">Your result will appear here.</div><div class="buttons"><button class="primary" id="retryBtn">Retry Shape</button><button id="menuBtn">Change Shape</button><button onclick="window.location.href='../../index.html'">Back to Arcade</button></div></div></div></section>
     </main>
     
   </div>
+<script src="../../assets/deskarcade-config.js"></script>
+<script src="../../assets/leaderboard.js"></script>
 <script>
 (() => {
+  const lbPanel = document.getElementById('leaderboard');
   const $ = id => document.getElementById(id);
   const menuScreen=$('menuScreen'), drawScreen=$('drawScreen'), resultsScreen=$('resultsScreen');
   const countdownEl=$('countdown'), timerEl=$('timer'), targetLabel=$('targetLabel'), resultShape=$('resultShape'), scoreNumber=$('scoreNumber'), verdictEl=$('verdict'), breakdownEl=$('breakdown');
   const canvas=$('gameCanvas'), ctx=canvas.getContext('2d'), resultCanvas=$('resultCanvas'), rctx=resultCanvas.getContext('2d');
   let selectedShape='square', points=[], drawing=false, canDraw=false, finished=false, timerFrame=null, countdownTimer=null, finishTimeout=null, endTime=0;
+  const shapeBests=JSON.parse(localStorage.getItem('perfecttraceBests')||'{}');
+
+  function saveShapeBest(shape,score){
+    if(score>(shapeBests[shape]||0)){
+      shapeBests[shape]=score;
+      localStorage.setItem('perfecttraceBests',JSON.stringify(shapeBests));
+      return true;
+    }
+    return false;
+  }
   const drawSeconds=5;
 
   const clamp=(v,min,max)=>Number.isFinite(v)?Math.max(min,Math.min(max,v)):min;
   const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   const pretty=s=>s[0].toUpperCase()+s.slice(1);
   const show=screen=>{[menuScreen,drawScreen,resultsScreen].forEach(s=>s.classList.remove('active'));screen.classList.add('active')};
-  const clear=(c,cv)=>{c.clearRect(0,0,cv.width,cv.height);c.fillStyle='#020504';c.fillRect(0,0,cv.width,cv.height)};
+  const clear=(c,cv)=>{c.clearRect(0,0,cv.width,cv.height);c.fillStyle='#0c0c17';c.fillRect(0,0,cv.width,cv.height)};
   const point=e=>{const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*(canvas.width/r.width),y:(e.clientY-r.top)*(canvas.height/r.height)}};
   function resetTimers(){if(timerFrame)cancelAnimationFrame(timerFrame);if(countdownTimer)clearInterval(countdownTimer);if(finishTimeout)clearTimeout(finishTimeout);timerFrame=countdownTimer=finishTimeout=null}
 
-  function start(shape){resetTimers();selectedShape=shape;points=[];drawing=false;canDraw=false;finished=false;timerEl.textContent='5.0s';timerEl.classList.remove('low');targetLabel.textContent='Target: '+pretty(shape);clear(ctx,canvas);show(drawScreen);countdown()}
+  function start(shape){resetTimers();selectedShape=shape;DeskArcadeLeaderboard.mountPanel(lbPanel,'perfecttrace',selectedShape);points=[];drawing=false;canDraw=false;finished=false;timerEl.textContent='5.0s';timerEl.classList.remove('low');targetLabel.textContent='Target: '+pretty(shape);clear(ctx,canvas);show(drawScreen);countdown()}
   function countdown(){let n=3;countdownEl.textContent=n;countdownEl.classList.add('show');countdownTimer=setInterval(()=>{n--;if(n>0)countdownEl.textContent=n;else if(n===0)countdownEl.textContent='GO';else{clearInterval(countdownTimer);countdownEl.classList.remove('show');begin()}},750)}
   function begin(){
     finished=false;
@@ -100,6 +382,8 @@
     }
 
     show(resultsScreen);
+
+    DeskArcadeLeaderboard.trySubmit('perfecttrace', result.score, { panel: lbPanel, boardKey: selectedShape }).catch(() => {});
   }
 
   function bbox(ps){if(!ps.length)return null;const xs=ps.map(p=>p.x),ys=ps.map(p=>p.y);const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);return{minX,maxX,minY,maxY,width:maxX-minX,height:maxY-minY,cx:(minX+maxX)/2,cy:(minY+maxY)/2}}
@@ -202,8 +486,8 @@
     final=Math.round(clamp(final,0,100));return{score:final,verdict:final>=93?'GREAT':final>=82?'PASS':'FAIL',notes};
   }
 
-  function drawPath(c,ps){if(ps.length<2)return;c.save();c.strokeStyle='#eafff5';c.lineWidth=5;c.lineCap='round';c.lineJoin='round';c.beginPath();c.moveTo(ps[0].x,ps[0].y);for(let i=1;i<ps.length;i++)c.lineTo(ps[i].x,ps[i].y);c.stroke();c.restore()}
-  function drawIdeal(c,shape,b){if(!b)return;const m=18,minX=b.minX-m,minY=b.minY-m,maxX=b.maxX+m,maxY=b.maxY+m,cx=(minX+maxX)/2,cy=(minY+maxY)/2,w=maxX-minX,h=maxY-minY;c.save();c.strokeStyle='#00ff88';c.lineWidth=6;c.setLineDash([12,8]);c.shadowColor='rgba(0,255,136,.45)';c.shadowBlur=12;c.beginPath();if(shape==='square')c.rect(minX,minY,w,h);if(shape==='triangle'){c.moveTo(cx,minY);c.lineTo(maxX,maxY);c.lineTo(minX,maxY);c.closePath()}if(shape==='circle')c.ellipse(cx,cy,w/2,h/2,0,0,Math.PI*2);c.stroke();c.restore()}
+  function drawPath(c,ps){if(ps.length<2)return;c.save();c.strokeStyle='#0ea5e9';c.lineWidth=5;c.lineCap='round';c.lineJoin='round';c.beginPath();c.moveTo(ps[0].x,ps[0].y);for(let i=1;i<ps.length;i++)c.lineTo(ps[i].x,ps[i].y);c.stroke();c.restore()}
+  function drawIdeal(c,shape,b){if(!b)return;const m=18,minX=b.minX-m,minY=b.minY-m,maxX=b.maxX+m,maxY=b.maxY+m,cx=(minX+maxX)/2,cy=(minY+maxY)/2,w=maxX-minX,h=maxY-minY;c.save();c.strokeStyle='rgba(255,255,255,0.25)';c.lineWidth=6;c.setLineDash([12,8]);c.beginPath();if(shape==='square')c.rect(minX,minY,w,h);if(shape==='triangle'){c.moveTo(cx,minY);c.lineTo(maxX,maxY);c.lineTo(minX,maxY);c.closePath()}if(shape==='circle')c.ellipse(cx,cy,w/2,h/2,0,0,Math.PI*2);c.stroke();c.restore()}
   function drawResults(result){
   clear(rctx,resultCanvas);
   const b=bbox(points);
@@ -215,8 +499,13 @@
   verdictEl.textContent=result.verdict;
   verdictEl.className='verdict '+(result.score>=82?'pass':'fail');
 
+  const prevBest=shapeBests[selectedShape]||0;
+  const isNewBest=saveShapeBest(selectedShape,result.score);
+
   // --- Human-friendly feedback ---
   const msgs=[];
+  if(isNewBest) msgs.push('New personal best for '+pretty(selectedShape)+'!');
+  else if(prevBest) msgs.push('Personal best: '+prevBest+'%');
   const edges=analyseEdges(points);
   const connection=closeScore(points,b);
   const ex=excess(points,b,selectedShape);
@@ -264,6 +553,7 @@
   $('retryBtn').addEventListener('click',()=>start(selectedShape));
   $('menuBtn').addEventListener('click',()=>{resetTimers();show(menuScreen)});
   clear(ctx,canvas);
+  DeskArcadeLeaderboard.mountPanel(lbPanel, 'perfecttrace', 'square');
 })();
 </script>
 </body>

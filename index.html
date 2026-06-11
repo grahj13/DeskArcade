@@ -7,86 +7,55 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/theme.css">
 
   <style>
-    :root {
-      --green: #8cff6a;
-      --green-soft: #c8ffd8;
-      --bg: #071106;
-      --bg-deep: #020402;
-      --panel: rgba(7, 24, 8, 0.94);
-      --border: rgba(140,255,106,0.22);
-      --border-strong: rgba(140,255,106,0.46);
-      --radius-large: 18px;
-      --radius-medium: 14px;
-      --radius-small: 10px;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html, body {
-      margin: 0;
-      min-height: 100%;
-    }
-
     body {
-      font-family: 'IBM Plex Mono', monospace;
-      color: var(--green);
-      background:
-        radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 34%),
-        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
-      padding: 24px;
-    }
-
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background:
-        repeating-linear-gradient(
-          to bottom,
-          rgba(140,255,106,0.025),
-          rgba(140,255,106,0.025) 1px,
-          transparent 2px,
-          transparent 4px
-        );
-      opacity: 0.35;
-      z-index: 999;
+      padding: 32px 20px 48px;
     }
 
     .page {
       max-width: 1180px;
       margin: 0 auto;
+      position: relative;
+      z-index: 1;
     }
 
-    .frame {
-      border: 1px solid var(--border);
-      background: rgba(4, 14, 5, 0.72);
-      box-shadow:
-        0 0 18px rgba(140,255,106,0.08),
-        0 0 36px rgba(140,255,106,0.05);
-      padding: 18px;
-      border-radius: var(--radius-large);
-    }
-
+    /* ---------- Hero ---------- */
     .hero {
       position: relative;
       text-align: center;
-      margin-bottom: 18px;
-      padding: 16px 12px 18px;
-      border-bottom: 1px solid rgba(140,255,106,0.12);
+      padding: 48px 20px 56px;
+      margin-bottom: 36px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background:
+        radial-gradient(700px 320px at 50% -40%, var(--accent-glow), transparent 70%),
+        linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.008) 50%),
+        var(--surface-strong);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow-2);
       overflow: hidden;
     }
 
     .hero::before {
       content: "";
       position: absolute;
+      top: 0;
+      left: 16%;
+      right: 16%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-border), color-mix(in srgb, var(--accent-2) 40%, transparent), transparent);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
       inset: 0;
-      background: radial-gradient(circle at center, rgba(140,255,106,0.10), transparent 65%);
+      background:
+        radial-gradient(420px 200px at 16% 110%, color-mix(in srgb, var(--accent-2) 7%, transparent), transparent 70%),
+        radial-gradient(420px 200px at 84% 110%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 70%);
       pointer-events: none;
     }
 
@@ -97,172 +66,270 @@
 
     .main-logo {
       display: block;
-      max-width: 390px;
-      width: 100%;
+      width: min(520px, 86%);
       height: auto;
-      margin: 0 auto 12px;
-      filter:
-        drop-shadow(0 0 10px rgba(140,255,106,0.28))
-        drop-shadow(0 0 24px rgba(140,255,106,0.14));
+      margin: 0 auto 6px;
+      filter: drop-shadow(0 10px 32px rgba(0, 0, 0, 0.55));
     }
 
     .subline {
+      margin: 0 0 22px;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-dim);
+      letter-spacing: 0.01em;
+    }
+
+    .hero-meta {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 15px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      background: var(--surface);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      letter-spacing: 0.04em;
+    }
+
+    .meta-pill .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    /* ---------- Section heading ---------- */
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      margin: 0 4px 18px;
+    }
+
+    .section-head h1 {
       margin: 0;
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .section-head .count {
+      font-family: var(--font-mono);
       font-size: 13px;
-      color: var(--green-soft);
-      text-shadow: 0 0 10px rgba(140,255,106,0.12);
+      color: var(--text-faint);
     }
 
-    .section-title {
-      margin: 0 0 12px;
-      font-size: 18px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
+    /* ---------- Game grid ---------- */
     .games-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
     }
 
     .game-card {
       position: relative;
       display: flex;
       flex-direction: column;
-      min-height: 165px;
-      padding: 14px;
       text-decoration: none;
-      color: var(--green);
       border: 1px solid var(--border);
-      border-radius: var(--radius-medium);
+      border-radius: var(--radius-md);
       background:
-        linear-gradient(180deg, rgba(10,32,11,0.96), rgba(3,11,4,0.96));
-      box-shadow:
-        inset 0 0 22px rgba(140,255,106,0.04),
-        0 0 16px rgba(140,255,106,0.10);
+        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01) 60%),
+        var(--surface-strong);
+      box-shadow: var(--shadow-1);
       overflow: hidden;
-      transition:
-        transform 0.18s ease,
-        border-color 0.18s ease,
-        box-shadow 0.18s ease;
+      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.22s ease, box-shadow 0.22s ease;
     }
 
     .game-card::before {
       content: "";
       position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at top, rgba(140,255,106,0.10), transparent 55%);
-      opacity: 0.7;
-      pointer-events: none;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.22s ease;
     }
 
     .game-card:hover {
-      transform: translateY(-4px);
-      border-color: var(--border-strong);
+      transform: translateY(-5px);
+      border-color: color-mix(in srgb, var(--accent) 40%, transparent);
       box-shadow:
-        inset 0 0 24px rgba(140,255,106,0.06),
-        0 0 22px rgba(140,255,106,0.22);
+        0 2px 6px rgba(0, 0, 0, 0.55),
+        0 22px 48px rgba(0, 0, 0, 0.5),
+        0 8px 40px color-mix(in srgb, var(--accent) 18%, transparent);
     }
 
-    .game-logo-wrap,
-    .game-info,
-    .play-chip {
+    .game-card:hover::before {
+      opacity: 1;
+    }
+
+    .card-art {
       position: relative;
-      z-index: 1;
-    }
-
-    .game-logo-wrap {
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 58px;
-      margin-bottom: 8px;
+      height: 116px;
+      padding: 26px 22px;
+      background:
+        radial-gradient(240px 110px at 50% 120%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 75%),
+        linear-gradient(180deg, #0c0c17, #08080f);
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
     }
 
-    .game-logo {
-      max-width: 100%;
-      max-height: 46px;
+    .card-art img {
+      width: 100%;
+      height: 100%;
       object-fit: contain;
-      filter: drop-shadow(0 0 10px rgba(140,255,106,0.18));
-      transition: transform 0.18s ease;
+      filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.6));
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    .game-card:hover .game-logo {
+    .game-card:hover .card-art img {
       transform: scale(1.05);
     }
 
-    .game-info {
+    .card-body {
+      display: flex;
+      flex-direction: column;
       flex: 1;
-      text-align: center;
+      gap: 4px;
+      padding: 15px 16px 16px;
     }
 
-    .game-info h2 {
-      margin: 0 0 5px;
-      font-size: 15px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .game-info p {
+    .card-body h2 {
       margin: 0;
-      font-size: 11px;
-      line-height: 1.35;
-      color: var(--green-soft);
-      opacity: 0.82;
+      font-family: var(--font-display);
+      font-size: 15.5px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: var(--text);
+    }
+
+    .card-body p {
+      margin: 0;
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: var(--text-dim);
+      flex: 1;
+    }
+
+    .card-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+
+    .tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: color-mix(in srgb, var(--accent) 75%, #ffffff);
     }
 
     .play-chip {
-      align-self: center;
-      margin-top: 10px;
-      padding: 5px 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
       border: 1px solid var(--border-strong);
-      border-radius: 999px;
-      font-size: 10px;
+      background: var(--surface);
+      font-size: 11px;
       font-weight: 700;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--green);
-      background: rgba(0,0,0,0.28);
+      color: var(--text-dim);
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .play-chip::after {
+      content: "→";
+      font-size: 12px;
+      transition: transform 0.2s ease;
     }
 
     .game-card:hover .play-chip {
-      background: var(--green);
-      color: #061206;
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0a0a12;
     }
 
+    .game-card:hover .play-chip::after {
+      transform: translateX(2px);
+    }
+
+    /* ---------- Feedback ---------- */
     .feedback-panel {
-      margin-top: 24px;
-      padding: 18px;
+      position: relative;
       border: 1px solid var(--border);
-      border-radius: var(--radius-medium);
-      background: var(--panel);
-      box-shadow:
-        inset 0 0 18px rgba(140,255,106,0.03),
-        0 0 12px rgba(140,255,106,0.10);
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.008) 50%),
+        var(--surface-strong);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow-1);
+      padding: 28px;
+      overflow: hidden;
+    }
+
+    .feedback-panel::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 16%;
+      right: 16%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-border), transparent);
+    }
+
+    .feedback-panel .da-eyebrow {
+      display: block;
+      margin-bottom: 6px;
     }
 
     .feedback-panel h2 {
-      margin: 0 0 14px;
-      font-size: 20px;
-      text-transform: uppercase;
+      margin: 0 0 6px;
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .feedback-panel .lead {
+      margin: 0 0 20px;
+      font-size: 13.5px;
+      color: var(--text-dim);
     }
 
     .feedback-panel label {
       display: block;
-      margin: 12px 0 6px;
-      font-size: 13px;
-      color: var(--green-soft);
-    }
-
-    #gameSelect,
-    #feedbackBox {
-      width: 100%;
-      padding: 11px;
-      background: #001507;
-      color: var(--green);
-      border: 1px solid var(--border-strong);
-      border-radius: var(--radius-small);
-      font-family: inherit;
+      margin: 16px 0 7px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-dim);
     }
 
     #feedbackBox {
@@ -271,55 +338,43 @@
     }
 
     #sendFeedbackBtn {
-      margin-top: 14px;
-      padding: 11px 16px;
-      background: var(--green);
-      color: #061206;
-      border: none;
-      border-radius: var(--radius-small);
-      font-family: inherit;
-      font-weight: 700;
-      cursor: pointer;
-      text-transform: uppercase;
-    }
-
-    #sendFeedbackBtn:hover {
-      filter: brightness(1.15);
+      margin-top: 18px;
     }
 
     #feedbackStatus {
       margin: 12px 0 0;
       font-size: 13px;
-      color: var(--green-soft);
+      color: var(--text-dim);
     }
 
+    /* ---------- Footer ---------- */
     .footer {
-      margin-top: 18px;
+      margin-top: 32px;
       text-align: center;
-      font-size: 12px;
-      color: rgba(200,255,216,0.72);
+      font-size: 12.5px;
+      color: var(--text-faint);
+    }
+
+    .footer strong {
+      color: var(--text-dim);
+      font-weight: 600;
     }
 
     @media (max-width: 640px) {
       body {
-        padding: 14px;
+        padding: 16px 12px 32px;
       }
 
-      .frame {
-        padding: 16px;
-        border-radius: 14px;
-      }
-
-      .main-logo {
-        max-width: 320px;
+      .hero {
+        padding: 36px 16px 40px;
       }
 
       .games-grid {
         grid-template-columns: 1fr;
       }
 
-      .game-card {
-        min-height: 155px;
+      .feedback-panel {
+        padding: 20px;
       }
     }
   </style>
@@ -327,233 +382,209 @@
 
 <body>
   <main class="page">
-    <div class="frame">
 
-      <section class="hero">
-        <img src="deskarcadelogo.png" alt="DeskArcade logo" class="main-logo">
-        <p class="subline">Pick a game. Waste a few minutes.</p>
-      </section>
+    <section class="hero">
+      <img src="deskarcadelogo.png" alt="DeskArcade logo" class="main-logo">
+      <p class="subline">A curated collection of quick-hit desk games. Pick one, waste a few minutes in style.</p>
+      <div class="hero-meta">
+        <span class="meta-pill"><span class="dot"></span>16 games</span>
+        <span class="meta-pill"><span class="dot"></span>No installs</span>
+        <span class="meta-pill"><span class="dot"></span>Free forever</span>
+      </div>
+    </section>
 
-      <h1 class="section-title">Available Games</h1>
-
-      <section class="games-grid">
-
-        <a class="game-card" href="games/keystorm/index.html" aria-label="Play KeyStorm">
-          <div class="game-logo-wrap">
-            <img src="games/keystorm/keystorm-logo.png" alt="KeyStorm logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>KeyStorm</h2>
-            <p>Fast-paced typing survival.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-        <a class="game-card" href="games/snake/index.html" aria-label="Play Grid Viper">
-          <div class="game-logo-wrap">
-            <img src="games/snake/gridviperlogov2.png" alt="Grid Viper logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>Grid Viper</h2>
-            <p>Classic snake arcade game.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-        <a class="game-card" href="games/shockline/index.html" aria-label="Play Shockline">
-          <div class="game-logo-wrap">
-            <img src="games/shockline/shocklinelogo.png" alt="Shockline logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>Shockline</h2>
-            <p>Follow the line carefully.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-        <a class="game-card" href="games/neonreels/index.html" aria-label="Play NeonReels">
-          <div class="game-logo-wrap">
-            <img src="games/neonreels/neonreelslogo.png" alt="NeonReels logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>NeonReels</h2>
-            <p>Neon arcade slot machine.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-        <a class="game-card" href="games/reacto/index.html" aria-label="Play Reacto">
-          <div class="game-logo-wrap">
-            <img src="games/reacto/reactologo.png" alt="Reacto logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>Reacto</h2>
-            <p>Reaction speed challenge.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-        <a class="game-card" href="games/perfect10/index.html" aria-label="Play Perfect 10">
-          <div class="game-logo-wrap">
-            <img src="games/perfect10/perfect10logo.png" alt="Perfect 10 logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>Perfect 10</h2>
-            <p>Stop at exactly 10 seconds.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-        <a class="game-card" href="games/lanedash/index.html" aria-label="Play Lane Dash">
-          <div class="game-logo-wrap">
-            <img src="games/lanedash/lanedashlogo.png" alt="Lane Dash logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>Lane Dash</h2>
-            <p>Cross the road safely.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-        <a class="game-card" href="games/neonsearch/index.html" aria-label="Play Neon Search">
-          <div class="game-logo-wrap">
-            <img src="games/neonsearch/neonsearchlogo.png" alt="Neon Search logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>Neon Search</h2>
-            <p>Classic word search puzzle.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-        <a class="game-card" href="games/fracture/index.html" aria-label="Play Fracture">
-          <div class="game-logo-wrap">
-            <img src="games/fracture/fracturelogo.png" alt="Fracture logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>Fracture</h2>
-            <p>Break blocks and survive.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-        <a class="game-card" href="games/signalscan/index.html" aria-label="Play Signal Scan">
-          <div class="game-logo-wrap">
-            <img src="games/signalscan/signalscanlogo.png" alt="Signal Scan logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>Signal Scan</h2>
-            <p>Remember the number sequence.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-        <a class="game-card" href="games/wordforge/index.html" aria-label="Play Word Forge">
-          <div class="game-logo-wrap">
-            <img src="games/wordforge/wordforgelogo.png" alt="Word Forge logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>Word Forge</h2>
-            <p>Create words from letters.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-        <a class="game-card" href="games/runexe/index.html" aria-label="Play Run.exe">
-          <div class="game-logo-wrap">
-            <img src="games/runexe/runexelogo.png" alt="Run.exe logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>Run.exe</h2>
-            <p>Jump and dodge obstacles.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-        <a class="game-card" href="games/perfecttrace/index.html" aria-label="Play Perfect Trace">
-          <div class="game-logo-wrap">
-            <img src="games/perfecttrace/perfecttracelogo.png" alt="Perfect Trace logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>Perfect Trace</h2>
-            <p>Trace the shape perfectly.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-        <a class="game-card" href="games/pixelglide/index.html" aria-label="Play Pixel Glide">
-          <div class="game-logo-wrap">
-            <img src="games/pixelglide/pixelglidelogo.png" alt="Pixel Glide logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>Pixel Glide</h2>
-            <p>Side-scrolling flying challenge.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-        <a class="game-card" href="games/wordtrap/index.html" aria-label="Play Word Trap">
-          <div class="game-logo-wrap">
-            <img src="games/wordtrap/wordtraplogo.png" alt="Word Trap logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>Word Trap</h2>
-            <p>Classic hangman word game.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-        <a class="game-card" href="games/ghostpixel/index.html" aria-label="Play Ghost Pixel">
-          <div class="game-logo-wrap">
-            <img src="games/ghostpixel/ghostpixellogo.png" alt="Ghost Pixel logo" class="game-logo">
-          </div>
-          <div class="game-info">
-            <h2>Ghost Pixel</h2>
-            <p>Find the hidden pixel.</p>
-          </div>
-          <span class="play-chip">Play</span>
-        </a>
-
-      </section>
-
-      <section class="feedback-panel">
-        <h2>Feedback & Suggestions</h2>
-
-        <label for="gameSelect">Game</label>
-        <select id="gameSelect">
-          <option value="">Select a game</option>
-          <option value="General">General</option>
-          <option value="DeskArcade Home">Home Page</option>
-          <option value="KeyStorm">KeyStorm</option>
-          <option value="Grid Viper">Grid Viper</option>
-          <option value="Shockline">Shockline</option>
-          <option value="NeonReels">NeonReels</option>
-          <option value="Reacto">Reacto</option>
-          <option value="Perfect 10">Perfect 10</option>
-          <option value="Lane Dash">Lane Dash</option>
-          <option value="Neon Search">Neon Search</option>
-          <option value="Fracture">Fracture</option>
-          <option value="Signal Scan">Signal Scan</option>
-          <option value="Word Forge">Word Forge</option>
-          <option value="Run.exe">Run.exe</option>
-          <option value="Perfect Trace">Perfect Trace</option>
-          <option value="Pixel Glide">Pixel Glide</option>
-          <option value="Word Trap">Word Trap</option>
-          <option value="Ghost Pixel">Ghost Pixel</option>
-        </select>
-
-        <label for="feedbackBox">Feedback/Suggestions</label>
-        <textarea id="feedbackBox" placeholder="Drop your feedback or suggestions here..."></textarea>
-
-        <button id="sendFeedbackBtn">Send Feedback/Suggestion</button>
-        <p id="feedbackStatus"></p>
-      </section>
-
-      <footer class="footer">
-        Built by Jason
-      </footer>
-
+    <div class="section-head">
+      <h1>The Collection</h1>
+      <span class="count">16 titles</span>
     </div>
+
+    <section class="games-grid">
+
+      <a class="game-card" href="games/keystorm/index.html" aria-label="Play KeyStorm" style="--accent:#3b82f6">
+        <div class="card-art"><img src="games/keystorm/keystorm-logo.png" alt="KeyStorm logo"></div>
+        <div class="card-body">
+          <h2>KeyStorm</h2>
+          <p>Fast-paced typing survival.</p>
+          <div class="card-foot"><span class="tag">Typing</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/snake/index.html" aria-label="Play Grid Viper" style="--accent:#10b981">
+        <div class="card-art"><img src="games/snake/gridviperlogov2.png" alt="Grid Viper logo"></div>
+        <div class="card-body">
+          <h2>Grid Viper</h2>
+          <p>Classic snake, rebuilt for the grid.</p>
+          <div class="card-foot"><span class="tag">Arcade</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/shockline/index.html" aria-label="Play Shockline" style="--accent:#f59e0b">
+        <div class="card-art"><img src="games/shockline/shocklinelogo.png" alt="Shockline logo"></div>
+        <div class="card-body">
+          <h2>Shockline</h2>
+          <p>Steady hands. Follow the line.</p>
+          <div class="card-foot"><span class="tag">Precision</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/neonreels/index.html" aria-label="Play NeonReels" style="--accent:#ec4899">
+        <div class="card-art"><img src="games/neonreels/neonreelslogo.png" alt="NeonReels logo"></div>
+        <div class="card-body">
+          <h2>NeonReels</h2>
+          <p>Neon arcade slot machine.</p>
+          <div class="card-foot"><span class="tag">Luck</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/reacto/index.html" aria-label="Play Reacto" style="--accent:#ef4444">
+        <div class="card-art"><img src="games/reacto/reactologo.png" alt="Reacto logo"></div>
+        <div class="card-body">
+          <h2>Reacto</h2>
+          <p>How fast are your reflexes, really?</p>
+          <div class="card-foot"><span class="tag">Reflex</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/perfect10/index.html" aria-label="Play Perfect 10" style="--accent:#06b6d4">
+        <div class="card-art"><img src="games/perfect10/perfect10logo.png" alt="Perfect 10 logo"></div>
+        <div class="card-body">
+          <h2>Perfect 10</h2>
+          <p>Stop the clock at exactly 10 seconds.</p>
+          <div class="card-foot"><span class="tag">Timing</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/lanedash/index.html" aria-label="Play Lane Dash" style="--accent:#f97316">
+        <div class="card-art"><img src="games/lanedash/lanedashlogo.png" alt="Lane Dash logo"></div>
+        <div class="card-body">
+          <h2>Lane Dash</h2>
+          <p>Cross the lanes. Don't get clipped.</p>
+          <div class="card-foot"><span class="tag">Arcade</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/neonsearch/index.html" aria-label="Play Neon Search" style="--accent:#8b5cf6">
+        <div class="card-art"><img src="games/neonsearch/neonsearchlogo.png" alt="Neon Search logo"></div>
+        <div class="card-body">
+          <h2>Neon Search</h2>
+          <p>Word search with a glow-up.</p>
+          <div class="card-foot"><span class="tag">Puzzle</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/fracture/index.html" aria-label="Play Fracture" style="--accent:#a855f7">
+        <div class="card-art"><img src="games/fracture/fracturelogo.png" alt="Fracture logo"></div>
+        <div class="card-body">
+          <h2>Fracture</h2>
+          <p>Break every block. Keep the ball alive.</p>
+          <div class="card-foot"><span class="tag">Arcade</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/signalscan/index.html" aria-label="Play Signal Scan" style="--accent:#14b8a6">
+        <div class="card-art"><img src="games/signalscan/signalscanlogo.png" alt="Signal Scan logo"></div>
+        <div class="card-body">
+          <h2>Signal Scan</h2>
+          <p>Memorise the sequence. Echo it back.</p>
+          <div class="card-foot"><span class="tag">Memory</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/wordforge/index.html" aria-label="Play Word Forge" style="--accent:#eab308">
+        <div class="card-art"><img src="games/wordforge/wordforgelogo.png" alt="Word Forge logo"></div>
+        <div class="card-body">
+          <h2>Word Forge</h2>
+          <p>Forge words from a handful of letters.</p>
+          <div class="card-foot"><span class="tag">Words</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/runexe/index.html" aria-label="Play Run.exe" style="--accent:#84cc16">
+        <div class="card-art"><img src="games/runexe/runexelogo.png" alt="Run.exe logo"></div>
+        <div class="card-body">
+          <h2>Run.exe</h2>
+          <p>Jump, dodge, survive the runtime.</p>
+          <div class="card-foot"><span class="tag">Runner</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/perfecttrace/index.html" aria-label="Play Perfect Trace" style="--accent:#0ea5e9">
+        <div class="card-art"><img src="games/perfecttrace/perfecttracelogo.png" alt="Perfect Trace logo"></div>
+        <div class="card-body">
+          <h2>Perfect Trace</h2>
+          <p>Trace the shape. Chase 100%.</p>
+          <div class="card-foot"><span class="tag">Precision</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/pixelglide/index.html" aria-label="Play Pixel Glide" style="--accent:#6366f1">
+        <div class="card-art"><img src="games/pixelglide/pixelglidelogo.png" alt="Pixel Glide logo"></div>
+        <div class="card-body">
+          <h2>Pixel Glide</h2>
+          <p>Thread the gaps. Keep gliding.</p>
+          <div class="card-foot"><span class="tag">Arcade</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/wordtrap/index.html" aria-label="Play Word Trap" style="--accent:#f43f5e">
+        <div class="card-art"><img src="games/wordtrap/wordtraplogo.png" alt="Word Trap logo"></div>
+        <div class="card-body">
+          <h2>Word Trap</h2>
+          <p>Hangman with the stakes turned up.</p>
+          <div class="card-foot"><span class="tag">Words</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/ghostpixel/index.html" aria-label="Play Ghost Pixel" style="--accent:#d946ef">
+        <div class="card-art"><img src="games/ghostpixel/ghostpixellogo.png" alt="Ghost Pixel logo"></div>
+        <div class="card-body">
+          <h2>Ghost Pixel</h2>
+          <p>Spot the odd pixel before time runs out.</p>
+          <div class="card-foot"><span class="tag">Perception</span><span class="play-chip">Play</span></div>
+        </div>
+      </a>
+
+    </section>
+
+    <section class="feedback-panel">
+      <span class="da-eyebrow">Get in touch</span>
+      <h2>Feedback &amp; Suggestions</h2>
+      <p class="lead">Found a bug, or got an idea for the next game? Drop it below.</p>
+
+      <label for="gameSelect">Game</label>
+      <select id="gameSelect" class="da-select">
+        <option value="">Select a game</option>
+        <option value="General">General</option>
+        <option value="DeskArcade Home">Home Page</option>
+        <option value="KeyStorm">KeyStorm</option>
+        <option value="Grid Viper">Grid Viper</option>
+        <option value="Shockline">Shockline</option>
+        <option value="NeonReels">NeonReels</option>
+        <option value="Reacto">Reacto</option>
+        <option value="Perfect 10">Perfect 10</option>
+        <option value="Lane Dash">Lane Dash</option>
+        <option value="Neon Search">Neon Search</option>
+        <option value="Fracture">Fracture</option>
+        <option value="Signal Scan">Signal Scan</option>
+        <option value="Word Forge">Word Forge</option>
+        <option value="Run.exe">Run.exe</option>
+        <option value="Perfect Trace">Perfect Trace</option>
+        <option value="Pixel Glide">Pixel Glide</option>
+        <option value="Word Trap">Word Trap</option>
+        <option value="Ghost Pixel">Ghost Pixel</option>
+      </select>
+
+      <label for="feedbackBox">Feedback / Suggestions</label>
+      <textarea id="feedbackBox" class="da-textarea" placeholder="Drop your feedback or suggestions here..."></textarea>
+
+      <button id="sendFeedbackBtn" class="da-btn">Send Feedback</button>
+      <p id="feedbackStatus"></p>
+    </section>
+
+    <footer class="footer">
+      Built by <strong>Jason</strong> &middot; DeskArcade
+    </footer>
+
   </main>
 
   <script>

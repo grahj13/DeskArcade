@@ -4,29 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Word Forge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/theme.css">
+  <link rel="stylesheet" href="../../assets/leaderboard.css">
   <script src="dictionary.js"></script>
   <style>
     :root {
-      --bg: #050807;
-      --panel: #0b1411;
-      --green: #39ff88;
-      --green-dim: #1f8f52;
-      --text: #d8ffe7;
-      --muted: #7da990;
-      --danger: #ff4d6d;
-      --gold: #ffd166;
+      --accent: #eab308;
+      --accent-2: #facc15;
+      --green: var(--accent);
+      --green-dim: color-mix(in srgb, var(--accent) 45%, transparent);
+      --muted: var(--text-dim);
+      --danger: #ef4444;
+      --gold: #facc15;
     }
 
-    * { box-sizing: border-box; }
-
     body {
-      margin: 0;
-      min-height: 100vh;
-      background:
-        radial-gradient(circle at top, rgba(57, 255, 136, 0.12), transparent 35%),
-        linear-gradient(180deg, #020403, var(--bg));
       color: var(--text);
-      font-family: Consolas, Monaco, 'Courier New', monospace;
+      font-family: var(--font-ui);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -34,11 +31,16 @@
     }
 
     .screen {
+      position: relative;
+      z-index: 1;
       width: min(980px, 100%);
-      background: rgba(11, 20, 17, 0.92);
-      border: 1px solid rgba(57, 255, 136, 0.45);
-      box-shadow: 0 0 28px rgba(57, 255, 136, 0.14);
-      border-radius: 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012) 38%),
+        var(--surface-strong);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow-2);
       padding: 24px;
     }
 
@@ -46,24 +48,26 @@
 
     h1 {
       margin: 0;
+      font-family: var(--font-display);
       font-size: 1.85rem;
+      font-weight: 700;
       letter-spacing: 3px;
-      color: var(--green);
-      text-shadow: 0 0 14px rgba(57, 255, 136, 0.55);
+      color: var(--accent-text);
       text-align: center;
     }
 
     .logo {
       display: block;
-      max-width: min(520px, 92vw);
-      width: 100%;
-      height: auto;
+      height: 56px;
+      width: auto;
+      max-width: min(420px, 55vw);
+      object-fit: contain;
       margin: 0 auto;
-      filter: drop-shadow(0 0 18px rgba(57, 255, 136, 0.38));
+      filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.55));
     }
 
     .game .logo {
-      max-width: 360px;
+      height: 48px;
       margin: 0;
     }
 
@@ -89,27 +93,29 @@
     }
 
     .mode-card {
-      border: 1px solid rgba(57, 255, 136, 0.32);
-      border-radius: 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
       padding: 22px;
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--surface);
       text-align: center;
       cursor: pointer;
-      transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
       width: 100%;
       color: var(--text);
-      font-family: inherit;
+      font-family: var(--font-ui);
     }
 
     .mode-card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(57, 255, 136, 0.75);
-      box-shadow: 0 0 20px rgba(57, 255, 136, 0.18);
+      transform: translateY(-1px);
+      border-color: var(--accent-border);
+      background: var(--accent-soft);
+      box-shadow: 0 8px 22px var(--accent-glow);
     }
 
     .mode-card h2 {
       margin: 0 0 10px;
-      color: var(--green);
+      font-family: var(--font-display);
+      color: var(--accent-text);
       font-size: 1.6rem;
     }
 
@@ -150,24 +156,27 @@
     }
 
     .stat {
-      border: 1px solid rgba(57, 255, 136, 0.28);
-      border-radius: 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
       padding: 10px;
       text-align: center;
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--surface);
     }
 
     .stat span {
       display: block;
-      color: var(--muted);
-      font-size: 0.75rem;
+      color: var(--text-faint);
+      font-size: 10px;
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.14em;
     }
 
     .stat strong {
+      font-family: var(--font-mono);
       font-size: 1.35rem;
-      color: var(--green);
+      font-weight: 700;
+      color: var(--accent-text);
     }
 
     .control-row {
@@ -180,32 +189,46 @@
 
     button {
       cursor: pointer;
-      border: 1px solid rgba(57, 255, 136, 0.5);
-      background: #06100c;
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
       color: var(--text);
-      font-family: inherit;
-      border-radius: 12px;
-      padding: 11px 15px;
-      font-weight: 700;
-      transition: transform 0.08s ease, box-shadow 0.15s ease, background 0.15s ease;
+      font-family: var(--font-display);
+      font-size: 14px;
+      letter-spacing: 0.03em;
+      border-radius: var(--radius-sm);
+      padding: 11px 18px;
+      font-weight: 600;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease, filter 0.15s ease;
     }
 
     button:hover {
-      background: rgba(57, 255, 136, 0.12);
-      box-shadow: 0 0 12px rgba(57, 255, 136, 0.22);
+      border-color: var(--accent-border);
+      background: var(--accent-soft);
+      transform: translateY(-1px);
     }
 
     button:active { transform: scale(0.97); }
 
     button.primary {
-      background: var(--green);
-      color: #031008;
-      box-shadow: 0 0 16px rgba(57, 255, 136, 0.42);
+      border: none;
+      background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--accent-2)));
+      color: #1c1605;
+      box-shadow: 0 8px 22px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    }
+
+    button.primary:hover {
+      background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--accent-2)));
+      filter: brightness(1.08);
     }
 
     button.danger {
-      border-color: rgba(255, 77, 109, 0.55);
-      color: #ffd5dc;
+      border-color: rgba(239, 68, 68, 0.55);
+      color: #fca5a5;
+    }
+
+    button.danger:hover {
+      border-color: rgba(239, 68, 68, 0.75);
+      background: rgba(239, 68, 68, 0.14);
     }
 
     .main {
@@ -217,10 +240,10 @@
     .panel {
       max-width: 720px;
       width: 100%;
-      border: 1px solid rgba(57, 255, 136, 0.25);
-      border-radius: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
       padding: 18px;
-      background: rgba(0, 0, 0, 0.18);
+      background: var(--surface);
     }
 
     .letters {
@@ -235,14 +258,19 @@
     .tile {
       width: 56px;
       height: 56px;
-      border-radius: 16px;
+      border-radius: var(--radius-md);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 2.2rem;
-      font-weight: 700;$1position: relative;
+      font-weight: 700;
+      position: relative;
       overflow: hidden;
-      font-family: Consolas, Monaco, 'Courier New', monospace;
+      font-family: var(--font-display);
+      color: #f4f4f8;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, #0b0b15, #07070f);
+      box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.55);
       line-height: 1;
       padding: 0;
       appearance: none;
@@ -254,7 +282,7 @@
       position: absolute;
       inset: 6px;
       border-radius: 11px;
-      border: 1px solid rgba(216, 255, 231, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       pointer-events: none;
       z-index: 1;
     }
@@ -273,26 +301,26 @@
     .tile.used {
       opacity: 1;
       transform: scale(0.96);
-      border-color: var(--gold);
+      border-color: var(--accent-border);
       background:
-        radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.28), transparent 24%),
-        linear-gradient(145deg, rgba(255, 209, 102, 0.38), rgba(57, 255, 136, 0.12));
-      color: var(--gold);
+        radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.18), transparent 24%),
+        linear-gradient(145deg, rgba(234, 179, 8, 0.3), rgba(234, 179, 8, 0.08));
+      color: var(--accent-2);
       box-shadow:
-        inset 0 0 18px rgba(255, 209, 102, 0.18),
-        0 0 18px rgba(255, 209, 102, 0.34);
+        inset 0 0 18px rgba(234, 179, 8, 0.16),
+        0 8px 22px rgba(234, 179, 8, 0.2);
     }
 
     .tile.flash {
       transform: scale(1.08);
-      border-color: var(--gold);
-      box-shadow: 0 0 22px rgba(255, 209, 102, 0.55);
+      border-color: var(--accent-border);
+      box-shadow: 0 8px 22px rgba(234, 179, 8, 0.38);
     }
 
     .tile.full-forge {
       transform: scale(1.12);
-      border-color: var(--gold);
-      box-shadow: 0 0 32px rgba(255, 209, 102, 0.75);
+      border-color: var(--accent-2);
+      box-shadow: 0 8px 22px rgba(234, 179, 8, 0.5);
     }
 
     .entry {
@@ -303,19 +331,21 @@
 
     input {
       width: 100%;
-      border: 1px solid rgba(57, 255, 136, 0.45);
-      border-radius: 12px;
-      background: #030806;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: rgba(10, 10, 20, 0.7);
       color: var(--text);
       padding: 14px;
-      font-family: inherit;
+      font-family: var(--font-display);
       font-size: 1.1rem;
       outline: none;
       text-transform: uppercase;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
     }
 
     input:focus {
-      box-shadow: 0 0 14px rgba(57, 255, 136, 0.22);
+      border-color: var(--accent-border);
+      box-shadow: 0 0 0 3px var(--accent-soft);
     }
 
     input.shake {
@@ -336,7 +366,7 @@
       font-weight: 700;
     }
 
-    .message.good { color: var(--green); }
+    .message.good { color: var(--accent-text); }
     .message.bad { color: var(--danger); }
     .message.gold { color: var(--gold); }
 
@@ -362,10 +392,10 @@
     }
 
     .word-chip {
-      border: 1px solid rgba(57, 255, 136, 0.35);
-      border-radius: 999px;
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius-pill);
       padding: 7px 10px;
-      background: rgba(57, 255, 136, 0.08);
+      background: var(--accent-soft);
       color: var(--text);
       font-size: 0.9rem;
     }
@@ -400,11 +430,11 @@
 
     .modal {
       width: min(520px, 100%);
-      border: 1px solid rgba(57, 255, 136, 0.5);
-      background: #07100d;
-      border-radius: 18px;
+      border: 1px solid var(--border-strong);
+      background: rgba(14, 14, 24, 0.96);
+      border-radius: var(--radius-lg);
       padding: 24px;
-      box-shadow: 0 0 32px rgba(57, 255, 136, 0.22);
+      box-shadow: var(--shadow-2);
       text-align: center;
       position: relative;
       z-index: 10000;
@@ -419,7 +449,8 @@
     }
 
     .modal h2 {
-      color: var(--green);
+      font-family: var(--font-display);
+      color: var(--accent-text);
       font-size: 2rem;
       margin: 0 0 10px;
     }
@@ -435,17 +466,18 @@
     }
 
     .results-box {
-      border: 1px solid rgba(57, 255, 136, 0.25);
-      border-radius: 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
       padding: 12px;
-      background: rgba(0, 0, 0, 0.22);
+      background: var(--surface);
       max-height: 190px;
       overflow: auto;
     }
 
     .results-box h3 {
       margin: 0 0 8px;
-      color: var(--green);
+      font-family: var(--font-display);
+      color: var(--accent-text);
       font-size: 0.9rem;
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -500,7 +532,9 @@
       </button>
     </div>
 
-    <button id="returnArcadeBtn" type="button">Return to Arcade</button>
+    <button id="returnArcadeBtn" class="da-back" type="button">Back to Arcade</button>
+
+    <div id="leaderboard"></div>
 
     <div class="credit">Created by Jason / build v1.18</div>
   </div>
@@ -515,7 +549,7 @@
         <div class="stat"><span>Score</span><strong id="score">0</strong></div>
         <div class="stat"><span>Words</span><strong id="wordCount">0</strong></div>
         <div class="stat"><span>Available</span><strong id="availableCount">0</strong></div>
-        <div class="stat"><span>Time</span><strong id="timer">20</strong></div>
+        <div class="stat"><span>Time</span><strong id="timer">60</strong></div>
       </div>
     </header>
 
@@ -559,7 +593,11 @@
     </div>
   </div>
 
+  <script src="../../assets/deskarcade-config.js"></script>
+  <script src="../../assets/leaderboard.js"></script>
   <script>
+    const lbPanel = document.getElementById('leaderboard');
+
     const wordBank = [
       'ace','act','add','ado','age','ago','aid','aim','air','ale','all','and','ant','any','ape','apt','arc','are','ark','arm','art','ash','ask','ate','awe','bad','bag','ban','bar','bat','bay','bed','bee','beg','bet','bid','big','bin','bit','boa','bog','bow','box','boy','bra','bud','bug','bus','but','buy','bye','cab','can','cap','car','cat','cog','con','cop','cow','cry','cub','cue','cup','cut','dad','dam','day','den','dew','did','die','dig','dim','din','dip','dog','dot','dry','due','dug','ear','eat','egg','ego','elf','elm','end','era','eve','eye','fad','fan','far','fat','fax','fed','fee','few','fig','fin','fit','fix','fly','fog','for','fox','fun','fur','gap','gas','gel','gem','get','gig','gin','got','gum','gun','gut','guy','had','ham','has','hat','hay','hem','hen','her','hid','him','hip','his','hit','hog','hop','hot','how','hug','hut','ice','ill','ink','inn','ion','ire','ivy','jam','jar','jaw','jet','job','jog','joy','key','kid','kin','kit','lab','lad','lag','lap','law','lay','led','leg','let','lid','lie','lip','lit','log','lot','low','mad','man','map','mat','may','men','met','mix','mob','mud','mug','net','new','nod','nor','not','now','nut','oak','oar','odd','off','oil','old','one','opt','ore','our','out','owl','own','pad','pal','pan','par','pat','pay','pea','pen','pet','pie','pin','pit','pod','pop','pot','pub','put','rag','ram','ran','rap','rat','raw','ray','red','rib','rid','rig','rim','rip','rob','rod','rot','row','rub','rug','run','sad','sag','sap','sat','saw','say','sea','see','set','she','sin','sip','sir','sit','six','sky','sob','son','sow','soy','spa','spy','sub','sun','tab','tag','tan','tap','tar','tax','tea','ten','the','tie','tin','tip','toe','ton','top','toy','try','tub','two','use','van','vet','via','war','was','wax','way','web','wed','wet','who','why','win','wit','won','wow','yes','yet','you','able','acid','acne','acre','aged','aide','aims','airs','ally','also','amen','amid','anal','ante','arch','area','arms','army','arts','atom','aunt','auto','avid','away','axis','bake','bald','bale','band','bane','bank','bare','bark','barn','base','bash','bask','bath','bead','beak','beam','bean','bear','beat','beef','been','beer','bell','belt','bend','bent','best','bias','bike','bind','bird','bite','blow','blue','boat','body','boil','bold','bolt','bond','bone','book','boot','bore','born','boss','both','bowl','brag','bran','brat','brew','brim','buck','bulk','burn','bush','busy','cafe','cage','cake','calm','came','camp','cane','card','care','cart','case','cash','cast','cave','cell','cent','chat','chef','chew','chip','city','clan','clap','clay','clip','club','coal','coat','code','coil','coin','cold','come','cone','copy','cord','core','corn','cost','crab','crew','crop','cube','cure','curl','cute','dare','dark','data','date','dawn','dead','deal','dear','debt','deck','deep','deer','desk','dial','dice','dine','dirt','dish','disk','dive','dock','does','doll','done','door','down','drag','draw','drop','drum','duck','dust','duty','each','earn','ease','east','easy','echo','edge','edit','else','envy','epic','even','ever','evil','exam','exit','face','fact','fade','fail','fair','fake','fall','fame','farm','fast','fate','fear','feed','feel','feet','file','film','find','fine','fire','firm','fish','five','flag','flat','flaw','flow','fold','folk','food','fool','foot','form','fort','free','frog','from','fuel','full','fund','gain','game','gate','gear','gift','girl','give','glad','glow','goal','goat','gold','golf','gone','good','grab','gray','grid','grin','grip','grow','gulf','hail','hair','half','hall','hand','hard','harm','hate','have','head','heal','heap','hear','heat','held','hell','help','herb','hero','hide','high','hill','hire','hold','hole','holy','home','hope','host','hour','huge','hung','hunt','hurt','idea','idle','inch','into','iron','item','jail','jazz','join','joke','jump','junk','just','keen','keep','kick','kind','king','knee','knew','knit','know','lace','lack','lady','laid','lake','land','lane','last','late','lead','leaf','leak','lean','left','lend','lens','less','life','lift','like','limb','lime','line','link','lion','list','live','load','loan','lock','lone','long','look','loop','lord','lose','loss','lost','loud','love','luck','made','mail','main','make','male','many','mark','mask','mass','mate','math','meal','mean','meat','meet','melt','menu','mild','mile','milk','mind','mine','mint','miss','mode','mood','moon','more','most','move','much','must','name','near','neat','neck','need','nest','news','next','nice','nine','node','none','noon','nose','note','noun','oath','once','only','open','oral','over','pace','pack','page','paid','pain','pair','pale','palm','park','part','pass','past','path','peak','pear','peer','perk','pick','pile','pine','pink','pipe','plan','play','plot','plug','poem','poet','pole','pond','pool','poor','port','pose','post','pour','pray','pull','pure','push','quit','race','rack','rage','rail','rain','rank','rare','rate','read','real','rear','redo','reed','reef','rely','rent','rest','rice','rich','ride','ring','rise','risk','road','rock','role','roll','roof','room','root','rope','rose','rule','rush','safe','sage','said','sail','sale','salt','same','sand','save','scan','scar','seal','seat','seed','seek','seem','seen','self','sell','send','sent','ship','shoe','shop','shot','show','shut','sick','side','sign','silk','sing','sink','site','skin','slab','slam','slap','slim','slot','slow','slug','snap','snow','soap','soft','soil','sold','sole','some','song','soon','sort','soul','soup','spin','spot','star','stay','stem','step','stir','stop','such','suit','sure','swim','tail','take','tale','talk','tall','tank','task','team','tear','tell','tend','term','text','than','that','them','then','thin','this','tick','tide','tile','time','tiny','tire','told','tone','tool','torn','tour','town','trap','tree','trip','true','tube','tune','turn','twin','type','unit','upon','used','user','vain','vary','vast','very','vest','view','vote','wage','wait','wake','walk','wall','want','warm','warn','wash','wave','weak','wear','week','well','went','were','west','what','when','wild','will','wind','wine','wing','wire','wise','wish','with','wolf','wood','word','work','worm','yard','year','yell','yoga','young','about','above','actor','acute','adapt','admit','adopt','adult','after','again','agent','agree','alert','alien','align','alike','alive','allow','alone','along','alter','amend','among','angel','anger','angle','apple','apply','arena','argue','arise','armed','arrow','aside','asset','audio','audit','avoid','badge','baker','basic','batch','beach','beard','began','begin','being','below','bench','blade','blank','blast','blend','blind','block','board','boast','bonus','brain','brand','brave','bread','break','brick','bring','broad','brown','build','cable','carry','catch','cause','chain','chair','chalk','change','chant','chart','chase','cheap','cheat','check','cheer','chest','chief','child','claim','class','clean','clear','climb','clock','close','cloud','coach','coast','craft','crane','crash','crate','cream','crime','cross','crowd','crown','dance','danger','debug','decay','delay','delta','dense','depth','design','direct','dream','drive','eagle','early','earth','elite','empty','enemy','enjoy','enter','equal','error','event','exact','extra','feast','field','fight','final','first','flame','flash','fleet','floor','focus','force','forge','frame','fresh','front','garden','ghost','giant','given','glass','glide','glory','grade','grain','grand','grant','graph','grave','great','green','group','guard','guess','guide','habit','heart','heavy','hidden','house','ideal','image','index','inner','input','judge','knife','label','labor','large','laser','layer','learn','least','leave','legal','lemon','level','light','limit','logic','loose','magic','major','maker','maple','march','match','matter','maybe','metal','meter','might','minor','mixed','model','money','month','moral','motor','mouse','mouth','music','never','night','noise','north','novel','ocean','offer','often','orbit','order','other','outer','paint','panel','paper','party','pause','peace','phase','phone','piece','pilot','place','plain','plane','plant','plate','point','power','press','prime','print','prize','proof','proud','pulse','quick','quiet','radio','range','rapid','reach','react','ready','realm','reason','record','reduce','relay','reset','right','river','robot','rough','round','route','royal','scale','score','screen','script','search','season','second','secret','sector','sense','serve','shade','shake','shape','share','sharp','sheet','shift','shine','shore','short','signal','silent','simple','skill','slate','smart','snake','solid','solve','sound','space','spark','speak','speed','spell','spend','spike','split','sport','stack','stage','stand','start','steam','stone','storm','story','stream','strike','strong','table','taken','target','teach','theme','thing','think','timer','title','toast','today','token','tower','trace','track','trade','trail','train','trial','trick','trust','truth','under','union','urban','value','video','voice','water','watch','wheel','white','whole','world','worth','write','wrong','beauty','before','better','border','bottle','branch','breath','bridge','bright','broken','camera','career','castle','center','chance','circle','client','coffee','corner','course','danger','detail','doctor','double','dragon','effect','energy','engine','escape','family','father','figure','filter','finger','forest','friend','future','golden','ground','handle','health','hunter','impact','island','letter','little','market','master','matter','memory','middle','minute','modern','mother','motion','nature','number','object','office','orange','parent','planet','player','pocket','reason','record','remote','rocket','screen','search','second','shadow','silver','simple','single','sister','source','spring','square','station','summer','system','target','temple','thread','ticket','travel','tunnel','update','valley','victor','vision','window','winner','wonder','yellow','ancient','another','balance','battery','between','builder','capture','central','channel','classic','control','counter','creator','diamond','digital','display','dynamic','element','evening','gateway','general','harvest','holding','journal','kingdom','landing','machine','manager','natural','network','nothing','opening','package','perfect','picture','project','quality','reactor','rebuild','recover','release','running','science','section','speaker','storage','strange','student','support','teacher','trainer','trouble','variant','victory','weather','welcome','western','working','writing','anything','building','challenge','computer','creative','developer','distance','friendly','generate','graphics','learning','lighting','magnetic','movement','platform','practice','reaction','security','strategy','strength','terminal','training','triangle','wireless','wordplay'
     ];
@@ -800,6 +838,7 @@
         return;
       }
       state.mode = mode;
+      DeskArcadeLeaderboard.mountPanel(lbPanel, 'wordforge', state.mode);
       showGame();
       newRound(false);
     }
@@ -875,6 +914,16 @@
       flashTiles(word.length === 8);
     }
 
+    function getBestScore(mode) {
+      return Number(localStorage.getItem('wordforgeBest_' + mode) || 0);
+    }
+
+    function saveBestScore(mode, score) {
+      const prev = getBestScore(mode);
+      if (score > prev) localStorage.setItem('wordforgeBest_' + mode, String(score));
+      return Math.max(score, prev);
+    }
+
     function endRound() {
       clearInterval(state.timerId);
       state.active = false;
@@ -883,8 +932,11 @@
       const missedWords = possibleWords.filter(word => !state.found.includes(word));
       const foundDisplay = formatWordList(state.found, 50);
       const missedDisplay = formatWordList(missedWords, 50);
+      const best = saveBestScore(state.mode, state.score);
+      const isRecord = state.score >= best && state.score > 0;
       els.finalText.innerHTML = `
-        You forged <strong>${state.found.length}</strong> words and scored <strong>${state.score}</strong> points.<br><br>
+        You forged <strong>${state.found.length}</strong> words and scored <strong>${state.score}</strong> points${isRecord ? ' — <strong>new best!</strong>' : ''}.<br>
+        Best (${state.mode}): <strong>${best}</strong><br><br>
         Best word: <strong>${getBestWord()}</strong><br>
         Longest word: <strong>${getLongestWord()}</strong><br>
         Possible words found: <strong>${state.found.length}/${possibleWords.length}</strong><br>
@@ -901,6 +953,8 @@
         </div>
       `;
       els.overlay.classList.add('show');
+
+      DeskArcadeLeaderboard.trySubmit('wordforge', state.score, { panel: lbPanel, boardKey: state.mode }).catch(() => {});
     }
 
     els.startChallenge.addEventListener('click', () => startMode('challenge'));
@@ -923,6 +977,8 @@
     els.endBtn.addEventListener('click', endRound);
     els.playAgainBtn.addEventListener('click', () => newRound(false));
     els.menuBtn.addEventListener('click', showMenu);
+
+    DeskArcadeLeaderboard.mountPanel(lbPanel, 'wordforge', 'challenge');
   </script>
 </body>
 </html>

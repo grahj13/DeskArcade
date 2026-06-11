@@ -5,27 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>LaneDash | DeskArcade</title>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/leaderboard.css">
+
 <style>
 :root {
-  --green:#8cff6a;
-  --red:#ff6b4a;
-  --yellow:#ffd86b;
-  --blue:#7fdcff;
-  --panel:rgba(7,24,8,0.94);
-  --text-soft:#b9ffd2;
-  --border-soft:rgba(140,255,106,0.35);
+  --accent:#f97316;
+  --accent-2:#fb923c;
+  --red:#ef4444;
+  --yellow:#f59e0b;
+  --blue:#38bdf8;
 }
 
-* { box-sizing:border-box; }
-
 body {
-  margin:0;
-  min-height:100vh;
-  background:
-    radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 35%),
-    linear-gradient(180deg,#071106 0%,#020402 100%);
-  color:var(--green);
-  font-family:Consolas, Monaco, monospace;
   display:flex;
   justify-content:center;
   align-items:center;
@@ -34,12 +29,17 @@ body {
 }
 
 .game-shell {
+  position:relative;
+  z-index:1;
   width:min(860px, 100%);
-  background:var(--panel);
-  border:1px solid var(--border-soft);
-  border-radius:18px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012) 38%),
+    var(--surface-strong);
+  backdrop-filter:blur(18px);
+  box-shadow:var(--shadow-2);
   padding:14px 16px 16px;
-  box-shadow:0 0 35px rgba(140,255,106,0.16);
 }
 
 .top-bar {
@@ -56,31 +56,17 @@ body {
 }
 
 .game-logo {
-  width:min(320px, 100%);
-  max-width:100%;
+  height:48px;
+  width:auto;
+  max-width:min(420px, 55vw);
+  object-fit:contain;
   display:block;
   justify-self:center;
-  filter:
-    drop-shadow(0 0 8px rgba(140,255,106,0.55))
-    drop-shadow(0 0 18px rgba(140,255,106,0.5))
-    drop-shadow(0 0 34px rgba(140,255,106,0.34))
-    drop-shadow(0 0 14px rgba(255,216,107,0.22));
+  filter:drop-shadow(0 4px 14px rgba(0,0,0,0.55));
 }
 
 .arcade-link {
   justify-self:end;
-  color:var(--green);
-  text-decoration:none;
-  border:1px solid var(--border-soft);
-  padding:8px 14px;
-  border-radius:999px;
-  font-size:0.85rem;
-  background:rgba(140,255,106,0.08);
-  white-space:nowrap;
-}
-
-.arcade-link:hover {
-  background:rgba(140,255,106,0.16);
 }
 
 .stats {
@@ -91,22 +77,28 @@ body {
 
 .stat {
   flex:1;
-  border:1px solid var(--border-soft);
-  border-radius:12px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
   padding:8px;
-  background:rgba(0,0,0,0.25);
+  background:var(--surface);
   text-align:center;
 }
 
 .stat span {
   display:block;
-  font-size:0.72rem;
-  color:var(--text-soft);
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+  margin-bottom:2px;
 }
 
 .stat strong {
   display:inline-block;
+  font-family:var(--font-mono);
   font-size:1.25rem;
+  color:var(--accent-text);
 }
 
 .stat.score-pop strong {
@@ -129,10 +121,10 @@ canvas {
   width:100%;
   aspect-ratio:1 / 1;
   display:block;
-  border:1px solid var(--border-soft);
-  border-radius:16px;
-  background:#031003;
-  box-shadow:inset 0 0 25px rgba(140,255,106,0.12);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:#0c0c17;
+  box-shadow:inset 0 2px 12px rgba(0,0,0,0.55);
 }
 
 .overlay {
@@ -142,8 +134,8 @@ canvas {
   justify-content:center;
   align-items:center;
   padding:18px;
-  background:rgba(0,0,0,0.55);
-  border-radius:16px;
+  background:rgba(6,6,12,0.6);
+  border-radius:var(--radius-md);
   text-align:center;
 }
 
@@ -152,43 +144,50 @@ canvas {
 }
 
 .overlay-card {
-  background:rgba(7,24,8,0.96);
-  border:1px solid var(--border-soft);
-  border-radius:16px;
+  background:rgba(18,18,30,0.96);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
   padding:22px;
   max-width:400px;
-  box-shadow:0 0 30px rgba(140,255,106,0.2);
+  box-shadow:var(--shadow-1);
 }
 
 .overlay-card h2 {
   margin:0 0 8px;
+  font-family:var(--font-display);
   font-size:1.8rem;
+  color:var(--text);
 }
 
 .overlay-card p {
-  color:var(--text-soft);
+  color:var(--text-dim);
   line-height:1.6;
   font-size:0.95rem;
 }
 
 .overlay-card strong {
-  color:var(--green);
+  font-family:var(--font-mono);
+  color:var(--accent-text);
 }
 
 button {
   cursor:pointer;
-  border:1px solid var(--green);
-  background:rgba(140,255,106,0.12);
-  color:var(--green);
-  border-radius:999px;
-  padding:10px 20px;
-  font-family:inherit;
-  font-weight:bold;
-  box-shadow:0 0 14px rgba(140,255,106,0.2);
+  border:none;
+  background:linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--accent-2)));
+  color:#fff;
+  border-radius:var(--radius-sm);
+  padding:11px 22px;
+  font-family:var(--font-display);
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:0.03em;
+  box-shadow:0 8px 22px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.22);
+  transition:transform 0.18s ease, filter 0.18s ease;
 }
 
 button:hover {
-  background:rgba(140,255,106,0.22);
+  transform:translateY(-1px);
+  filter:brightness(1.08);
 }
 
 .flash-message {
@@ -197,15 +196,16 @@ button:hover {
   top:42%;
   transform:translate(-50%, -50%);
   padding:12px 22px;
-  border:1px solid var(--green);
-  border-radius:999px;
-  background:rgba(7,24,8,0.92);
-  color:var(--green);
-  font-weight:bold;
+  border:1px solid var(--accent-border);
+  border-radius:var(--radius-pill);
+  background:rgba(12,12,23,0.92);
+  color:var(--accent-text);
+  font-family:var(--font-display);
+  font-weight:600;
   letter-spacing:1px;
   opacity:0;
   pointer-events:none;
-  box-shadow:0 0 25px rgba(140,255,106,0.35);
+  box-shadow:0 8px 22px var(--accent-glow);
   transition:opacity 0.15s ease, transform 0.15s ease;
   z-index:3;
 }
@@ -218,13 +218,13 @@ button:hover {
 .controls {
   margin-top:10px;
   text-align:center;
-  color:var(--text-soft);
+  color:var(--text-dim);
   font-size:0.85rem;
 }
 
 .footer {
   margin-top:10px;
-  color:var(--text-soft);
+  color:var(--text-faint);
   text-align:center;
   font-size:0.78rem;
 }
@@ -266,7 +266,7 @@ button:hover {
   <div class="top-bar">
     <div class="top-spacer" aria-hidden="true"></div>
     <img class="game-logo" src="lanedashlogo.png" alt="LaneDash logo">
-    <a class="arcade-link" href="../../index.html">Return to Arcade</a>
+    <a class="da-back arcade-link" href="../../index.html">Return to Arcade</a>
   </div>
 
   <div class="stats">
@@ -300,13 +300,20 @@ button:hover {
     </div>
   </div>
 
-  <div class="controls">Use Arrow Keys or WASD.</div>
+  <div class="controls">Arrow Keys or WASD · P to pause</div>
 
   <div class="footer">Created by Jason / build v1.6</div>
 
+  <div id="leaderboard"></div>
+
 </div>
 
+<script src="../../assets/deskarcade-config.js"></script>
+<script src="../../assets/leaderboard.js"></script>
 <script>
+const lbPanel = document.getElementById('leaderboard');
+DeskArcadeLeaderboard.mountPanel(lbPanel, 'lanedash', 'default');
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -332,6 +339,7 @@ let score = 0;
 let best = Number(localStorage.getItem("lanedashBest")) || 0;
 let level = 1;
 let gameRunning = false;
+let paused = false;
 let animationId = null;
 let moveLocked = false;
 let screenShake = 0;
@@ -431,12 +439,13 @@ function spawnCarsFairly(lane) {
       height:TILE * 0.55,
       direction:lane.direction,
       speed:lane.speed * (0.92 + Math.random() * 0.16),
-      color:randomChoice(["red", "yellow", "blue"])
+      color:randomChoice(["red", "yellow", "blue", "purple"])
     });
   }
 }
 
 function startGame() {
+  paused = false;
   score = 0;
   level = 1;
   moveLocked = false;
@@ -661,6 +670,8 @@ function endGame() {
     startBtn.textContent = "Restart";
     overlay.classList.remove("hidden");
   }, 90);
+
+  DeskArcadeLeaderboard.trySubmit('lanedash', score, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
 }
 
 function drawBackground() {
@@ -674,19 +685,19 @@ function drawBackground() {
     const y = row * TILE;
 
     ctx.fillStyle = lane.type === "safe"
-      ? (row % 2 === 0 ? "#052007" : "#06270a")
-      : "#101510";
+      ? (row % 2 === 0 ? "#10101c" : "#12121f")
+      : "#15151f";
 
     ctx.fillRect(0, y, canvas.width, TILE);
 
-    ctx.strokeStyle = "rgba(140,255,106,0.12)";
+    ctx.strokeStyle = "rgba(255,255,255,0.07)";
     ctx.beginPath();
     ctx.moveTo(0, y);
     ctx.lineTo(canvas.width, y);
     ctx.stroke();
 
     if (lane.type === "road") {
-      ctx.strokeStyle = "rgba(255,216,107,0.28)";
+      ctx.strokeStyle = "rgba(255,255,255,0.16)";
       ctx.setLineDash([14, 14]);
       ctx.beginPath();
       ctx.moveTo(0, y + TILE / 2);
@@ -697,7 +708,7 @@ function drawBackground() {
   });
 
   for (let col = 0; col <= COLS; col++) {
-    ctx.strokeStyle = "rgba(140,255,106,0.06)";
+    ctx.strokeStyle = "rgba(255,255,255,0.04)";
     ctx.beginPath();
     ctx.moveTo(col * TILE, 0);
     ctx.lineTo(col * TILE, canvas.height);
@@ -730,17 +741,22 @@ function drawCars() {
     const carHeight = car.height;
     const bodyRadius = 6;
 
-    let fill = "#ff6b4a";
-    let glow = "rgba(255,107,74,0.55)";
+    let fill = "#f43f5e";
+    let glow = "rgba(244,63,94,0.5)";
 
     if (car.color === "yellow") {
-      fill = "#ffd86b";
-      glow = "rgba(255,216,107,0.5)";
+      fill = "#fbbf24";
+      glow = "rgba(251,191,36,0.45)";
     }
 
     if (car.color === "blue") {
-      fill = "#7fdcff";
-      glow = "rgba(127,220,255,0.5)";
+      fill = "#38bdf8";
+      glow = "rgba(56,189,248,0.45)";
+    }
+
+    if (car.color === "purple") {
+      fill = "#a78bfa";
+      glow = "rgba(167,139,250,0.45)";
     }
 
     ctx.save();
@@ -864,10 +880,10 @@ function drawPlayer() {
   ctx.rotate(tilt);
   ctx.translate(-centreX, -centreY);
 
-  ctx.shadowColor = "rgba(140,255,106,0.85)";
+  ctx.shadowColor = "rgba(249,115,22,0.7)";
   ctx.shadowBlur = 18;
 
-  ctx.strokeStyle = "#8cff6a";
+  ctx.strokeStyle = "#f97316";
   ctx.lineWidth = TILE * 0.07 * popScale;
   ctx.lineCap = "round";
 
@@ -891,7 +907,7 @@ function drawPlayer() {
   ctx.lineTo(centreX + bodyW * 0.72, bodyY + bodyH * 0.18);
   ctx.stroke();
 
-  ctx.fillStyle = "#8cff6a";
+  ctx.fillStyle = "#f97316";
   ctx.fillRect(
     centreX - bodyW / 2,
     bodyY - bodyH / 2,
@@ -904,7 +920,7 @@ function drawPlayer() {
   ctx.fill();
 
   ctx.shadowBlur = 0;
-  ctx.fillStyle = "#020402";
+  ctx.fillStyle = "#0c0c17";
   ctx.fillRect(
     centreX - headR * 0.55,
     headY - headR * 0.15,
@@ -924,14 +940,14 @@ function drawPlayer() {
 }
 
 function drawDangerZone() {
-  ctx.fillStyle = "rgba(255,107,74,0.1)";
+  ctx.fillStyle = "rgba(239,68,68,0.1)";
   ctx.fillRect(0, (ROWS - 1) * TILE, canvas.width, TILE);
 }
 
 function drawDeathFlash() {
   if (deathFlash <= 0) return;
 
-  ctx.fillStyle = `rgba(255,107,74,${deathFlash * 0.35})`;
+  ctx.fillStyle = `rgba(239,68,68,${deathFlash * 0.35})`;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
@@ -951,8 +967,27 @@ function draw() {
   ctx.restore();
 }
 
+function togglePause() {
+  if (!gameRunning || deathFreeze) return;
+  paused = !paused;
+  if (paused) {
+    overlayTitle.textContent = "Paused";
+    overlayText.textContent = "Press P to resume";
+    overlay.classList.remove("hidden");
+  } else {
+    overlay.classList.add("hidden");
+    gameLoop();
+  }
+}
+
 function gameLoop() {
   if (!gameRunning) return;
+
+  if (paused) {
+    draw();
+    animationId = requestAnimationFrame(gameLoop);
+    return;
+  }
 
   if (playerPop > 0) {
     playerPop *= 0.72;
@@ -980,6 +1015,16 @@ function gameLoop() {
 }
 
 document.addEventListener("keydown", event => {
+  if (event.key === "p" || event.key === "P" || event.key === "Escape") {
+    if (gameRunning && !deathFreeze) {
+      event.preventDefault();
+      togglePause();
+      return;
+    }
+  }
+
+  if (paused) return;
+
   if (["ArrowUp", "w", "W"].includes(event.key)) {
     event.preventDefault();
     attemptMove(0, -1);

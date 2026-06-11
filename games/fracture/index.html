@@ -5,29 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Fracture | DeskArcade</title>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/leaderboard.css">
+
 <style>
 :root {
-  --green:#8cff6a;
-  --red:#ff6b4a;
-  --yellow:#ffd86b;
-  --blue:#7fdcff;
-  --purple:#c77dff;
-  --bg:#020402;
-  --panel:rgba(7,24,8,0.94);
-  --text-soft:#b9ffd2;
-  --border-soft:rgba(140,255,106,0.35);
+  --accent:#a855f7;
+  --accent-2:#c084fc;
+  --red:#ef4444;
+  --yellow:#f59e0b;
+  --blue:#38bdf8;
+  --purple:var(--accent);
+  --green:var(--accent);
+  --panel:var(--surface);
+  --text-soft:var(--text-dim);
+  --border-soft:var(--border);
 }
 
-* { box-sizing:border-box; }
-
 body {
-  margin:0;
-  min-height:100vh;
-  background:
-    radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 34%),
-    linear-gradient(180deg,#071106 0%,#020402 100%);
-  color:var(--green);
-  font-family:Consolas, Monaco, monospace;
+  color:var(--text);
+  font-family:var(--font-ui);
   display:flex;
   justify-content:center;
   align-items:flex-start;
@@ -36,8 +36,17 @@ body {
 }
 
 .arcade-wrap {
+  position:relative;
+  z-index:1;
   width:min(1080px, 96vw);
-  padding:8px 14px 10px;
+  padding:16px 18px 14px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012) 38%),
+    var(--surface-strong);
+  backdrop-filter:blur(18px);
+  box-shadow:var(--shadow-2);
 }
 
 .top-bar {
@@ -50,40 +59,69 @@ body {
 }
 
 .game-logo {
-  max-width:330px;
-  width:100%;
-  height:auto;
+  height:52px;
+  width:auto;
+  max-width:min(420px, 55vw);
+  object-fit:contain;
   display:block;
-  filter:
-    drop-shadow(0 0 8px rgba(140,255,106,0.55))
-    drop-shadow(0 0 18px rgba(140,255,106,0.28));
+  filter:drop-shadow(0 4px 14px rgba(0,0,0,0.55));
 }
 
 .btn {
-  border:1px solid var(--border-soft);
-  background:rgba(0,0,0,0.35);
-  color:var(--green);
-  padding:9px 13px;
-  border-radius:12px;
-  font-family:inherit;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border:1px solid var(--border-strong);
+  background:var(--surface);
+  color:var(--text);
+  padding:10px 18px;
+  border-radius:var(--radius-sm);
+  font-family:var(--font-display);
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:0.03em;
   cursor:pointer;
   text-decoration:none;
-  box-shadow:0 0 12px rgba(140,255,106,0.14);
+  transition:border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
 }
 
 .btn:hover {
-  background:rgba(140,255,106,0.12);
-  box-shadow:0 0 18px rgba(140,255,106,0.3);
+  border-color:var(--accent-border);
+  background:var(--accent-soft);
+  transform:translateY(-1px);
+}
+
+#startBtn {
+  border:none;
+  background:linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--accent-2)));
+  color:#fff;
+  box-shadow:0 8px 22px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.22);
+}
+
+#startBtn:hover {
+  background:linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--accent-2)));
+  filter:brightness(1.08);
+  transform:translateY(-1px);
+}
+
+.top-bar > .btn {
+  border-radius:var(--radius-pill);
+  padding:9px 16px;
+  font-family:var(--font-ui);
+  font-size:13px;
+  color:var(--text-dim);
+}
+
+.top-bar > .btn:hover {
+  color:var(--text);
 }
 
 .game-shell {
-  border:1px solid var(--border-soft);
-  background:var(--panel);
-  border-radius:20px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  border-radius:var(--radius-md);
   padding:10px;
-  box-shadow:
-    0 0 24px rgba(140,255,106,0.14),
-    inset 0 0 20px rgba(140,255,106,0.05);
 }
 
 .hud {
@@ -94,9 +132,9 @@ body {
 }
 
 .hud-card {
-  border:1px solid rgba(140,255,106,0.25);
-  background:rgba(0,0,0,0.28);
-  border-radius:13px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  border-radius:var(--radius-md);
   padding:8px;
   text-align:center;
 }
@@ -104,25 +142,26 @@ body {
 .hud-card span {
   display:block;
   font-size:10px;
-  color:var(--text-soft);
+  font-weight:600;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--text-faint);
   margin-bottom:3px;
 }
 
 .hud-card strong {
+  font-family:var(--font-mono);
   font-size:17px;
+  font-weight:700;
+  color:var(--accent-text);
 }
 
 .canvas-wrap {
   position:relative;
-  border:1px solid rgba(140,255,106,0.32);
-  border-radius:16px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
   overflow:hidden;
-  background:
-    linear-gradient(rgba(140,255,106,0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(140,255,106,0.045) 1px, transparent 1px),
-    radial-gradient(circle at center, rgba(140,255,106,0.08), transparent 55%),
-    #020402;
-  background-size:32px 32px, 32px 32px, auto, auto;
+  background:#0c0c17;
 }
 
 .canvas-wrap.shake {
@@ -141,8 +180,8 @@ body {
 }
 
 @keyframes dangerPulse {
-  0%, 100% { box-shadow:0 0 18px rgba(255,107,74,0.18); }
-  50% { box-shadow:0 0 36px rgba(255,107,74,0.42); }
+  0%, 100% { box-shadow:0 0 0 1px rgba(239,68,68,0.25), 0 8px 22px rgba(239,68,68,0.16); }
+  50% { box-shadow:0 0 0 1px rgba(239,68,68,0.5), 0 8px 22px rgba(239,68,68,0.3); }
 }
 
 canvas {
@@ -167,24 +206,26 @@ canvas {
 }
 
 .overlay-box {
-  border:1px solid var(--border-soft);
-  background:rgba(4,15,5,0.96);
-  border-radius:20px;
+  border:1px solid var(--border-strong);
+  background:rgba(14,14,24,0.96);
+  border-radius:var(--radius-lg);
   padding:24px;
   max-width:500px;
-  box-shadow:0 0 32px rgba(140,255,106,0.26);
+  box-shadow:var(--shadow-2);
 }
 
 .overlay-box h2 {
   margin:0 0 10px;
+  font-family:var(--font-display);
   font-size:32px;
+  font-weight:700;
   text-transform:uppercase;
   letter-spacing:3px;
-  text-shadow:0 0 18px rgba(140,255,106,0.8);
+  color:var(--accent-text);
 }
 
 .overlay-box p {
-  color:var(--text-soft);
+  color:var(--text-dim);
   line-height:1.45;
 }
 
@@ -199,7 +240,7 @@ canvas {
 .footer-note {
   margin-top:7px;
   text-align:center;
-  color:rgba(185,255,210,0.7);
+  color:var(--text-faint);
   font-size:12px;
 }
 
@@ -208,7 +249,6 @@ canvas {
   margin-top:7px;
   text-align:center;
   color:var(--yellow);
-  text-shadow:0 0 10px rgba(255,216,107,0.45);
   font-size:13px;
 }
 
@@ -270,10 +310,16 @@ canvas {
 
     <div class="power-note" id="message"></div>
     <div class="footer-note">Created by Jason / build v1.5</div>
+    <div id="leaderboard"></div>
   </div>
 </div>
 
+<script src="../../assets/deskarcade-config.js"></script>
+<script src="../../assets/leaderboard.js"></script>
 <script>
+const lbPanel = document.getElementById('leaderboard');
+DeskArcadeLeaderboard.mountPanel(lbPanel, 'fracture', 'default');
+
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const canvasWrap = document.querySelector(".canvas-wrap");
@@ -292,9 +338,11 @@ const startBtn = document.getElementById("startBtn");
 
 let keys = {};
 let score = 0;
+let best = Number(localStorage.getItem("fractureBest")) || 0;
 let lives = 3;
 let level = 1;
 let running = false;
+let paused = false;
 let levelReady = false;
 let animationId = null;
 let lastBrickWarningShown = false;
@@ -334,13 +382,19 @@ const levels = [
 ];
 
 const powerTypes = [
-  { name:"WIDE", color:"#7fdcff" },
-  { name:"SLOW", color:"#ffd86b" },
-  { name:"LIFE", color:"#8cff6a" },
-  { name:"MULTI", color:"#c77dff" }
+  { name:"WIDE", color:"#38bdf8" },
+  { name:"SLOW", color:"#fbbf24" },
+  { name:"LIFE", color:"#34d399" },
+  { name:"MULTI", color:"#f43f5e" }
 ];
 
 document.addEventListener("keydown", e => {
+  if ((e.key === "p" || e.key === "P" || e.key === "Escape") && running && !levelReady) {
+    paused = !paused;
+    messageEl.textContent = paused ? "Paused — press P to resume" : "";
+    return;
+  }
+
   keys[e.key] = true;
 
   if (["ArrowLeft", "ArrowRight", " "].includes(e.key)) {
@@ -473,6 +527,7 @@ function createBricks() {
         y: top + r * (brickH + gap),
         w: brickW,
         h: brickH,
+        row: r,
         hp,
         maxHp: hp,
         type,
@@ -495,7 +550,7 @@ function ensureBreakableBricks() {
 }
 
 function gameLoop() {
-  update();
+  if (!paused) update();
   draw();
 
   if (running) {
@@ -504,7 +559,7 @@ function gameLoop() {
 }
 
 function update() {
-  if (levelReady) return;
+  if (levelReady || paused) return;
 
   if (keys.ArrowLeft) paddle.x -= paddle.speed;
   if (keys.ArrowRight) paddle.x += paddle.speed;
@@ -558,7 +613,7 @@ function updateBalls() {
 
       if (edgeHit) {
         showMessage("Clutch save!");
-        makeParticles(ball.x, ball.y, "#ffd86b", 14);
+        makeParticles(ball.x, ball.y, "#fbbf24", 14);
       }
     }
 
@@ -808,9 +863,11 @@ function endGame() {
   canvasWrap.classList.remove("danger");
 
   overlayTitle.textContent = "Game Over";
-  overlayText.textContent = `Final score: ${score}. You reached level ${level}.`;
+  overlayText.textContent = `Final score: ${score}. Best: ${best}. You reached level ${level}.`;
   startBtn.textContent = "Play Again";
   overlay.classList.remove("hidden");
+
+  DeskArcadeLeaderboard.trySubmit('fracture', score, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
 }
 
 function winGame() {
@@ -823,6 +880,8 @@ function winGame() {
   overlayText.textContent = `You cleared every level. Final score: ${score}.`;
   startBtn.textContent = "Play Again";
   overlay.classList.remove("hidden");
+
+  DeskArcadeLeaderboard.trySubmit('fracture', score, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
 }
 
 function getBreakableRemaining() {
@@ -921,13 +980,13 @@ function drawBricks() {
       ctx.lineTo(brick.x + brick.w * 0.4, brick.y + 7);
       ctx.lineTo(brick.x + brick.w * 0.58, brick.y + brick.h - 7);
       ctx.lineTo(brick.x + brick.w - 8, brick.y + 6);
-      ctx.strokeStyle = "rgba(2,4,2,0.75)";
+      ctx.strokeStyle = "rgba(10,10,18,0.75)";
       ctx.lineWidth = 2;
       ctx.stroke();
     }
 
     if (brick.type === "explosive" || brick.type === "speed" || brick.type === "solid") {
-      ctx.font = "bold 17px Consolas, Monaco, monospace";
+      ctx.font = "bold 17px 'Space Grotesk', sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
@@ -936,7 +995,7 @@ function drawBricks() {
       }
 
       if (brick.type === "speed") {
-        ctx.fillStyle = "#020402";
+        ctx.fillStyle = "#0c0c17";
         ctx.fillText("⚡", brick.x + brick.w / 2, brick.y + brick.h / 2 + 1);
       }
 
@@ -949,19 +1008,21 @@ function drawBricks() {
   });
 }
 
+const brickRowColors = ["#a855f7", "#8b5cf6", "#6366f1", "#38bdf8", "#22d3ee"];
+
 function getBrickColor(brick) {
-  if (brick.type === "strong") return "#ffd86b";
-  if (brick.type === "explosive") return "#ff6b4a";
-  if (brick.type === "speed") return "#7fdcff";
+  if (brick.type === "strong") return "#fbbf24";
+  if (brick.type === "explosive") return "#f43f5e";
+  if (brick.type === "speed") return "#38bdf8";
   if (brick.type === "solid") return "#8a8a8a";
-  return "#8cff6a";
+  return brickRowColors[(brick.row || 0) % brickRowColors.length];
 }
 
 function drawPaddle() {
   ctx.save();
   ctx.shadowBlur = powerState.wide ? 30 : 22;
-  ctx.shadowColor = powerState.wide ? "#7fdcff" : "#8cff6a";
-  ctx.fillStyle = powerState.wide ? "#7fdcff" : "#8cff6a";
+  ctx.shadowColor = powerState.wide ? "#38bdf8" : "#a855f7";
+  ctx.fillStyle = powerState.wide ? "#38bdf8" : "#a855f7";
   roundedRect(paddle.x, paddle.y, paddle.w, paddle.h, 8);
   ctx.fill();
   ctx.restore();
@@ -971,8 +1032,8 @@ function drawBalls() {
   balls.forEach(ball => {
     ctx.save();
     ctx.shadowBlur = powerState.slow ? 24 : 20;
-    ctx.shadowColor = powerState.slow ? "#ffd86b" : "#7fdcff";
-    ctx.fillStyle = powerState.slow ? "#ffd86b" : "#7fdcff";
+    ctx.shadowColor = powerState.slow ? "#fbbf24" : "#f4f4f8";
+    ctx.fillStyle = powerState.slow ? "#fbbf24" : "#f4f4f8";
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
     ctx.fill();
@@ -992,8 +1053,8 @@ function drawPowerups() {
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = "#020402";
-    ctx.font = "bold 12px Consolas, Monaco, monospace";
+    ctx.fillStyle = "#0c0c17";
+    ctx.font = "bold 12px 'Space Grotesk', sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(p.type.name, 0, 1);
@@ -1028,6 +1089,10 @@ function roundedRect(x, y, w, h, r) {
 }
 
 function updateHud() {
+  if (score > best) {
+    best = score;
+    localStorage.setItem("fractureBest", String(best));
+  }
   scoreEl.textContent = score;
   livesEl.textContent = lives;
   levelEl.textContent = level;

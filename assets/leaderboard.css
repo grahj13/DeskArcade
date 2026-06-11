@@ -1,0 +1,173 @@
+/* DeskArcade — arcade-style TOP 10 leaderboard */
+
+.da-lb-panel {
+  margin-top: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  padding: 14px 16px;
+}
+
+.da-lb-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.da-lb-title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.da-lb-sub {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.da-lb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.da-lb-table th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.da-lb-table td {
+  padding: 6px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--text-dim);
+}
+
+.da-lb-table tr:last-child td {
+  border-bottom: none;
+}
+
+.da-lb-rank {
+  width: 28px;
+  color: var(--text-faint);
+}
+
+.da-lb-name {
+  width: 52px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text);
+}
+
+.da-lb-score {
+  text-align: right;
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+.da-lb-empty {
+  padding: 10px 6px;
+  font-size: 12px;
+  color: var(--text-faint);
+  font-family: var(--font-ui);
+}
+
+.da-lb-offline {
+  font-size: 11px;
+  color: var(--text-faint);
+  padding: 8px 6px 0;
+}
+
+/* Initials entry modal */
+.da-lb-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(6, 6, 12, 0.82);
+  backdrop-filter: blur(6px);
+}
+
+.da-lb-modal.open {
+  display: flex;
+}
+
+.da-lb-modal-card {
+  width: min(380px, 100%);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.012) 40%),
+    var(--surface-strong);
+  box-shadow: var(--shadow-2);
+  padding: 22px 20px 18px;
+  text-align: center;
+}
+
+.da-lb-modal-card h3 {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.da-lb-modal-card p {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.da-lb-initials {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.da-lb-initials input {
+  width: 52px;
+  height: 58px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: rgba(10, 10, 20, 0.85);
+  color: var(--text);
+  caret-color: var(--accent);
+}
+
+.da-lb-initials input:focus {
+  outline: none;
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.da-lb-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.da-lb-modal-actions .da-btn-ghost {
+  min-width: 96px;
+}

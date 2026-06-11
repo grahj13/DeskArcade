@@ -5,33 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Reacto | DeskArcade</title>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/leaderboard.css">
+
 <style>
 :root {
-  --green:#8cff6a;
-  --red:#ff6b4a;
-  --yellow:#ffd86b;
-  --blue:#7fdcff;
-  --bg:#020402;
-  --panel:rgba(7,24,8,0.94);
-  --text-soft:#b9ffd2;
-  --border-soft:rgba(140,255,106,0.35);
-}
-
-* {
-  box-sizing:border-box;
-}
-
-@keyframes logoGlow {
-  0%, 100% {
-    filter:
-      drop-shadow(0 0 12px rgba(140,255,106,0.6))
-      drop-shadow(0 0 28px rgba(140,255,106,0.3));
-  }
-  50% {
-    filter:
-      drop-shadow(0 0 20px rgba(140,255,106,0.9))
-      drop-shadow(0 0 40px rgba(140,255,106,0.6));
-  }
+  --accent:#ef4444;
+  --accent-2:#f87171;
+  --red:#ef4444;
+  --yellow:#f59e0b;
+  --blue:#38bdf8;
 }
 
 @keyframes buttonBreath {
@@ -47,15 +33,15 @@
   0%, 100% {
     transform:scale(1);
     box-shadow:
-      0 0 30px rgba(140,255,106,0.7),
-      0 14px 0 rgba(27,80,20,0.95),
+      0 0 30px rgba(34,197,94,0.45),
+      0 14px 0 rgba(11,58,27,0.95),
       0 26px 30px rgba(0,0,0,0.55);
   }
   50% {
     transform:scale(1.045);
     box-shadow:
-      0 0 55px rgba(140,255,106,1),
-      0 14px 0 rgba(27,80,20,0.95),
+      0 0 48px rgba(34,197,94,0.65),
+      0 14px 0 rgba(11,58,27,0.95),
       0 32px 40px rgba(0,0,0,0.65);
   }
 }
@@ -80,13 +66,6 @@
 }
 
 body {
-  margin:0;
-  min-height:100vh;
-  font-family:Consolas, Monaco, monospace;
-  background:
-    radial-gradient(circle at top, rgba(140,255,106,0.16), transparent 35%),
-    linear-gradient(180deg,#071106 0%,#020402 100%);
-  color:var(--green);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -94,14 +73,17 @@ body {
 }
 
 .arcade-shell {
+  position:relative;
+  z-index:1;
   width:min(720px, 100%);
-  background:var(--panel);
-  border:1px solid var(--border-soft);
-  border-radius:24px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012) 38%),
+    var(--surface-strong);
+  backdrop-filter:blur(18px);
+  box-shadow:var(--shadow-2);
   padding:24px;
-  box-shadow:
-    0 0 25px rgba(140,255,106,0.18),
-    inset 0 0 30px rgba(140,255,106,0.06);
   text-align:center;
 }
 
@@ -113,47 +95,34 @@ body {
   margin-bottom:24px;
 }
 
-.arcade-link {
-  color:var(--green);
-  text-decoration:none;
-  border:1px solid var(--border-soft);
-  padding:9px 14px;
-  border-radius:999px;
-  font-size:14px;
-  background:rgba(140,255,106,0.08);
-}
-
-.arcade-link:hover {
-  background:rgba(140,255,106,0.16);
-  box-shadow:0 0 14px rgba(140,255,106,0.25);
-}
-
 .build {
   font-size:13px;
-  color:var(--text-soft);
-  opacity:0.75;
+  color:var(--text-dim);
 }
 
 .logo {
-  width:100%;
-  max-width:520px;
-  margin:0 auto 10px;
   display:block;
-  animation:logoGlow 3s ease-in-out infinite;
+  height:56px;
+  width:auto;
+  max-width:min(420px, 55vw);
+  object-fit:contain;
+  margin:0 auto 10px;
+  filter:drop-shadow(0 4px 14px rgba(0,0,0,0.55));
 }
 
 .subtitle {
   margin:8px 0 26px;
-  color:var(--text-soft);
+  color:var(--text-dim);
   font-size:16px;
 }
 
 .status {
   min-height:28px;
   margin-bottom:18px;
+  font-family:var(--font-display);
+  font-weight:600;
   font-size:20px;
   color:var(--yellow);
-  text-shadow:0 0 10px rgba(255,216,107,0.35);
 }
 
 .game-button {
@@ -162,17 +131,17 @@ body {
   border-radius:50%;
   border:4px solid rgba(255,255,255,0.12);
   background:
-    radial-gradient(circle at 35% 30%, rgba(255,255,255,0.22), transparent 22%),
-    linear-gradient(145deg,#ff866d,#b42c18);
-  color:#160403;
-  font-family:inherit;
+    radial-gradient(circle at 35% 30%, rgba(255,255,255,0.16), transparent 22%),
+    linear-gradient(145deg,#b91c1c,#5f1414);
+  color:#fde8e8;
+  font-family:var(--font-display);
   font-size:clamp(24px, 5vw, 46px);
-  font-weight:900;
+  font-weight:700;
   letter-spacing:2px;
   cursor:pointer;
   box-shadow:
-    0 0 22px rgba(255,107,74,0.45),
-    0 14px 0 rgba(80,10,5,0.9),
+    0 0 22px rgba(239,68,68,0.22),
+    0 14px 0 rgba(54,8,8,0.95),
     0 26px 30px rgba(0,0,0,0.55);
   transition:
     box-shadow 0.12s ease,
@@ -187,22 +156,23 @@ body {
 .game-button:active {
   transform:translateY(8px);
   box-shadow:
-    0 0 18px rgba(255,107,74,0.35),
-    0 6px 0 rgba(80,10,5,0.9),
+    0 0 18px rgba(239,68,68,0.18),
+    0 6px 0 rgba(54,8,8,0.95),
     0 16px 22px rgba(0,0,0,0.5);
 }
 
 .game-button.ready {
   background:
     radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25), transparent 22%),
-    linear-gradient(145deg,#b7ff96,#3fc930);
+    linear-gradient(145deg,#4ade80,#16a34a);
+  color:#052e16;
   animation:readyPulse 0.65s ease-in-out infinite;
 }
 
 .game-button.ready:active {
   box-shadow:
-    0 0 22px rgba(140,255,106,0.55),
-    0 6px 0 rgba(27,80,20,0.95),
+    0 0 22px rgba(34,197,94,0.45),
+    0 6px 0 rgba(11,58,27,0.95),
     0 16px 22px rgba(0,0,0,0.5);
 }
 
@@ -213,28 +183,49 @@ body {
 .results {
   margin-top:32px;
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:repeat(3, 1fr);
   gap:14px;
 }
 
+.history-row {
+  margin-top:14px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+  min-height:28px;
+}
+
+.history-pill {
+  padding:5px 10px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-pill);
+  font-family:var(--font-mono);
+  font-size:12px;
+  color:var(--text-dim);
+}
+
 .score-card {
-  border:1px solid var(--border-soft);
-  border-radius:16px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
   padding:16px;
-  background:rgba(0,0,0,0.22);
+  background:var(--surface);
 }
 
 .label {
-  font-size:13px;
-  color:var(--text-soft);
-  opacity:0.75;
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--text-faint);
   margin-bottom:8px;
 }
 
 .value {
+  font-family:var(--font-mono);
   font-size:30px;
-  color:var(--green);
-  text-shadow:0 0 12px rgba(140,255,106,0.45);
+  font-weight:700;
+  color:var(--accent-text);
 }
 
 .value.pop {
@@ -244,8 +235,7 @@ body {
 .note {
   margin-top:22px;
   font-size:13px;
-  color:var(--text-soft);
-  opacity:0.65;
+  color:var(--text-faint);
 }
 
 @media (max-width:560px) {
@@ -265,7 +255,7 @@ body {
 <main class="arcade-shell">
 
   <div class="top-bar">
-    <a class="arcade-link" href="../../index.html">&larr; Return to Arcade</a>
+    <a class="da-back arcade-link" href="../../index.html">Return to Arcade</a>
     <div class="build">Created by Jason / build v1.0</div>
   </div>
 
@@ -287,21 +277,40 @@ body {
       <div class="label">BEST REACTION</div>
       <div id="bestScore" class="value">--</div>
     </div>
+
+    <div class="score-card">
+      <div class="label">SESSION AVG</div>
+      <div id="avgScore" class="value">--</div>
+    </div>
   </section>
 
-  <div class="note">Clicking before green is cheating. Don&apos;t be that person.</div>
+  <div class="history-row" id="historyRow"></div>
+
+  <div class="note">5-round session · Space to start · Clicking before green resets the round</div>
+
+  <div id="leaderboard"></div>
 
 </main>
 
+<script src="../../assets/deskarcade-config.js"></script>
+<script src="../../assets/leaderboard.js"></script>
 <script>
+const lbPanel = document.getElementById('leaderboard');
+DeskArcadeLeaderboard.mountPanel(lbPanel, 'reacto', 'default');
+
+const ROUNDS = 5;
 let state = "idle";
 let startTime = 0;
 let timeout = null;
+let roundNum = 0;
+let sessionTimes = [];
 
 const gameBtn = document.getElementById("gameBtn");
 const statusText = document.getElementById("status");
 const lastScore = document.getElementById("lastScore");
 const bestScore = document.getElementById("bestScore");
+const avgScore = document.getElementById("avgScore");
+const historyRow = document.getElementById("historyRow");
 
 let bestTime = localStorage.getItem("reactoBestTime");
 
@@ -315,11 +324,29 @@ function popScore(element) {
   element.classList.add("pop");
 }
 
+function updateHistory() {
+  historyRow.innerHTML = "";
+  sessionTimes.forEach((t, i) => {
+    const pill = document.createElement("span");
+    pill.className = "history-pill";
+    pill.textContent = "R" + (i + 1) + ": " + t.toFixed(3) + "s";
+    historyRow.appendChild(pill);
+  });
+}
+
 function resetButton() {
   state = "idle";
   gameBtn.classList.remove("ready");
   gameBtn.classList.remove("error");
-  gameBtn.textContent = "START";
+  gameBtn.textContent = roundNum === 0 ? "START" : "NEXT";
+}
+
+function startSession() {
+  roundNum = 0;
+  sessionTimes = [];
+  avgScore.textContent = "--";
+  updateHistory();
+  startRound();
 }
 
 function startRound() {
@@ -327,7 +354,7 @@ function startRound() {
   gameBtn.classList.remove("ready");
   gameBtn.classList.remove("error");
   gameBtn.textContent = "WAIT";
-  statusText.textContent = "Wait for green...";
+  statusText.textContent = "Round " + (roundNum + 1) + "/" + ROUNDS + " — wait for green...";
   lastScore.textContent = "--";
 
   const delay = Math.random() * 3000 + 2000;
@@ -345,7 +372,7 @@ function tooSoon() {
   clearTimeout(timeout);
   state = "idle";
 
-  statusText.textContent = "Too soon. Resetting.";
+  statusText.textContent = "Too soon — round " + (roundNum + 1) + " failed.";
   lastScore.textContent = "FAIL";
   popScore(lastScore);
 
@@ -356,7 +383,8 @@ function tooSoon() {
 
   setTimeout(() => {
     resetButton();
-  }, 300);
+    statusText.textContent = "Tap NEXT to retry this round.";
+  }, 400);
 }
 
 function finishRound() {
@@ -364,8 +392,10 @@ function finishRound() {
   const formattedTime = reactionTime.toFixed(3) + "s";
 
   lastScore.textContent = formattedTime;
-  statusText.textContent = "Reaction recorded.";
   popScore(lastScore);
+  sessionTimes.push(reactionTime);
+  roundNum++;
+  updateHistory();
 
   if (!bestTime || reactionTime < Number(bestTime)) {
     bestTime = reactionTime;
@@ -375,16 +405,42 @@ function finishRound() {
     popScore(bestScore);
   }
 
+  DeskArcadeLeaderboard.trySubmit('reacto', Math.round(reactionTime * 1000), { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+
+  if (roundNum >= ROUNDS) {
+    const avg = sessionTimes.reduce((a, b) => a + b, 0) / ROUNDS;
+    avgScore.textContent = avg.toFixed(3) + "s";
+    statusText.textContent = "Session complete — average " + avg.toFixed(3) + "s";
+    roundNum = 0;
+    sessionTimes = [];
+    resetButton();
+    gameBtn.textContent = "START";
+    return;
+  }
+
+  const avgSoFar = sessionTimes.reduce((a, b) => a + b, 0) / sessionTimes.length;
+  avgScore.textContent = avgSoFar.toFixed(3) + "s";
+  statusText.textContent = "Round " + roundNum + "/" + ROUNDS + " done — tap NEXT";
   resetButton();
 }
 
-gameBtn.addEventListener("click", () => {
+function handleAction() {
   if (state === "idle") {
-    startRound();
+    if (roundNum === 0 && sessionTimes.length === 0) startSession();
+    else startRound();
   } else if (state === "waiting") {
     tooSoon();
   } else if (state === "ready") {
     finishRound();
+  }
+}
+
+gameBtn.addEventListener("click", handleAction);
+
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space") {
+    e.preventDefault();
+    handleAction();
   }
 });
 </script>

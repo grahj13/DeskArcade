@@ -4,28 +4,29 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Shockline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/leaderboard.css">
 
 <style>
 :root {
-  --green:#8cff6a;
-  --red:#ff6b4a;
-  --yellow:#ffd86b;
-  --blue:#7fdcff;
-  --panel:rgba(7,24,8,0.94);
-  --text-soft:#b9ffd2;
-  --border-soft:rgba(140,255,106,0.35);
+  --accent:#f59e0b;
+  --accent-2:#fbbf24;
+  --green:var(--accent);
+  --red:#ef4444;
+  --yellow:#fbbf24;
+  --blue:#38bdf8;
+  --panel:var(--surface-strong);
+  --text-soft:var(--text-dim);
+  --border-soft:var(--border);
 }
-
-* { box-sizing:border-box; }
 
 body{
   margin:0;
   min-height:100vh;
-  background:
-    radial-gradient(circle at top, rgba(140,255,106,0.14), transparent 34%),
-    linear-gradient(180deg,#071106 0%,#020402 100%);
-  color:var(--green);
-  font-family:Consolas, Monaco, monospace;
+  color:var(--text);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -34,44 +35,41 @@ body{
 
 .game-shell{
   width:min(1100px,100%);
-  border:1px solid var(--border-soft);
-  background:var(--panel);
-  box-shadow:0 0 18px rgba(140,255,106,0.35), inset 0 0 28px rgba(140,255,106,0.08);
-  border-radius:22px;
-  padding:12px 18px 16px;
+  position:relative;
+  border:1px solid var(--border);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012) 38%),
+    var(--surface-strong);
+  backdrop-filter:blur(18px);
+  box-shadow:var(--shadow-2);
+  border-radius:var(--radius-lg);
+  padding:16px 18px;
+}
+
+.game-shell::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:10%;
+  right:10%;
+  height:1px;
+  background:linear-gradient(90deg, transparent, var(--accent-border), transparent);
+  pointer-events:none;
 }
 
 .logo{
   display:block;
-  width:100%;
-  max-width:100%;
-  max-height:145px;
+  height:56px;
+  width:auto;
+  max-width:min(420px,55vw);
   object-fit:contain;
-  margin:-4px auto 2px;
-  filter:
-    drop-shadow(0 0 10px rgba(140,255,106,0.45))
-    drop-shadow(0 0 24px rgba(140,255,106,0.28));
-  animation:logoPulse 3.2s ease-in-out infinite;
-}
-
-@keyframes logoPulse{
-  0%,100%{
-    filter:
-      drop-shadow(0 0 8px rgba(140,255,106,0.35))
-      drop-shadow(0 0 18px rgba(140,255,106,0.22));
-    transform:scale(1);
-  }
-  50%{
-    filter:
-      drop-shadow(0 0 14px rgba(140,255,106,0.65))
-      drop-shadow(0 0 34px rgba(140,255,106,0.42));
-    transform:scale(1.015);
-  }
+  margin:0 auto 10px;
+  filter:drop-shadow(0 4px 14px rgba(0,0,0,0.55));
 }
 
 .subtitle{
   text-align:center;
-  color:var(--text-soft);
+  color:var(--text-dim);
   font-size:0.95rem;
   margin-bottom:6px;
 }
@@ -79,7 +77,7 @@ body{
 .meta{
   text-align:center;
   font-size:0.8rem;
-  color:rgba(185,255,210,0.7);
+  color:var(--text-faint);
   margin-bottom:10px;
 }
 
@@ -91,41 +89,45 @@ body{
 }
 
 .stat{
-  border:1px solid var(--border-soft);
-  border-radius:14px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
   padding:10px;
-  background:rgba(0,0,0,0.22);
+  background:var(--surface);
   text-align:center;
 }
 
 .stat-label{
-  font-size:0.7rem;
-  color:rgba(185,255,210,0.7);
-  letter-spacing:0.12em;
+  font-size:10px;
+  font-weight:600;
+  text-transform:uppercase;
+  color:var(--text-faint);
+  letter-spacing:0.14em;
 }
 
 .stat-value{
   margin-top:4px;
+  font-family:var(--font-mono);
   font-size:1.25rem;
-  text-shadow:0 0 10px rgba(140,255,106,0.35);
+  font-weight:700;
+  color:var(--accent-text);
 }
 
-.status-ready{color:var(--green);}
+.status-ready{color:var(--accent-text);}
 .status-charged{color:var(--blue);}
 .status-active{color:var(--yellow);}
 .status-shock{color:var(--red);}
-.status-clear{color:var(--green);}
+.status-clear{color:#34d399;}
 
 .game-area{
-  border:1px solid var(--border-soft);
-  border-radius:18px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
   background:
-    linear-gradient(rgba(140,255,106,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(140,255,106,0.05) 1px, transparent 1px),
-    rgba(0,0,0,0.38);
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
+    #0c0c17;
   background-size:28px 28px;
   overflow:hidden;
-  box-shadow:inset 0 0 32px rgba(0,0,0,0.6);
+  box-shadow:inset 0 2px 12px rgba(0,0,0,0.55);
 }
 
 canvas{
@@ -133,20 +135,18 @@ canvas{
   width:100%;
   height:auto;
   cursor:none;
+  touch-action:none;
 }
 
 .message{
   text-align:center;
   margin:10px 0;
-  color:var(--text-soft);
+  color:var(--text-dim);
   font-size:0.95rem;
 }
 
 .message.shock-message{
   color:var(--red);
-  text-shadow:
-    0 0 8px rgba(255,107,74,0.85),
-    0 0 22px rgba(255,107,74,0.55);
   animation:shockTextPulse 0.28s ease;
 }
 
@@ -157,38 +157,46 @@ canvas{
 }
 
 button{
-  font-family:Consolas, Monaco, monospace;
-  border:1px solid var(--green);
-  background:rgba(140,255,106,0.08);
-  color:var(--green);
-  border-radius:999px;
+  font-family:var(--font-display);
+  font-weight:600;
+  border:1px solid var(--border-strong);
+  background:var(--surface);
+  color:var(--text-dim);
+  border-radius:var(--radius-pill);
   padding:8px 18px;
   cursor:pointer;
   letter-spacing:0.08em;
   text-transform:uppercase;
-  box-shadow:0 0 12px rgba(140,255,106,0.16);
+  transition:color 0.18s ease, border-color 0.18s ease, background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-button:hover,
+button:hover{
+  color:var(--text);
+  border-color:var(--accent-border);
+  background:var(--accent-soft);
+  transform:translateY(-1px);
+}
+
 button.active{
-  .home-controls {
-  margin-top: 10px;
+  border-color:transparent;
+  background:linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--accent-2)));
+  color:#fff;
+  box-shadow:0 8px 22px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.22);
 }
 
-#homeBtn {
-  border-color: var(--blue);
-  color: var(--blue);
-  box-shadow: 0 0 12px rgba(127,220,255,0.25);
+.home-controls{
+  margin-top:10px;
 }
 
-#homeBtn:hover {
-  background: var(--blue);
-  color: #061006;
-  box-shadow: 0 0 22px rgba(127,220,255,0.55);
+#homeBtn{
+  color:var(--text-dim);
+  border-color:var(--border-strong);
 }
-  background:var(--green);
-  color:#061006;
-  box-shadow:0 0 22px rgba(140,255,106,0.45);
+
+#homeBtn:hover{
+  color:var(--text);
+  border-color:var(--accent-border);
+  background:var(--accent-soft);
 }
 
 .shake{ animation:shake 0.22s linear; }
@@ -206,21 +214,21 @@ button.active{
 @keyframes failFlash{
   50%{
     box-shadow:
-      0 0 42px rgba(255,107,74,0.75),
-      inset 0 0 42px rgba(255,107,74,0.25);
+      0 0 36px rgba(239,68,68,0.55),
+      inset 0 0 36px rgba(239,68,68,0.18);
   }
 }
 
 @keyframes winFlash{
   30%{
     box-shadow:
-      0 0 70px rgba(140,255,106,0.95),
-      inset 0 0 58px rgba(140,255,106,0.35);
+      0 0 44px rgba(245,158,11,0.55),
+      inset 0 0 40px rgba(245,158,11,0.22);
   }
   65%{
     box-shadow:
-      0 0 42px rgba(255,216,107,0.75),
-      inset 0 0 46px rgba(255,216,107,0.22);
+      0 0 32px rgba(251,191,36,0.45),
+      inset 0 0 32px rgba(251,191,36,0.16);
   }
 }
 
@@ -278,9 +286,15 @@ button.active{
   <button id="homeBtn">Return to Arcade</button>
 </div>
 
+<div id="leaderboard"></div>
+
 </main>
 
+<script src="../../assets/deskarcade-config.js"></script>
+<script src="../../assets/leaderboard.js"></script>
 <script>
+const lbPanel = document.getElementById('leaderboard');
+
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
@@ -319,6 +333,7 @@ const settings = {
 };
 
 let difficulty = "normal";
+DeskArcadeLeaderboard.mountPanel(lbPanel, 'shockline', difficulty);
 let mouse = {x:-100,y:-100};
 let gameState = "ready";
 let isMouseDown = false;
@@ -360,12 +375,18 @@ function getMousePos(e){
   };
 }
 
-canvas.addEventListener("mousemove", e => {
+function setPointerFromEvent(e){
   mouse = getMousePos(e);
-});
+}
+
+canvas.addEventListener("mousemove", setPointerFromEvent);
+canvas.addEventListener("touchmove", e => {
+  e.preventDefault();
+  if(e.touches[0]) setPointerFromEvent(e.touches[0]);
+}, { passive:false });
 
 canvas.addEventListener("mousedown", e => {
-  mouse = getMousePos(e);
+  setPointerFromEvent(e);
   isMouseDown = true;
 
   if(gameState === "ready" && inNode(mouse,startNode)){
@@ -373,7 +394,18 @@ canvas.addEventListener("mousedown", e => {
   }
 });
 
-window.addEventListener("mouseup", () => {
+canvas.addEventListener("touchstart", e => {
+  e.preventDefault();
+  if(!e.touches[0]) return;
+  setPointerFromEvent(e.touches[0]);
+  isMouseDown = true;
+
+  if(gameState === "ready" && inNode(mouse,startNode)){
+    startRun();
+  }
+}, { passive:false });
+
+function endPointer(){
   if(gameState === "playing" && hasLeftStart){
     isMouseDown = false;
     fail("You let go. Shock!");
@@ -386,7 +418,11 @@ window.addEventListener("mouseup", () => {
   }
 
   isMouseDown = false;
-});
+}
+
+window.addEventListener("mouseup", endPointer);
+window.addEventListener("touchend", endPointer);
+window.addEventListener("touchcancel", endPointer);
 
 canvas.addEventListener("mouseleave", () => {
   if(gameState === "playing" && hasLeftStart){
@@ -454,6 +490,8 @@ messageEl.textContent = `Finished! Time: ${elapsed.toFixed(2)}s`;
 messageEl.textContent = `New ${difficulty} best! ${elapsed.toFixed(2)}s`;
   }
 
+  DeskArcadeLeaderboard.trySubmit('shockline', Math.round(elapsed * 1000), { panel: lbPanel, boardKey: difficulty }).catch(() => {});
+
   setTimeout(reset, 3000);
 }
 
@@ -471,6 +509,7 @@ function setDifficulty(level){
   hardBtn.classList.toggle("active", level === "hard");
 
   loadBestForDifficulty();
+  DeskArcadeLeaderboard.mountPanel(lbPanel, 'shockline', difficulty);
   reset();
   messageEl.textContent = `${level.charAt(0).toUpperCase() + level.slice(1)} mode selected. Start from the START node.`;
 }
@@ -558,8 +597,8 @@ if (gameState === "playing") {
 
 function drawGrid(){
   ctx.save();
-  ctx.globalAlpha = 0.12;
-  ctx.strokeStyle = "#8cff6a";
+  ctx.globalAlpha = 0.04;
+  ctx.strokeStyle = "#ffffff";
   ctx.lineWidth = 1;
 
   for(let x=0; x<=canvas.width; x+=28){
@@ -609,22 +648,22 @@ function drawWire(){
   ctx.lineJoin = "round";
 
   tracePath();
-  ctx.strokeStyle = `rgba(140,255,106,${0.10 + progress * 0.10})`;
+  ctx.strokeStyle = `rgba(245,158,11,${0.10 + progress * 0.10})`;
   ctx.lineWidth = safeGlowWidth[difficulty];
   ctx.shadowBlur = glowStrength;
-  ctx.shadowColor = "#8cff6a";
+  ctx.shadowColor = "#f59e0b";
   ctx.stroke();
 
   tracePath();
-  ctx.strokeStyle = "#8cff6a";
+  ctx.strokeStyle = "#f59e0b";
   ctx.lineWidth = 6;
   ctx.shadowBlur = glowStrength + 4;
-  ctx.shadowColor = "#8cff6a";
+  ctx.shadowColor = "#f59e0b";
   ctx.stroke();
 
   tracePath();
   ctx.shadowBlur = 0;
-  ctx.strokeStyle = "#d8ffce";
+  ctx.strokeStyle = "#fde68a";
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
@@ -643,7 +682,7 @@ function drawNode(node,label,color){
 
   ctx.beginPath();
   ctx.arc(node.x,node.y,node.r,0,Math.PI*2);
-  ctx.fillStyle = "rgba(0,0,0,0.72)";
+  ctx.fillStyle = "rgba(12,12,23,0.85)";
   ctx.fill();
 
   ctx.shadowBlur = 22 + nearEndBoost + progressBoost;
@@ -654,7 +693,7 @@ function drawNode(node,label,color){
 
   ctx.shadowBlur = 0;
   ctx.fillStyle = color;
-  ctx.font = "bold 13px Consolas, Monaco, monospace";
+  ctx.font = "bold 13px 'Space Grotesk', sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(label,node.x,node.y);
@@ -667,12 +706,12 @@ function drawCursor(){
 
   ctx.beginPath();
   ctx.arc(mouse.x,mouse.y,settings[difficulty].cursor,0,Math.PI*2);
-  ctx.fillStyle = "#071106";
+  ctx.fillStyle = "#0c0c17";
   ctx.fill();
 
   ctx.shadowBlur = difficulty === "hard" ? 10 : 14;
-  ctx.shadowColor = "#7fdcff";
-  ctx.strokeStyle = "#7fdcff";
+  ctx.shadowColor = "#38bdf8";
+  ctx.strokeStyle = "#38bdf8";
   ctx.lineWidth = 2;
   ctx.stroke();
 
@@ -682,8 +721,8 @@ function drawCursor(){
 function drawHelpText(){
   ctx.save();
 
-  ctx.fillStyle = "rgba(185,255,210,0.42)";
-  ctx.font = "bold 11px Consolas, Monaco, monospace";
+  ctx.fillStyle = "rgba(155,155,176,0.6)";
+  ctx.font = "bold 11px 'Space Grotesk', sans-serif";
   ctx.textAlign = "left";
   ctx.fillText("HOLD CLICK + TRACE THE LINE", 34, 28);
 
@@ -699,8 +738,8 @@ function draw(){
   drawGrid();
   drawHelpText();
   drawWire();
-  drawNode(startNode,"START","#7fdcff");
-  drawNode(endNode,"END","#ffd86b");
+  drawNode(startNode,"START","#38bdf8");
+  drawNode(endNode,"END","#fbbf24");
   drawCursor();
 }
 
