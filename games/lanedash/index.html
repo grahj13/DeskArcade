@@ -117,6 +117,16 @@ body {
   margin:0 auto;
 }
 
+.game-area::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:var(--radius-md);
+  pointer-events:none;
+  z-index:2;
+  box-shadow:inset 0 0 0 1px rgba(249,115,22,0.12);
+}
+
 canvas {
   width:100%;
   aspect-ratio:1 / 1;
@@ -125,6 +135,10 @@ canvas {
   border-radius:var(--radius-md);
   background:#0c0c17;
   box-shadow:inset 0 2px 12px rgba(0,0,0,0.55);
+}
+
+canvas.invincible {
+  box-shadow:inset 0 2px 12px rgba(0,0,0,0.55), inset 0 0 24px rgba(249,115,22,0.08);
 }
 
 .overlay {
@@ -328,25 +342,66 @@ const COLS = 11;
 const ROWS = 11;
 const TILE = canvas.width / COLS;
 const PLAYER_SCREEN_ROW = ROWS - 2;
+const FORWARD_COOLDOWN = 105;
+const LATERAL_COOLDOWN = 48;
+const INVINCIBLE_MS = 165;
+const SOFT_OPEN_HOPS = 14;
 
 let player;
 let lanes = [];
 let cars = [];
+let floaters = [];
+let hopParticles = [];
 let score = 0;
 let best = Number(localStorage.getItem("lanedashBest")) || 0;
 let level = 1;
 let gameRunning = false;
 let paused = false;
 let animationId = null;
-let moveLocked = false;
+let lastMoveTime = 0;
+let inputBuffer = null;
 let screenShake = 0;
 let nearMissCooldown = false;
 let playerPop = 0;
 let deathFlash = 0;
 let deathFreeze = false;
 let lastMove = "up";
+let laneOffset = 0;
+let invincibleUntil = 0;
+let displayX = 0;
+let lastFrame = 0;
+let forwardStreak = 0;
 
 bestEl.textContent = best;
+
+function difficultyScale() {
+  const ramp = Math.min(1, score / 55);
+  const soft = score < SOFT_OPEN_HOPS ? 0.5 + score / SOFT_OPEN_HOPS * 0.35 : 1;
+  return soft * (0.82 + ramp * 0.38);
+}
+
+function canMoveNow(dx, dy) {
+  const now = performance.now();
+  const cooldown = dy !== 0 ? FORWARD_COOLDOWN : LATERAL_COOLDOWN;
+  return now - lastMoveTime >= cooldown;
+}
+
+function spawnFloater(text, x, y, color = "#fb923c") {
+  floaters.push({ text, x, y, life: 1, color });
+}
+
+function spawnHopDust(x, y) {
+  for (let i = 0; i < 6; i++) {
+    hopParticles.push({
+      x: x * TILE + TILE * 0.5,
+      y: y * TILE + TILE * 0.72,
+      vx: (Math.random() - 0.5) * 2.4,
+      vy: -1.2 - Math.random() * 1.8,
+      life: 1,
+      size: 2 + Math.random() * 2.5
+    });
+  }
+}
 
 function randomChoice(array) {
   return array[Math.floor(Math.random() * array.length)];
@@ -378,14 +433,15 @@ function createLane(worldY) {
     };
   }
 
-  const difficultyBoost = level - 1;
+  const scale = difficultyScale();
+  const tier = Math.floor(score / 20);
 
   return {
     worldY,
     type:"road",
     direction:randomChoice([-1, 1]),
-    speed:1.1 + Math.random() * 1.15 + difficultyBoost * 0.16,
-    carCount:2 + Math.floor(Math.random() * 2) + Math.min(2, Math.floor(difficultyBoost / 2))
+    speed:(0.85 + Math.random() * 0.75 + tier * 0.09) * scale,
+    carCount:Math.max(2, Math.round((2 + Math.random() * 1.2 + tier * 0.35) * scale))
   };
 }
 
@@ -403,29 +459,31 @@ function buildStartingWorld() {
   }
 }
 
-function spawnCarsFairly(lane) {
-  const safeGapTiles = 2;
+function spawnCarsFairly(lane, protectCol = null) {
+  const safeGapTiles = 3;
   const safeGapWidth = safeGapTiles * TILE;
   const laneWidth = canvas.width;
   const carCount = lane.carCount;
   const segmentWidth = laneWidth / carCount;
 
-  const protectedGapStart = Math.floor(Math.random() * (COLS - safeGapTiles)) * TILE;
+  let protectedGapStart = protectCol !== null
+    ? protectCol * TILE
+    : Math.floor(Math.random() * (COLS - safeGapTiles)) * TILE;
   const protectedGapEnd = protectedGapStart + safeGapWidth;
 
   for (let i = 0; i < carCount; i++) {
-    const width = TILE * randomChoice([1.1, 1.25, 1.45]);
-    let x = i * segmentWidth + Math.random() * (segmentWidth * 0.35);
+    const width = TILE * randomChoice([1.05, 1.2, 1.35]);
+    let x = i * segmentWidth + Math.random() * (segmentWidth * 0.3);
 
     const overlapsProtectedGap =
       x < protectedGapEnd &&
       x + width > protectedGapStart;
 
     if (overlapsProtectedGap) {
-      x += safeGapWidth + TILE * 0.5;
+      x += safeGapWidth + TILE * 0.4;
 
       if (x + width > laneWidth) {
-        x = protectedGapStart - width - TILE * 0.6;
+        x = protectedGapStart - width - TILE * 0.5;
       }
     }
 
@@ -433,9 +491,9 @@ function spawnCarsFairly(lane) {
       worldY:lane.worldY,
       x,
       width,
-      height:TILE * 0.55,
+      height:TILE * 0.52,
       direction:lane.direction,
-      speed:lane.speed * (0.92 + Math.random() * 0.16),
+      speed:lane.speed * (0.94 + Math.random() * 0.12),
       color:randomChoice(["red", "yellow", "blue", "purple"])
     });
   }
@@ -445,18 +503,26 @@ function startGame() {
   paused = false;
   score = 0;
   level = 1;
-  moveLocked = false;
+  lastMoveTime = 0;
+  inputBuffer = null;
   screenShake = 0;
   nearMissCooldown = false;
   playerPop = 0;
   deathFlash = 0;
   deathFreeze = false;
   lastMove = "up";
+  laneOffset = 0;
+  invincibleUntil = 0;
+  forwardStreak = 0;
+  floaters = [];
+  hopParticles = [];
+  lastFrame = performance.now();
 
   player = {
     x:Math.floor(COLS / 2),
     worldY:0
   };
+  displayX = player.x;
 
   buildStartingWorld();
   updateUI();
@@ -499,22 +565,35 @@ function addNewLane() {
   }
 }
 
-function attemptMove(dx, dy) {
-  if (!gameRunning || moveLocked || deathFreeze) return;
+function queueMove(dx, dy) {
+  if (!gameRunning || paused || deathFreeze) return;
 
   const newX = player.x + dx;
+  if (dx !== 0 && (newX < 0 || newX >= COLS)) return;
+  if (dy === 1 && player.worldY <= 0) return;
 
-  if (newX < 0 || newX >= COLS) return;
+  if (!canMoveNow(dx, dy)) {
+    inputBuffer = { dx, dy };
+    return;
+  }
+
+  executeMove(dx, dy);
+}
+
+function executeMove(dx, dy) {
+  if (!gameRunning || paused || deathFreeze) return;
+
+  const newX = player.x + dx;
+  if (dx !== 0 && (newX < 0 || newX >= COLS)) return;
+  if (dy === 1 && player.worldY <= 0) return;
+
+  lastMoveTime = performance.now();
+  inputBuffer = null;
 
   if (dx === -1) lastMove = "left";
   if (dx === 1) lastMove = "right";
   if (dy === -1) lastMove = "up";
   if (dy === 1) lastMove = "down";
-
-  moveLocked = true;
-  setTimeout(() => {
-    moveLocked = false;
-  }, 95);
 
   if (dx !== 0) {
     player.x = newX;
@@ -524,15 +603,22 @@ function attemptMove(dx, dy) {
   if (dy === -1) {
     player.worldY++;
     score++;
-    playerPop = 1;
+    forwardStreak++;
+    playerPop = 1.15;
+    laneOffset = -TILE;
+    invincibleUntil = performance.now() + INVINCIBLE_MS;
     pulseScore();
+    spawnHopDust(player.x, PLAYER_SCREEN_ROW);
+    spawnFloater("+1", player.x * TILE + TILE * 0.5, PLAYER_SCREEN_ROW * TILE + TILE * 0.35);
+    if (forwardStreak >= 5 && forwardStreak % 5 === 0) {
+      spawnFloater("STREAK " + forwardStreak, player.x * TILE + TILE * 0.5, PLAYER_SCREEN_ROW * TILE + TILE * 0.15, "#fbbf24");
+    }
 
     const newLevel = 1 + Math.floor(score / 20);
-
     if (newLevel > level) {
       level = newLevel;
       showFlash("LEVEL " + level);
-      screenShake = 7;
+      screenShake = 4;
     }
 
     if (score > best) {
@@ -543,35 +629,52 @@ function attemptMove(dx, dy) {
     addNewLane();
   }
 
-  if (dy === 1 && player.worldY > 0) {
+  if (dy === 1) {
     player.worldY--;
-    playerPop = 1;
+    forwardStreak = 0;
+    playerPop = 0.85;
+    laneOffset = TILE;
+    invincibleUntil = performance.now() + INVINCIBLE_MS * 0.6;
+    spawnHopDust(player.x, PLAYER_SCREEN_ROW);
   }
 
   updateUI();
   checkCollision();
 }
 
-function updateCars() {
+function tryBufferedMove() {
+  if (!inputBuffer || !gameRunning || paused || deathFreeze) return;
+  const { dx, dy } = inputBuffer;
+  if (!canMoveNow(dx, dy)) return;
+  executeMove(dx, dy);
+}
+
+function updateCars(dt) {
+  const scale = Math.min(2.2, dt / 16.67);
   cars.forEach(car => {
-    car.x += car.speed * car.direction;
+    car.x += car.speed * car.direction * scale;
 
     if (car.direction === 1 && car.x > canvas.width + TILE) {
-      car.x = -car.width - Math.random() * 160;
+      car.x = -car.width - Math.random() * 120;
     }
 
     if (car.direction === -1 && car.x < -car.width - TILE) {
-      car.x = canvas.width + Math.random() * 160;
+      car.x = canvas.width + Math.random() * 120;
     }
   });
 }
 
+function rowY(row) {
+  return row * TILE + laneOffset;
+}
+
 function getPlayerBox() {
+  const px = (displayX + 0.5) * TILE;
   return {
-    x:player.x * TILE + TILE * 0.22,
-    y:PLAYER_SCREEN_ROW * TILE + TILE * 0.18,
-    w:TILE * 0.56,
-    h:TILE * 0.64
+    x:px - TILE * 0.24,
+    y:rowY(PLAYER_SCREEN_ROW) + TILE * 0.2,
+    w:TILE * 0.48,
+    h:TILE * 0.56
   };
 }
 
@@ -585,17 +688,17 @@ function checkNearMiss() {
 
     const carRow = getScreenRow(car.worldY);
     const c = {
-      x:car.x,
-      y:carRow * TILE + TILE * 0.24,
-      w:car.width,
-      h:car.height
+      x:car.x + TILE * 0.04,
+      y:rowY(carRow) + TILE * 0.26,
+      w:car.width - TILE * 0.08,
+      h:car.height - TILE * 0.06
     };
 
     const close =
-      p.x < c.x + c.w + 10 &&
-      p.x + p.w > c.x - 10 &&
-      p.y < c.y + c.h + 8 &&
-      p.y + p.h > c.y - 8;
+      p.x < c.x + c.w + 12 &&
+      p.x + p.w > c.x - 12 &&
+      p.y < c.y + c.h + 6 &&
+      p.y + p.h > c.y - 6;
 
     const hit =
       p.x < c.x + c.w &&
@@ -604,8 +707,8 @@ function checkNearMiss() {
       p.y + p.h > c.y;
 
     if (close && !hit) {
-      showFlash("NEAR MISS");
-      screenShake = 5;
+      showFlash("CLOSE!");
+      screenShake = 2;
       nearMissCooldown = true;
 
       setTimeout(() => {
@@ -618,7 +721,7 @@ function checkNearMiss() {
 }
 
 function checkCollision() {
-  if (deathFreeze) return;
+  if (deathFreeze || performance.now() < invincibleUntil) return;
 
   const p = getPlayerBox();
 
@@ -627,10 +730,10 @@ function checkCollision() {
 
     const carRow = getScreenRow(car.worldY);
     const c = {
-      x:car.x,
-      y:carRow * TILE + TILE * 0.24,
-      w:car.width,
-      h:car.height
+      x:car.x + TILE * 0.06,
+      y:rowY(carRow) + TILE * 0.28,
+      w:car.width - TILE * 0.12,
+      h:car.height - TILE * 0.08
     };
 
     const hit =
@@ -674,38 +777,49 @@ function endGame() {
 function drawBackground() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, "#0a0a14");
+  grad.addColorStop(1, "#0e0e1a");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
   lanes.forEach(lane => {
     const row = getScreenRow(lane.worldY);
-
     if (row < -1 || row > ROWS) return;
 
-    const y = row * TILE;
+    const y = rowY(row);
 
-    ctx.fillStyle = lane.type === "safe"
-      ? (row % 2 === 0 ? "#10101c" : "#12121f")
-      : "#15151f";
-
-    ctx.fillRect(0, y, canvas.width, TILE);
-
-    ctx.strokeStyle = "rgba(255,255,255,0.07)";
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
-    ctx.stroke();
-
-    if (lane.type === "road") {
-      ctx.strokeStyle = "rgba(255,255,255,0.16)";
-      ctx.setLineDash([14, 14]);
+    if (lane.type === "safe") {
+      ctx.fillStyle = row % 2 === 0 ? "#101820" : "#0e161c";
+      ctx.fillRect(0, y, canvas.width, TILE);
+      ctx.fillStyle = "rgba(74,222,128,0.06)";
+      for (let i = 0; i < 5; i++) {
+        ctx.fillRect((i * 97 + row * 13) % canvas.width, y + 8 + (i % 2) * 18, 6, 3);
+      }
+    } else {
+      ctx.fillStyle = "#161622";
+      ctx.fillRect(0, y, canvas.width, TILE);
+      ctx.fillStyle = "rgba(255,255,255,0.03)";
+      ctx.fillRect(0, y, 6, TILE);
+      ctx.fillRect(canvas.width - 6, y, 6, TILE);
+      ctx.strokeStyle = "rgba(249,115,22,0.22)";
+      ctx.setLineDash([10, 12]);
       ctx.beginPath();
       ctx.moveTo(0, y + TILE / 2);
       ctx.lineTo(canvas.width, y + TILE / 2);
       ctx.stroke();
       ctx.setLineDash([]);
     }
+
+    ctx.strokeStyle = "rgba(255,255,255,0.06)";
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
   });
 
   for (let col = 0; col <= COLS; col++) {
-    ctx.strokeStyle = "rgba(255,255,255,0.04)";
+    ctx.strokeStyle = "rgba(255,255,255,0.035)";
     ctx.beginPath();
     ctx.moveTo(col * TILE, 0);
     ctx.lineTo(col * TILE, canvas.height);
@@ -734,7 +848,7 @@ function drawCars() {
 
     if (row < -1 || row > ROWS) return;
 
-    const y = row * TILE + TILE * 0.24;
+    const y = rowY(row) + TILE * 0.24;
     const carHeight = car.height;
     const bodyRadius = 6;
 
@@ -852,17 +966,19 @@ function drawCars() {
 }
 
 function drawPlayer() {
-  const popScale = 1 + playerPop * 0.08;
-  const bounce = playerPop * 6;
+  const popScale = 1 + playerPop * 0.1;
+  const bounce = playerPop * 8;
+  const invincible = performance.now() < invincibleUntil;
+  const flicker = invincible ? (Math.sin(performance.now() * 0.04) > 0 ? 1 : 0.55) : 1;
 
   let tilt = 0;
-  if (lastMove === "left") tilt = -0.15;
-  if (lastMove === "right") tilt = 0.15;
-  if (lastMove === "up") tilt = 0.05;
-  if (lastMove === "down") tilt = -0.04;
+  if (lastMove === "left") tilt = -0.18;
+  if (lastMove === "right") tilt = 0.18;
+  if (lastMove === "up") tilt = 0.06;
+  if (lastMove === "down") tilt = -0.05;
 
-  const centreX = player.x * TILE + TILE * 0.5;
-  const centreY = PLAYER_SCREEN_ROW * TILE + TILE * 0.5 - bounce;
+  const centreX = (displayX + 0.5) * TILE;
+  const centreY = rowY(PLAYER_SCREEN_ROW) + TILE * 0.5 - bounce;
 
   const bodyW = TILE * 0.36 * popScale;
   const bodyH = TILE * 0.34 * popScale;
@@ -872,13 +988,19 @@ function drawPlayer() {
   const bodyY = centreY + TILE * 0.06 * popScale;
 
   ctx.save();
+  ctx.globalAlpha = flicker;
+
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.beginPath();
+  ctx.ellipse(centreX, centreY + TILE * 0.28, TILE * 0.22, TILE * 0.08, 0, 0, Math.PI * 2);
+  ctx.fill();
 
   ctx.translate(centreX, centreY);
   ctx.rotate(tilt);
   ctx.translate(-centreX, -centreY);
 
-  ctx.shadowColor = "rgba(249,115,22,0.7)";
-  ctx.shadowBlur = 18;
+  ctx.shadowColor = invincible ? "rgba(251,191,36,0.75)" : "rgba(249,115,22,0.7)";
+  ctx.shadowBlur = invincible ? 22 : 18;
 
   ctx.strokeStyle = "#f97316";
   ctx.lineWidth = TILE * 0.07 * popScale;
@@ -937,8 +1059,32 @@ function drawPlayer() {
 }
 
 function drawDangerZone() {
-  ctx.fillStyle = "rgba(239,68,68,0.1)";
-  ctx.fillRect(0, (ROWS - 1) * TILE, canvas.width, TILE);
+  const lane = lanes.find(l => l.worldY === player.worldY);
+  if (!lane || lane.type !== "road") return;
+
+  const row = getScreenRow(player.worldY);
+  const y = rowY(row);
+  ctx.fillStyle = "rgba(239,68,68,0.08)";
+  ctx.fillRect(0, y, canvas.width, TILE);
+}
+
+function drawHopParticles() {
+  hopParticles.forEach(p => {
+    ctx.fillStyle = `rgba(249,115,22,${p.life * 0.7})`;
+    ctx.fillRect(p.x, p.y, p.size, p.size);
+  });
+}
+
+function drawFloaters() {
+  floaters.forEach(f => {
+    ctx.save();
+    ctx.globalAlpha = f.life;
+    ctx.fillStyle = f.color;
+    ctx.font = `600 ${14 + (1 - f.life) * 4}px "Space Grotesk", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(f.text, f.x, f.y - (1 - f.life) * 22);
+    ctx.restore();
+  });
 }
 
 function drawDeathFlash() {
@@ -958,7 +1104,9 @@ function draw() {
   drawBackground();
   drawDangerZone();
   drawCars();
+  drawHopParticles();
   drawPlayer();
+  drawFloaters();
   drawDeathFlash();
 
   ctx.restore();
@@ -968,17 +1116,22 @@ function togglePause() {
   if (!gameRunning || deathFreeze) return;
   paused = !paused;
   if (paused) {
+    inputBuffer = null;
     overlayTitle.textContent = "Paused";
     overlayText.textContent = "Press P to resume";
     overlay.classList.remove("hidden");
   } else {
     overlay.classList.add("hidden");
+    lastFrame = performance.now();
     gameLoop();
   }
 }
 
-function gameLoop() {
+function gameLoop(now = performance.now()) {
   if (!gameRunning) return;
+
+  const dt = Math.min(32, now - lastFrame || 16.67);
+  lastFrame = now;
 
   if (paused) {
     draw();
@@ -986,25 +1139,46 @@ function gameLoop() {
     return;
   }
 
+  displayX += (player.x - displayX) * Math.min(1, dt * 0.018);
+  if (Math.abs(displayX - player.x) < 0.01) displayX = player.x;
+
+  laneOffset += (0 - laneOffset) * Math.min(1, dt * 0.014);
+
   if (playerPop > 0) {
-    playerPop *= 0.72;
-    if (playerPop < 0.05) playerPop = 0;
+    playerPop *= Math.pow(0.68, dt / 16.67);
+    if (playerPop < 0.04) playerPop = 0;
   }
 
   if (deathFlash > 0) {
-    deathFlash *= 0.7;
+    deathFlash *= Math.pow(0.7, dt / 16.67);
     if (deathFlash < 0.03) deathFlash = 0;
   }
 
   if (screenShake > 0) {
-    screenShake *= 0.82;
-    if (screenShake < 0.4) screenShake = 0;
+    screenShake *= Math.pow(0.82, dt / 16.67);
+    if (screenShake < 0.35) screenShake = 0;
   }
 
+  hopParticles = hopParticles.filter(p => {
+    p.x += p.vx * (dt / 16.67);
+    p.y += p.vy * (dt / 16.67);
+    p.vy += 0.12 * (dt / 16.67);
+    p.life -= 0.04 * (dt / 16.67);
+    return p.life > 0;
+  });
+
+  floaters = floaters.filter(f => {
+    f.life -= 0.028 * (dt / 16.67);
+    return f.life > 0;
+  });
+
+  canvas.classList.toggle("invincible", performance.now() < invincibleUntil);
+
   if (!deathFreeze) {
-    updateCars();
+    updateCars(dt);
     checkCollision();
     checkNearMiss();
+    tryBufferedMove();
   }
 
   draw();
@@ -1012,6 +1186,8 @@ function gameLoop() {
 }
 
 document.addEventListener("keydown", event => {
+  if (typeof DeskArcadeLeaderboard !== "undefined" && DeskArcadeLeaderboard.isModalOpen()) return;
+
   if (event.key === "p" || event.key === "P" || event.key === "Escape") {
     if (gameRunning && !deathFreeze) {
       event.preventDefault();
@@ -1020,26 +1196,28 @@ document.addEventListener("keydown", event => {
     }
   }
 
-  if (paused) return;
+  if (paused || !gameRunning || deathFreeze) return;
 
   if (["ArrowUp", "w", "W"].includes(event.key)) {
     event.preventDefault();
-    attemptMove(0, -1);
+    if (event.repeat) return;
+    queueMove(0, -1);
   }
 
   if (["ArrowDown", "s", "S"].includes(event.key)) {
     event.preventDefault();
-    attemptMove(0, 1);
+    if (event.repeat) return;
+    queueMove(0, 1);
   }
 
   if (["ArrowLeft", "a", "A"].includes(event.key)) {
     event.preventDefault();
-    attemptMove(-1, 0);
+    queueMove(-1, 0);
   }
 
   if (["ArrowRight", "d", "D"].includes(event.key)) {
     event.preventDefault();
-    attemptMove(1, 0);
+    queueMove(1, 0);
   }
 });
 
@@ -1051,6 +1229,8 @@ player = {
   x:Math.floor(COLS / 2),
   worldY:0
 };
+displayX = player.x;
+lastFrame = performance.now();
 
 buildStartingWorld();
 draw();
