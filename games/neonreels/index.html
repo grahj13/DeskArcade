@@ -995,21 +995,28 @@ function renderReels(winCells = []) {
       setSymCell(cell, grid[r][c], win);
     }
   }
-  updateReelControls();
 }
 
 function bindReelControls() {
   reelControls.querySelectorAll('.hold-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (!holdsAvailable || spinning || nudges > 0) return;
       const c = Number(btn.dataset.col);
       held[c] = !held[c];
       renderReels();
-      setMessage(holdsAvailable ? 'Hold reels, then spin again.' : '', 'hold');
+      const heldCount = held.filter(Boolean).length;
+      setMessage(
+        heldCount
+          ? `${heldCount} reel(s) held — hit SPIN`
+          : 'Hold feature — lock reels, spin again',
+        'hold'
+      );
       updateUI();
     });
   });
   reelControls.querySelectorAll('.nudge-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (nudges <= 0 || spinning) return;
       nudgeCol(Number(btn.dataset.col));
     });
   });
@@ -1082,9 +1089,10 @@ function updateUI() {
   jackpotEl.textContent = `£${jackpot}`;
 
   const locked = spinning || holdsAvailable || held.some(Boolean) || nudges > 0;
-  spinBtn.disabled = spinning || balance < bet;
+  spinBtn.disabled = spinning || balance < bet || nudges > 0;
   betSelect.disabled = locked;
   maxBetBtn.disabled = locked;
+  updateReelControls();
 }
 
 function flashCabinet(kind) {
@@ -1138,7 +1146,7 @@ function animateReelColumn(col, finalCol, duration, delay) {
 
 async function spin() {
   const bet = Number(betSelect.value);
-  if (spinning || balance < bet) return;
+  if (spinning || balance < bet || nudges > 0) return;
   if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
 
   const usedHold = held.some(Boolean);
@@ -1173,7 +1181,10 @@ async function spin() {
     if (!held[2]) await animateReelColumn(2, [finalGrid[0][2], finalGrid[1][2], finalGrid[2][2]], 1500, 120);
 
     grid = finalGrid;
-    if (usedHold) held = [false, false, false];
+    if (usedHold) {
+      held = [false, false, false];
+      holdsAvailable = false;
+    }
 
     resolveResult();
     checkBust();
@@ -1222,7 +1233,6 @@ function resolveResult() {
 
   setPaylines(result.lines);
   renderReels(result.cells);
-  updateUI();
 }
 
 async function nudgeCol(col) {
@@ -1230,6 +1240,9 @@ async function nudgeCol(col) {
 
   spinning = true;
   updateUI();
+
+  paidLines.clear();
+  setPaylines(new Set());
 
   const column = [grid[0][col], grid[1][col], grid[2][col]];
   column.unshift(column.pop());
