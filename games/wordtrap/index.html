@@ -272,6 +272,31 @@
       line-height: 1.4;
       color: var(--text);
       text-transform: uppercase;
+      transition: transform 0.16s ease, color 0.16s ease;
+    }
+
+    .letter-slot.revealed {
+      animation: letterPop 0.22s ease;
+    }
+
+    .letter-slot.win-flash {
+      color: #34d399;
+      border-bottom-color: #34d399;
+    }
+
+    .word-meta {
+      text-align: center;
+      color: var(--text-faint);
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin: -8px 0 14px;
+    }
+
+    @keyframes letterPop {
+      0% { transform: scale(0.82); }
+      55% { transform: scale(1.12); }
+      100% { transform: scale(1); }
     }
 
     .space-slot {
@@ -619,6 +644,7 @@
         </h2>
 
         <div class="word-display" id="word-display"></div>
+        <div class="word-meta" id="word-meta"></div>
 
         <div class="message" id="message">Pick a letter to start.</div>
 
@@ -629,7 +655,7 @@
           <a class="da-back" id="return-btn" href="../../index.html">Back to Arcade</a>
         </div>
 
-        <div class="footer-note">Clickable letters. 6 wrong guesses. No hints. No mercy.</div>
+        <div class="footer-note">Keyboard or click · 6 wrong guesses · Streak builds your score</div>
 
         <div id="leaderboard"></div>
       </section>
@@ -653,18 +679,75 @@
 
     const WORD_BANKS = {
       easy: [
-        'arcade', 'server', 'cursor', 'matrix', 'packet', 'script', 'binary', 'reboot', 'browser', 'desktop',
-        'console', 'monitor', 'storage', 'scanner', 'gateway', 'network', 'keyboard', 'digital'
+        'desk', 'chair', 'mouse', 'phone', 'email', 'inbox', 'notes', 'paper', 'lunch', 'break', 'coffee', 'water',
+        'clock', 'music', 'dance', 'books', 'games', 'sport', 'apple', 'grape', 'mango', 'peach', 'lemon', 'bread',
+        'pizza', 'tacos', 'salad', 'melon', 'berry', 'toast', 'cream', 'spice', 'ocean', 'river', 'cloud', 'storm',
+        'frost', 'flame', 'tiger', 'eagle', 'wolf', 'maple', 'bloom', 'quest', 'level', 'score', 'pixel', 'laser',
+        'neon', 'robot', 'cyber', 'flash', 'power', 'magic', 'ghost', 'brick', 'block', 'words', 'quick', 'brave',
+        'crown', 'sword', 'shield', 'stone', 'wheel', 'space', 'spark', 'glow', 'blaze', 'forge', 'prism', 'vivid',
+        'north', 'south', 'east', 'west', 'pilot', 'coral', 'movie', 'light', 'dark', 'smile', 'happy', 'green',
+        'brown', 'black', 'white', 'craft', 'paint', 'photo', 'video', 'radio', 'alarm', 'badge', 'bonus', 'stage',
+        'frame', 'grace', 'trace', 'place', 'voice', 'noise', 'gate', 'lake', 'hill', 'sand', 'wind', 'rain', 'snow',
+        'star', 'moon', 'dawn', 'dusk', 'fire', 'warm', 'cool', 'fast', 'slow', 'open', 'close', 'enter', 'leave',
+        'arcade', 'runner', 'dragon', 'tunnel', 'bridge', 'window', 'garden', 'forest', 'meadow', 'sunset', 'planet',
+        'comet', 'lunar', 'solar', 'orbit', 'tennis', 'rugby', 'sprint', 'medal', 'track', 'focus', 'tasks', 'staple'
       ],
       normal: [
-        'firewall', 'debugger', 'compile', 'process', 'terminal', 'protocol', 'database', 'function', 'variable', 'software',
-        'hardware', 'download', 'password', 'interface', 'platform', 'shortcut', 'encryption', 'algorithm'
+        'puzzle', 'galaxy', 'rocket', 'office', 'laptop', 'keypad', 'meeting', 'weekend', 'holiday', 'kitchen',
+        'bedroom', 'balcony', 'canyon', 'victory', 'fiction', 'chapter', 'history', 'science', 'culture', 'journey',
+        'mission', 'gateway', 'network', 'storage', 'monitor', 'console', 'browser', 'desktop', 'digital', 'vector',
+        'matrix', 'portal', 'circuit', 'blanket', 'cabinet', 'ceiling', 'channel', 'climate', 'costume', 'curtain',
+        'default', 'deliver', 'destiny', 'dolphin', 'eastern', 'feature', 'festival', 'fortune', 'freedom', 'gesture',
+        'glacier', 'gravity', 'harmony', 'horizon', 'instinct', 'jackpot', 'justice', 'kingdom', 'loyalty', 'miracle',
+        'natural', 'octagon', 'outside', 'package', 'partner', 'passion', 'patient', 'peanuts', 'picture', 'pitcher',
+        'plastic', 'popcorn', 'rainbow', 'request', 'resolve', 'restore', 'reverse', 'royalty', 'shelter', 'silence',
+        'soldier', 'sponsor', 'stadium', 'station', 'strange', 'stretch', 'student', 'succeed', 'summary', 'support',
+        'survive', 'thunder', 'tornado', 'torrent', 'tractor', 'traffic', 'trailer', 'trainer', 'transit', 'tribute',
+        'trilogy', 'triumph', 'tropical', 'trouble', 'tuition', 'typical', 'uniform', 'unknown', 'upgrade', 'utility',
+        'village', 'vintage', 'visible', 'visitor', 'volcano', 'welfare', 'western', 'whisper', 'wildlife', 'windows',
+        'witness', 'workshop', 'writing', 'battery', 'captain', 'century', 'chicken', 'classic', 'comfort', 'company',
+        'concert', 'contest', 'cooking', 'courage', 'cricket', 'crystal', 'curious', 'diamond', 'distant',
+        'drawing', 'elegant', 'evening', 'example', 'excited', 'explore', 'factory', 'fashion', 'feather', 'feeling',
+        'fifteen', 'finance', 'fishing', 'flowers', 'foreign', 'forever', 'founder', 'friendly', 'funding', 'furnace',
+        'grocery', 'habitat', 'harvest', 'helpful', 'highway', 'husband', 'imagine', 'improve', 'include', 'inspire',
+        'island', 'journey', 'justice', 'kitchen', 'laundry', 'library', 'machine', 'manager', 'mineral', 'morning',
+        'musical', 'mystery', 'natural', 'neither', 'nervous', 'nothing', 'novelty', 'observe', 'officer', 'organic'
       ],
       hard: [
-        'javascript', 'synchronise', 'transmission', 'authentication', 'configuration', 'virtualisation', 'infrastructure',
-        'cybersecurity', 'administrator', 'architecture', 'microprocessor', 'decryption', 'motherboard', 'compression'
+        'javascript', 'bookmark', 'broadcast', 'framework', 'highlight', 'inventory', 'landscape', 'notebook',
+        'timeline', 'viewport', 'workspace', 'chocolate', 'blueberry', 'pineapple', 'astronaut', 'telescope',
+        'waterfall', 'fortress', 'cathedral', 'discovery', 'navigation', 'adventure', 'champion', 'encryption',
+        'algorithm', 'interface', 'developer', 'processor', 'paragraph', 'migration', 'collision', 'direction',
+        'ecosystem', 'architect', 'animation', 'bandwidth', 'challenge', 'character', 'configure', 'copyright',
+        'dashboard', 'detective', 'dimension', 'emergency', 'executive', 'explosion', 'extension', 'furniture',
+        'geography', 'happiness', 'household', 'important', 'influence', 'inspector', 'integrity', 'interview',
+        'invention', 'librarian', 'limestone', 'machinery', 'marketing', 'mechanic', 'medieval', 'memorable',
+        'microphone', 'millennium', 'miniature', 'momentum', 'monument', 'mushroom', 'narrative', 'navigator',
+        'operation', 'orchestra', 'organizer', 'overnight', 'ownership', 'passenger', 'performer', 'permanent',
+        'physician', 'placement', 'pollution', 'portfolio', 'potential', 'practical', 'precision', 'president',
+        'primitive', 'principal', 'privilege', 'procedure', 'professor', 'programme', 'projector', 'promotion',
+        'prototype', 'provision', 'publisher', 'radiation', 'recommend', 'reference', 'regulate', 'reluctant',
+        'remainder', 'renewable', 'reporter', 'represent', 'residence', 'resources', 'response', 'restraint',
+        'retrieval', 'revolution', 'satellite', 'scientist', 'secondary', 'secretary', 'sensation', 'sensitive',
+        'situation', 'skeleton', 'snowflake', 'sociology', 'software', 'solution', 'southern', 'sparkling',
+        'specialty', 'spectacle', 'spiritual', 'spotlight', 'stability', 'statement', 'strategic', 'structure',
+        'submarine', 'substance', 'sunflower', 'supervise', 'supporter', 'surprised', 'suspicion', 'sweater',
+        'sympathy', 'symphony', 'technical', 'telephone', 'temporary', 'territory', 'testimony', 'textbook',
+        'therapist', 'thickness', 'thousand', 'threshold', 'throughout', 'tolerance', 'touchdown', 'tradition',
+        'transform', 'translate', 'transport', 'treasurer', 'treatment', 'tremendous', 'triangle', 'ultimate',
+        'umbrella', 'undertake', 'universal', 'universe', 'unusual', 'upstairs', 'vacation', 'valuable', 'variable',
+        'vegetable', 'velocity', 'vertical', 'viewpoint', 'virtually', 'visibility', 'visiting', 'vitamin',
+        'vocabulary', 'wandering', 'warehouse', 'warrior', 'weather', 'wedding', 'welcome', 'wonderful', 'woodland',
+        'workforce', 'workshop', 'worldwide', 'wireless', 'typewriter', 'backstage', 'clockwork', 'crossword',
+        'doorframe', 'earthworm', 'fireplace', 'goldfinch', 'handshake', 'headphone', 'inkstand', 'jellyfish',
+        'kilobyte', 'lamplight', 'moonlight', 'nameplate', 'outfield', 'playtime', 'quicksand', 'roadsign',
+        'seashore', 'tabletop', 'underdog', 'vineyard', 'windmill', 'yearbook', 'zebrafish'
       ]
     };
+
+    Object.keys(WORD_BANKS).forEach(key => {
+      WORD_BANKS[key] = [...new Set(WORD_BANKS[key])];
+    });
 
     const MAX_WRONG = 6;
     const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -672,6 +755,7 @@
     const gameShell = document.getElementById('game-shell');
     const trapPanel = document.getElementById('trap-panel');
     const wordDisplay = document.getElementById('word-display');
+    const wordMeta = document.getElementById('word-meta');
     const keyboard = document.getElementById('keyboard');
     const message = document.getElementById('message');
     const wrongCount = document.getElementById('wrong-count');
@@ -700,18 +784,38 @@
     let score = 0;
     DeskArcadeLeaderboard.mountPanel(lbPanel, 'wordtrap', difficulty);
     let streak = 0;
+    let roundsPlayed = 0;
+    let lastRevealed = new Set();
     let bestScore = Number(localStorage.getItem('wordtrapBestScore') || 0);
     let bestStreak = Number(localStorage.getItem('wordtrapBestStreak') || 0);
+
+    function bestKey(suffix) {
+      return `wordtrapBest_${suffix}_${difficulty}`;
+    }
+
+    function loadDifficultyBests() {
+      bestScore = Number(localStorage.getItem(bestKey('score')) || 0);
+      bestStreak = Number(localStorage.getItem(bestKey('streak')) || 0);
+    }
 
     function pickWord() {
       const pool = WORD_BANKS[difficulty];
       if (usedWords.size >= pool.length) usedWords.clear();
 
-      let word;
-      do {
-        word = pool[Math.floor(Math.random() * pool.length)].toUpperCase();
-      } while (usedWords.has(word) && usedWords.size < pool.length);
+      let candidates = pool.filter(w => !usedWords.has(w.toUpperCase()));
 
+      if (roundsPlayed < 3 && difficulty === 'easy') {
+        const short = candidates.filter(w => w.length <= 5);
+        if (short.length) candidates = short;
+      }
+
+      if (!candidates.length) {
+        usedWords.clear();
+        candidates = [...pool];
+      }
+
+      const pick = candidates[Math.floor(Math.random() * candidates.length)];
+      const word = pick.toUpperCase();
       usedWords.add(word);
       return word;
     }
@@ -730,6 +834,9 @@
 
     function renderWord() {
       wordDisplay.innerHTML = '';
+      const revealAll = gameOver && wrongLetters.size >= MAX_WRONG;
+      const letterCount = selectedWord.replace(/\s/g, '').length;
+      wordMeta.textContent = `${letterCount} letters · ${getUniqueLetters().length} unique`;
 
       selectedWord.split('').forEach(char => {
         const slot = document.createElement('div');
@@ -740,10 +847,21 @@
           return;
         }
 
+        const show = guessedLetters.has(char) || revealAll;
         slot.className = 'letter-slot';
-        slot.textContent = guessedLetters.has(char) || (gameOver && wrongLetters.size >= MAX_WRONG) ? char : '';
+        if (show) {
+          slot.textContent = char;
+          if (guessedLetters.has(char) && !lastRevealed.has(char)) {
+            slot.classList.add('revealed');
+          }
+          if (gameOver && checkWin()) slot.classList.add('win-flash');
+        } else {
+          slot.textContent = '';
+        }
         wordDisplay.appendChild(slot);
       });
+
+      lastRevealed = new Set(guessedLetters);
     }
 
     function updateStats() {
@@ -801,17 +919,19 @@
         streak += 1;
         if (score > bestScore) {
           bestScore = score;
+          localStorage.setItem(bestKey('score'), String(bestScore));
           localStorage.setItem('wordtrapBestScore', String(bestScore));
         }
         if (streak > bestStreak) {
           bestStreak = streak;
+          localStorage.setItem(bestKey('streak'), String(bestStreak));
           localStorage.setItem('wordtrapBestStreak', String(bestStreak));
         }
         updateStats();
-        endKicker.textContent = 'System Clear';
+        endKicker.textContent = 'Word cracked';
         endTitle.textContent = 'You Escaped';
-        endText.textContent = `You beat the trap and banked ${roundScore} points. Streak: ${streak}. Best: ${bestScore}.`;
-        endWord.textContent = `Solved Word: ${selectedWord}`;
+        endText.textContent = `+${roundScore} points · Streak ${streak} · Total ${score} · Best ${bestScore}`;
+        endWord.textContent = selectedWord;
 
         DeskArcadeLeaderboard.trySubmit('wordtrap', score, { panel: lbPanel, boardKey: difficulty }).catch(() => {});
       } else {
@@ -820,10 +940,10 @@
         document.body.classList.remove('screen-flash');
         void document.body.offsetWidth;
         document.body.classList.add('screen-flash');
-        endKicker.textContent = 'Critical Failure';
+        endKicker.textContent = 'Out of guesses';
         endTitle.textContent = 'Trap Sprung';
-        endText.textContent = 'Too many bad guesses. The gallows finished, the lights died, and the trap closed on you.';
-        endWord.textContent = `The Word Was: ${selectedWord}`;
+        endText.textContent = `Streak reset. Score stays at ${score}.`;
+        endWord.textContent = selectedWord;
       }
     }
 
@@ -864,7 +984,8 @@
         if (checkWin()) {
           endGame(true);
         } else {
-          message.textContent = `${letter} is in the word.`;
+          const hidden = getUniqueLetters().filter(l => !guessedLetters.has(l)).length;
+          message.textContent = `${letter} hit · ${hidden} letter${hidden === 1 ? '' : 's'} left`;
           message.className = 'message';
         }
       } else {
@@ -877,7 +998,9 @@
           endGame(false);
         } else {
           const lives = MAX_WRONG - wrongLetters.size;
-          message.textContent = lives <= 2 ? `${letter} missed. The trap is nearly closed.` : `${letter} is not in the word.`;
+          message.textContent = lives <= 2
+            ? `${letter} missed · ${lives} guess${lives === 1 ? '' : 'es'} left`
+            : `${letter} not in word`;
           message.className = lives <= 2 ? 'message warning' : 'message';
         }
       }
@@ -890,13 +1013,20 @@
       });
       difficultyLabel.textContent = `${difficulty.toUpperCase()} MODE`;
       DeskArcadeLeaderboard.mountPanel(lbPanel, 'wordtrap', difficulty);
+      loadDifficultyBests();
+      streak = 0;
+      score = 0;
+      roundsPlayed = 0;
+      usedWords.clear();
       startGame();
     }
 
     function startGame() {
       selectedWord = pickWord();
+      roundsPlayed += 1;
       guessedLetters = new Set();
       wrongLetters = new Set();
+      lastRevealed = new Set();
       gameOver = false;
       hideEndOverlay();
       trapPanel.classList.remove('danger-mode');
@@ -908,8 +1038,11 @@
     }
 
     document.addEventListener('keydown', (event) => {
+      if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
+      if (gameOver || event.repeat) return;
       const letter = event.key.toUpperCase();
       if (/^[A-Z]$/.test(letter)) {
+        event.preventDefault();
         handleGuess(letter);
       }
     });
@@ -921,6 +1054,7 @@
     newGameBtn.addEventListener('click', startGame);
     overlayNewGameBtn.addEventListener('click', startGame);
 
+    loadDifficultyBests();
     startGame();
   </script>
 </body>
