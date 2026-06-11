@@ -18,7 +18,8 @@
   --cabinet-edge:#2a2038;
   --reel-bg:#06060f;
   --sym-h:76px;
-  --reel-w:108px;
+  --reel-w:112px;
+  --reel-h:calc(var(--sym-h) * 3);
   --yellow:#fbbf24;
   --blue:#38bdf8;
 }
@@ -245,20 +246,29 @@ body {
 
 .reels-frame {
   display:flex;
-  gap:8px;
+  gap:10px;
   position:relative;
   z-index:2;
+  min-width:calc(var(--reel-w) * 3 + 20px);
+  min-height:var(--reel-h);
 }
 
 .reel-column {
   width:var(--reel-w);
-  height:calc(var(--sym-h) * 3);
+  height:var(--reel-h);
+  flex:0 0 var(--reel-w);
   overflow:hidden;
   border-radius:10px;
   background:var(--reel-bg);
   border:2px solid #1e1a2a;
   box-shadow:inset 0 6px 18px rgba(0,0,0,0.8);
   position:relative;
+}
+
+.reel-window {
+  display:flex;
+  flex-direction:column;
+  height:100%;
 }
 
 .reel-column::before,
@@ -282,8 +292,9 @@ body {
   background:linear-gradient(0deg, rgba(0,0,0,0.65), transparent);
 }
 
-.reel-column.spinning .reel-strip {
-  filter:blur(1px);
+.reel-column.spinning .sym {
+  filter:blur(0.8px);
+  opacity:0.88;
 }
 
 .reel-column.stopped {
@@ -301,16 +312,14 @@ body {
   100% { transform:translateY(0); }
 }
 
-.reel-strip {
-  will-change:transform;
-}
-
 .sym {
-  height:var(--sym-h);
+  flex:1 0 var(--sym-h);
+  min-height:var(--sym-h);
   display:flex;
   align-items:center;
   justify-content:center;
   font-size:2.5rem;
+  line-height:1;
   background:
     radial-gradient(ellipse at 50% 20%, rgba(255,255,255,0.07), transparent 55%),
     linear-gradient(180deg, #12101c, #090812);
@@ -571,10 +580,45 @@ body {
         <div class="payline diag diag-1" data-line="3"></div>
         <div class="payline diag diag-2" data-line="4"></div>
       </div>
-      <div class="reels-frame" id="reelsFrame"></div>
+      <div class="reels-frame" id="reelsFrame">
+        <div class="reel-column" data-col="0">
+          <div class="reel-window">
+            <div class="sym" data-row="0"></div>
+            <div class="sym" data-row="1"></div>
+            <div class="sym" data-row="2"></div>
+          </div>
+        </div>
+        <div class="reel-column" data-col="1">
+          <div class="reel-window">
+            <div class="sym" data-row="0"></div>
+            <div class="sym" data-row="1"></div>
+            <div class="sym" data-row="2"></div>
+          </div>
+        </div>
+        <div class="reel-column" data-col="2">
+          <div class="reel-window">
+            <div class="sym" data-row="0"></div>
+            <div class="sym" data-row="1"></div>
+            <div class="sym" data-row="2"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="reel-controls" id="reelControls"></div>
+    <div class="reel-controls" id="reelControls">
+      <div class="reel-ctrl" data-col="0">
+        <button class="mini-btn hold-btn" data-col="0">HOLD</button>
+        <button class="mini-btn nudge-btn" data-col="0">NUDGE ▼</button>
+      </div>
+      <div class="reel-ctrl" data-col="1">
+        <button class="mini-btn hold-btn" data-col="1">HOLD</button>
+        <button class="mini-btn nudge-btn" data-col="1">NUDGE ▼</button>
+      </div>
+      <div class="reel-ctrl" data-col="2">
+        <button class="mini-btn hold-btn" data-col="2">HOLD</button>
+        <button class="mini-btn nudge-btn" data-col="2">NUDGE ▼</button>
+      </div>
+    </div>
 
     <div class="deck">
       <label>
@@ -618,7 +662,6 @@ body {
 const lbPanel = document.getElementById('leaderboard');
 DeskArcadeLeaderboard.mountPanel(lbPanel, 'neonreels', 'default');
 
-const SYM_H = 76;
 const JACKPOT_SEED = 50;
 const BIG_WIN_MULT = 10;
 const SPIN_COST_TO_POT = 1;
@@ -653,7 +696,6 @@ let nudges = 0;
 let lastBet = 1;
 let paidLines = new Set();
 let spinning = false;
-let reelStrips = [[], [], []];
 
 const cabinet = document.getElementById('cabinet');
 const reelsFrame = document.getElementById('reelsFrame');
@@ -689,91 +731,58 @@ function generateGrid() {
   );
 }
 
-function buildStrip(finalCol, extraSpins) {
-  const strip = [];
-  const filler = 6 + extraSpins * 4;
-  for (let i = 0; i < filler; i++) strip.push(pickSymbol());
-  strip.push(finalCol[0], finalCol[1], finalCol[2]);
-  return strip;
+function getColEl(col) {
+  return reelsFrame.querySelector(`.reel-column[data-col="${col}"]`);
 }
 
-function stripOffset(strip) {
-  return (strip.length - 3) * SYM_H;
+function setSymCell(cell, sym, win = false) {
+  cell.className = 'sym';
+  if (sym.jackpot) cell.classList.add('jackpot');
+  if (win) cell.classList.add('win');
+  cell.textContent = sym.icon;
 }
 
-function mountReels(winCells = []) {
-  reelsFrame.innerHTML = '';
-  reelControls.innerHTML = '';
+function updateReelControls() {
+  reelControls.querySelectorAll('.hold-btn').forEach(btn => {
+    const c = Number(btn.dataset.col);
+    const on = held[c];
+    btn.textContent = on ? 'HELD' : 'HOLD';
+    btn.classList.toggle('hold-on', on);
+    btn.disabled = !holdsAvailable || nudges > 0 || spinning;
+  });
+  reelControls.querySelectorAll('.nudge-btn').forEach(btn => {
+    btn.disabled = nudges <= 0 || spinning;
+  });
+}
 
+function renderReels(winCells = []) {
   for (let c = 0; c < 3; c++) {
-    const col = document.createElement('div');
-    col.className = 'reel-column';
-    col.dataset.col = c;
-    if (held[c]) col.classList.add('held');
-
-    const stripEl = document.createElement('div');
-    stripEl.className = 'reel-strip';
-
-    const strip = reelStrips[c].length ? reelStrips[c] : [...grid[0][c], ...grid[1][c], ...grid[2][c]].flat();
-    const symbols = reelStrips[c].length
-      ? reelStrips[c]
-      : [grid[0][c], grid[1][c], grid[2][c]];
-
-    if (reelStrips[c].length) {
-      const visStart = symbols.length - 3;
-      symbols.forEach((sym, i) => {
-        const cell = document.createElement('div');
-        cell.className = 'sym';
-        if (sym.jackpot) cell.classList.add('jackpot');
-        const row = i - visStart;
-        if (row >= 0 && row < 3 && winCells.some(([rr, cc]) => rr === row && cc === c)) {
-          cell.classList.add('win');
-        }
-        cell.textContent = sym.icon;
-        stripEl.appendChild(cell);
-      });
-      stripEl.style.transform = symbols.length > 3
-        ? `translateY(-${stripOffset(symbols)}px)`
-        : 'translateY(0)';
-    } else {
-      [0, 1, 2].forEach(r => {
-        const sym = grid[r][c];
-        const cell = document.createElement('div');
-        cell.className = 'sym';
-        if (sym.jackpot) cell.classList.add('jackpot');
-        if (winCells.some(([rr, cc]) => rr === r && cc === c)) cell.classList.add('win');
-        cell.textContent = sym.icon;
-        stripEl.appendChild(cell);
-      });
+    const colEl = getColEl(c);
+    colEl.classList.toggle('held', held[c]);
+    for (let r = 0; r < 3; r++) {
+      const cell = colEl.querySelector(`.sym[data-row="${r}"]`);
+      const win = winCells.some(([rr, cc]) => rr === r && cc === c);
+      setSymCell(cell, grid[r][c], win);
     }
+  }
+  updateReelControls();
+}
 
-    col.appendChild(stripEl);
-    reelsFrame.appendChild(col);
-
-    const ctrl = document.createElement('div');
-    ctrl.className = 'reel-ctrl';
-
-    const holdBtn = document.createElement('button');
-    holdBtn.className = 'mini-btn' + (held[c] ? ' hold-on' : '');
-    holdBtn.textContent = held[c] ? 'HELD' : 'HOLD';
-    holdBtn.disabled = !holdsAvailable || nudges > 0 || spinning;
-    holdBtn.onclick = () => {
+function bindReelControls() {
+  reelControls.querySelectorAll('.hold-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const c = Number(btn.dataset.col);
       held[c] = !held[c];
-      mountReels();
+      renderReels();
       setMessage(holdsAvailable ? 'Hold reels, then spin again.' : '', 'hold');
       updateUI();
-    };
-
-    const nudgeBtn = document.createElement('button');
-    nudgeBtn.className = 'mini-btn';
-    nudgeBtn.textContent = 'NUDGE ▼';
-    nudgeBtn.disabled = nudges <= 0 || spinning;
-    nudgeBtn.onclick = () => nudgeCol(c);
-
-    ctrl.appendChild(holdBtn);
-    ctrl.appendChild(nudgeBtn);
-    reelControls.appendChild(ctrl);
-  }
+    });
+  });
+  reelControls.querySelectorAll('.nudge-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      nudgeCol(Number(btn.dataset.col));
+    });
+  });
 }
 
 function setMessage(text, cls = '') {
@@ -855,40 +864,27 @@ function flashCabinet(kind) {
   setTimeout(() => cabinet.classList.remove('win-flash', 'jackpot-flash'), 1200);
 }
 
-function animateReel(col, finalCol, duration, delay) {
+function animateReelColumn(col, finalCol, duration, delay) {
   return new Promise(resolve => {
     setTimeout(() => {
-      const colEl = reelsFrame.children[col];
-      const stripEl = colEl.querySelector('.reel-strip');
-      const strip = buildStrip(finalCol, 2 + col);
-      reelStrips[col] = strip;
-
-      stripEl.innerHTML = '';
-      strip.forEach(sym => {
-        const cell = document.createElement('div');
-        cell.className = 'sym';
-        if (sym.jackpot) cell.classList.add('jackpot');
-        cell.textContent = sym.icon;
-        stripEl.appendChild(cell);
-      });
-
+      const colEl = getColEl(col);
+      const cells = [0, 1, 2].map(r => colEl.querySelector(`.sym[data-row="${r}"]`));
+      const start = performance.now();
       colEl.classList.add('spinning');
-      stripEl.style.transition = 'none';
-      stripEl.style.transform = 'translateY(0)';
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          stripEl.style.transition = `transform ${duration}ms cubic-bezier(0.15, 0.85, 0.2, 1)`;
-          stripEl.style.transform = `translateY(-${stripOffset(strip)}px)`;
-        });
-      });
-
-      setTimeout(() => {
-        colEl.classList.remove('spinning');
-        colEl.classList.add('stopped');
-        setTimeout(() => colEl.classList.remove('stopped'), 280);
-        resolve();
-      }, duration + 40);
+      const timer = setInterval(() => {
+        const elapsed = performance.now() - start;
+        if (elapsed >= duration - 70) {
+          clearInterval(timer);
+          cells.forEach((cell, r) => setSymCell(cell, finalCol[r]));
+          colEl.classList.remove('spinning');
+          colEl.classList.add('stopped');
+          setTimeout(() => colEl.classList.remove('stopped'), 280);
+          resolve();
+          return;
+        }
+        cells.forEach(cell => setSymCell(cell, pickSymbol()));
+      }, 65);
     }, delay);
   });
 }
@@ -921,28 +917,23 @@ async function spin() {
     }
   }
 
-  reelStrips = [[], [], []];
-
-  for (let c = 0; c < 3; c++) {
-    if (held[c]) {
-      reelStrips[c] = [finalGrid[0][c], finalGrid[1][c], finalGrid[2][c]];
-    }
-  }
-
-  mountReels();
+  renderReels();
   updateUI();
 
-  if (!held[0]) await animateReel(0, [finalGrid[0][0], finalGrid[1][0], finalGrid[2][0]], 1100, 0);
-  if (!held[1]) await animateReel(1, [finalGrid[0][1], finalGrid[1][1], finalGrid[2][1]], 1300, held[0] ? 0 : 120);
-  if (!held[2]) await animateReel(2, [finalGrid[0][2], finalGrid[1][2], finalGrid[2][2]], 1500, 120);
+  try {
+    if (!held[0]) await animateReelColumn(0, [finalGrid[0][0], finalGrid[1][0], finalGrid[2][0]], 1100, 0);
+    if (!held[1]) await animateReelColumn(1, [finalGrid[0][1], finalGrid[1][1], finalGrid[2][1]], 1300, held[0] ? 0 : 120);
+    if (!held[2]) await animateReelColumn(2, [finalGrid[0][2], finalGrid[1][2], finalGrid[2][2]], 1500, 120);
 
-  grid = finalGrid;
-  spinning = false;
+    grid = finalGrid;
+    if (usedHold) held = [false, false, false];
 
-  if (usedHold) held = [false, false, false];
-
-  resolveResult();
-  checkBust();
+    resolveResult();
+    checkBust();
+  } finally {
+    spinning = false;
+    updateUI();
+  }
 }
 
 function resolveResult() {
@@ -982,7 +973,7 @@ function resolveResult() {
   }
 
   setPaylines(result.lines);
-  mountReels(result.cells);
+  renderReels(result.cells);
   updateUI();
 }
 
@@ -996,9 +987,7 @@ function nudgeCol(col) {
   grid[2][col] = column[2];
   nudges--;
 
-  reelStrips[col] = column;
-
-  const colEl = reelsFrame.children[col];
+  const colEl = getColEl(col);
   colEl.classList.add('stopped');
   setTimeout(() => colEl.classList.remove('stopped'), 280);
 
@@ -1026,7 +1015,7 @@ function nudgeCol(col) {
   }
 
   setPaylines(result.lines);
-  mountReels(result.cells);
+  renderReels(result.cells);
   updateUI();
   checkBust();
 }
@@ -1049,12 +1038,11 @@ function fullReset(msg) {
   nudges = 0;
   paidLines.clear();
   spinning = false;
-  reelStrips = [[], [], []];
   grid = generateGrid();
   setPaylines(new Set());
   lastWinEl.textContent = '£0';
   setMessage(msg || 'Insert stake. Hit SPIN.');
-  mountReels();
+  renderReels();
   updateUI();
   bustOverlay.classList.remove('open');
 }
@@ -1083,8 +1071,9 @@ document.addEventListener('keydown', e => {
   }
 });
 
+bindReelControls();
 grid = generateGrid();
-mountReels();
+renderReels();
 updateUI();
 </script>
 </body>
