@@ -17,8 +17,8 @@
   --cabinet:#14101f;
   --cabinet-edge:#2a2038;
   --reel-bg:#06060f;
-  --sym-h:76px;
-  --reel-w:112px;
+  --sym-h:92px;
+  --reel-w:132px;
   --reel-h:calc(var(--sym-h) * 3);
   --yellow:#fbbf24;
   --blue:#38bdf8;
@@ -90,6 +90,28 @@ body {
 
 .cabinet.jackpot-flash {
   animation:jackpotFlash 1.2s ease;
+}
+
+.cabinet.nudge-mode {
+  box-shadow:
+    0 24px 60px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    inset 0 -8px 24px rgba(0,0,0,0.45),
+    0 0 42px rgba(251,191,36,0.22);
+}
+
+.cabinet.nudge-mode::before {
+  border-color:rgba(251,191,36,0.35);
+  animation:nudgeBorderPulse 1.2s ease-in-out infinite alternate;
+}
+
+.cabinet.hold-mode::before {
+  border-color:rgba(56,189,248,0.35);
+}
+
+@keyframes nudgeBorderPulse {
+  from { box-shadow:inset 0 0 0 0 rgba(251,191,36,0); }
+  to { box-shadow:inset 0 0 28px rgba(251,191,36,0.12); }
 }
 
 @keyframes cabinetWin {
@@ -181,7 +203,11 @@ body {
 .message-bar.big { color:var(--yellow); text-shadow:0 0 12px rgba(251,191,36,0.35); }
 .message-bar.jackpot { color:var(--yellow); font-size:1.1rem; animation:messagePulse 0.7s ease-in-out infinite alternate; }
 .message-bar.hold { color:var(--blue); }
-.message-bar.nudge { color:var(--yellow); }
+.message-bar.nudge {
+  color:var(--yellow);
+  text-shadow:0 0 14px rgba(251,191,36,0.45);
+  animation:messagePulse 0.7s ease-in-out infinite alternate;
+}
 
 @keyframes messagePulse {
   from { transform:scale(1); }
@@ -193,15 +219,64 @@ body {
   position:relative;
   margin:0 auto 14px;
   max-width:fit-content;
-  padding:14px 18px;
-  border-radius:14px;
+  padding:18px 22px;
+  border-radius:16px;
   background:
+    radial-gradient(ellipse at 50% 0%, rgba(236,72,153,0.12), transparent 55%),
     linear-gradient(180deg, #1a1424, #08060e);
-  border:3px solid #2f2640;
+  border:3px solid #3d3254;
   box-shadow:
     inset 0 4px 24px rgba(0,0,0,0.75),
-    inset 0 0 0 1px rgba(255,255,255,0.04),
-    0 0 24px rgba(236,72,153,0.08);
+    inset 0 0 0 1px rgba(255,255,255,0.06),
+    0 0 32px rgba(236,72,153,0.14),
+    0 0 0 1px rgba(236,72,153,0.2);
+}
+
+.machine-window::before {
+  content:"";
+  position:absolute;
+  inset:10px;
+  border-radius:12px;
+  border:1px solid rgba(236,72,153,0.12);
+  pointer-events:none;
+  z-index:1;
+}
+
+.machine-window::after {
+  content:"";
+  position:absolute;
+  left:22px;
+  right:22px;
+  top:calc(18px + var(--sym-h) + 6px);
+  height:3px;
+  background:linear-gradient(90deg, transparent, rgba(236,72,153,0.55), transparent);
+  box-shadow:0 0 12px rgba(236,72,153,0.35);
+  pointer-events:none;
+  z-index:5;
+  opacity:0.65;
+}
+
+.flare-layer {
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:6;
+  overflow:hidden;
+  border-radius:16px;
+}
+
+.flare-burst {
+  position:absolute;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:radial-gradient(circle, #fff 0%, var(--accent-2) 35%, transparent 70%);
+  animation:flareBurst 0.85s ease-out forwards;
+}
+
+@keyframes flareBurst {
+  0% { transform:translate(0,0) scale(0.4); opacity:1; }
+  100% { transform:translate(var(--dx), var(--dy)) scale(1.6); opacity:0; }
 }
 
 .payline-layer {
@@ -232,12 +307,12 @@ body {
   transform-origin:center;
 }
 
-.payline.diag-1 { top:28%; transform:rotate(18deg); }
-.payline.diag-2 { top:62%; transform:rotate(-18deg); }
+.payline.diag-1 { top:calc(var(--sym-h) * 1.1); transform:rotate(20deg); }
+.payline.diag-2 { top:calc(var(--sym-h) * 1.9); transform:rotate(-20deg); }
 
-.payline.row-1 { top:16.5%; }
-.payline.row-2 { top:50%; transform:translateY(-50%); }
-.payline.row-3 { bottom:16.5%; }
+.payline.row-1 { top:calc(var(--sym-h) * 0.5); transform:translateY(-50%); }
+.payline.row-2 { top:calc(var(--sym-h) * 1.5); transform:translateY(-50%); }
+.payline.row-3 { top:calc(var(--sym-h) * 2.5); transform:translateY(-50%); }
 
 @keyframes paylinePulse {
   from { opacity:0.45; }
@@ -246,10 +321,10 @@ body {
 
 .reels-frame {
   display:flex;
-  gap:10px;
+  gap:12px;
   position:relative;
   z-index:2;
-  min-width:calc(var(--reel-w) * 3 + 20px);
+  min-width:calc(var(--reel-w) * 3 + 24px);
   min-height:var(--reel-h);
 }
 
@@ -258,11 +333,28 @@ body {
   height:var(--reel-h);
   flex:0 0 var(--reel-w);
   overflow:hidden;
-  border-radius:10px;
-  background:var(--reel-bg);
-  border:2px solid #1e1a2a;
-  box-shadow:inset 0 6px 18px rgba(0,0,0,0.8);
+  border-radius:12px;
+  background:
+    linear-gradient(180deg, #0a0814 0%, var(--reel-bg) 12%, var(--reel-bg) 88%, #0a0814 100%);
+  border:2px solid #2a2440;
+  box-shadow:
+    inset 0 8px 22px rgba(0,0,0,0.85),
+    0 0 0 1px rgba(255,255,255,0.04);
   position:relative;
+  transition:border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reel-column.nudge-ready {
+  border-color:rgba(251,191,36,0.55);
+  box-shadow:
+    inset 0 8px 22px rgba(0,0,0,0.85),
+    0 0 18px rgba(251,191,36,0.28);
+  animation:reelNudgePulse 1.1s ease-in-out infinite alternate;
+}
+
+@keyframes reelNudgePulse {
+  from { box-shadow:inset 0 8px 22px rgba(0,0,0,0.85), 0 0 10px rgba(251,191,36,0.2); }
+  to { box-shadow:inset 0 8px 22px rgba(0,0,0,0.85), 0 0 22px rgba(251,191,36,0.45); }
 }
 
 .reel-window {
@@ -277,7 +369,7 @@ body {
   position:absolute;
   left:0;
   right:0;
-  height:22%;
+  height:14%;
   z-index:3;
   pointer-events:none;
 }
@@ -292,9 +384,19 @@ body {
   background:linear-gradient(0deg, rgba(0,0,0,0.65), transparent);
 }
 
-.reel-column.spinning .sym {
+.reel-column.spinning .sym-icon {
   filter:blur(0.8px);
   opacity:0.88;
+}
+
+.reel-column.nudging .reel-window {
+  animation:nudgeSlide 0.42s cubic-bezier(0.22, 0.85, 0.28, 1);
+}
+
+@keyframes nudgeSlide {
+  0% { transform:translateY(0); }
+  45% { transform:translateY(calc(var(--sym-h) * 0.55)); filter:blur(1px); }
+  100% { transform:translateY(0); }
 }
 
 .reel-column.stopped {
@@ -313,28 +415,37 @@ body {
 }
 
 .sym {
-  flex:1 0 var(--sym-h);
-  min-height:var(--sym-h);
+  flex:0 0 var(--sym-h);
+  height:var(--sym-h);
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:2.5rem;
-  line-height:1;
   background:
-    radial-gradient(ellipse at 50% 20%, rgba(255,255,255,0.07), transparent 55%),
-    linear-gradient(180deg, #12101c, #090812);
-  border-bottom:1px solid rgba(255,255,255,0.04);
+    radial-gradient(ellipse at 50% 18%, rgba(255,255,255,0.09), transparent 58%),
+    linear-gradient(180deg, #14101e, #090812);
+  border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+.sym-icon {
+  font-size:3.1rem;
+  line-height:1;
+  display:block;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,0.45));
+  transform:translateZ(0);
 }
 
 .sym.win {
   background:
     radial-gradient(ellipse at 50% 30%, rgba(236,72,153,0.25), transparent 60%),
     linear-gradient(180deg, #1a1220, #100c16);
+}
+
+.sym.win .sym-icon {
   animation:symWin 0.65s ease-in-out infinite alternate;
 }
 
-.sym.jackpot {
-  text-shadow:0 0 14px rgba(251,191,36,0.55);
+.sym.jackpot .sym-icon {
+  filter:drop-shadow(0 0 12px rgba(251,191,36,0.65)) drop-shadow(0 4px 8px rgba(0,0,0,0.45));
 }
 
 @keyframes symWin {
@@ -382,10 +493,53 @@ body {
   cursor:not-allowed;
 }
 
+.mini-btn.hold-ready:not(:disabled) {
+  border-color:rgba(56,189,248,0.45);
+  color:var(--blue);
+  animation:holdBtnPulse 1.1s ease-in-out infinite alternate;
+}
+
 .mini-btn.hold-on {
   border-color:rgba(56,189,248,0.55);
   color:var(--blue);
   box-shadow:0 0 10px rgba(56,189,248,0.25);
+}
+
+.mini-btn.nudge-ready:not(:disabled) {
+  border-color:rgba(251,191,36,0.7);
+  color:var(--yellow);
+  background:linear-gradient(180deg, rgba(251,191,36,0.18), rgba(10,10,20,0.9));
+  box-shadow:
+    0 0 14px rgba(251,191,36,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+  animation:nudgeBtnPulse 0.85s ease-in-out infinite alternate;
+}
+
+.mini-btn.nudge-ready:not(:disabled):hover {
+  filter:brightness(1.12);
+  transform:translateY(-1px);
+}
+
+@keyframes holdBtnPulse {
+  from { box-shadow:0 0 6px rgba(56,189,248,0.2); }
+  to { box-shadow:0 0 16px rgba(56,189,248,0.4); }
+}
+
+@keyframes nudgeBtnPulse {
+  from { box-shadow:0 0 10px rgba(251,191,36,0.25), inset 0 1px 0 rgba(255,255,255,0.1); }
+  to { box-shadow:0 0 22px rgba(251,191,36,0.55), inset 0 1px 0 rgba(255,255,255,0.18); }
+}
+
+.nudges-live {
+  animation:nudgesPop 0.55s ease;
+  color:var(--yellow) !important;
+  text-shadow:0 0 12px rgba(251,191,36,0.5);
+}
+
+@keyframes nudgesPop {
+  0% { transform:scale(1); }
+  40% { transform:scale(1.35); }
+  100% { transform:scale(1); }
 }
 
 /* ---- Control deck ---- */
@@ -531,9 +685,9 @@ body {
 }
 
 @media (max-width:700px) {
-  :root { --sym-h:62px; --reel-w:88px; }
+  :root { --sym-h:78px; --reel-w:108px; }
   .led-panel { grid-template-columns:repeat(2, 1fr); }
-  .sym { font-size:2rem; }
+  .sym-icon { font-size:2.5rem; }
 }
 </style>
 </head>
@@ -580,6 +734,7 @@ body {
         <div class="payline diag diag-1" data-line="3"></div>
         <div class="payline diag diag-2" data-line="4"></div>
       </div>
+      <div class="flare-layer" id="flareLayer"></div>
       <div class="reels-frame" id="reelsFrame">
         <div class="reel-column" data-col="0">
           <div class="reel-window">
@@ -646,7 +801,7 @@ body {
   </section>
 
   <div id="leaderboard"></div>
-  <div class="footer">Created by JGDev · Space = spin</div>
+  <div class="footer">Created by JGDev · Space = spin · 1/2/3 = nudge reel</div>
 </div>
 
 <div class="bust-overlay" id="bustOverlay">
@@ -714,6 +869,7 @@ const maxBetBtn = document.getElementById('maxBetBtn');
 const bustOverlay = document.getElementById('bustOverlay');
 const bustText = document.getElementById('bustText');
 const bustRestart = document.getElementById('bustRestart');
+const flareLayer = document.getElementById('flareLayer');
 
 function pickSymbol() {
   const total = SYMBOLS.reduce((s, x) => s + x.weight, 0);
@@ -739,20 +895,94 @@ function setSymCell(cell, sym, win = false) {
   cell.className = 'sym';
   if (sym.jackpot) cell.classList.add('jackpot');
   if (win) cell.classList.add('win');
-  cell.textContent = sym.icon;
+  let icon = cell.querySelector('.sym-icon');
+  if (!icon) {
+    icon = document.createElement('span');
+    icon.className = 'sym-icon';
+    cell.appendChild(icon);
+  }
+  icon.textContent = sym.icon;
+}
+
+function setFeatureModes() {
+  cabinet.classList.toggle('nudge-mode', nudges > 0 && !spinning);
+  cabinet.classList.toggle('hold-mode', holdsAvailable && !spinning && nudges <= 0);
+}
+
+function pulseNudgesCounter() {
+  nudgesEl.classList.remove('nudges-live');
+  void nudgesEl.offsetWidth;
+  nudgesEl.classList.add('nudges-live');
+}
+
+function spawnNudgeSpark(col) {
+  const colEl = getColEl(col);
+  const layerRect = flareLayer.getBoundingClientRect();
+  const colRect = colEl.getBoundingClientRect();
+  const cx = colRect.left + colRect.width / 2 - layerRect.left;
+  const cy = colRect.top + colRect.height / 2 - layerRect.top;
+
+  for (let i = 0; i < 10; i++) {
+    const p = document.createElement('div');
+    p.className = 'flare-burst';
+    const angle = (Math.PI * 2 * i) / 10;
+    const dist = 24 + Math.random() * 36;
+    p.style.left = `${cx}px`;
+    p.style.top = `${cy}px`;
+    p.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+    p.style.setProperty('--dy', `${Math.sin(angle) * dist}px`);
+    p.style.background = 'radial-gradient(circle, #fde68a 0%, rgba(251,191,36,0.4) 40%, transparent 70%)';
+    flareLayer.appendChild(p);
+    setTimeout(() => p.remove(), 700);
+  }
+}
+
+function spawnWinFlare(kind = 'win') {
+  const colors = kind === 'jackpot'
+    ? ['#fbbf24', '#fde68a', '#fff']
+    : ['#ec4899', '#f472b6', '#fff'];
+  const cx = flareLayer.offsetWidth / 2;
+  const cy = flareLayer.offsetHeight / 2;
+
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'flare-burst';
+    const angle = (Math.PI * 2 * i) / 18 + Math.random() * 0.4;
+    const dist = 40 + Math.random() * 90;
+    p.style.left = `${cx}px`;
+    p.style.top = `${cy}px`;
+    p.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+    p.style.setProperty('--dy', `${Math.sin(angle) * dist}px`);
+    p.style.background = `radial-gradient(circle, ${colors[i % colors.length]} 0%, transparent 70%)`;
+    flareLayer.appendChild(p);
+    setTimeout(() => p.remove(), 900);
+  }
 }
 
 function updateReelControls() {
+  const nudgeActive = nudges > 0 && !spinning;
+  const holdActive = holdsAvailable && !spinning && nudges <= 0;
+
   reelControls.querySelectorAll('.hold-btn').forEach(btn => {
     const c = Number(btn.dataset.col);
     const on = held[c];
     btn.textContent = on ? 'HELD' : 'HOLD';
     btn.classList.toggle('hold-on', on);
-    btn.disabled = !holdsAvailable || nudges > 0 || spinning;
+    btn.classList.toggle('hold-ready', holdActive && !on);
+    btn.disabled = !holdActive || nudges > 0 || spinning;
   });
   reelControls.querySelectorAll('.nudge-btn').forEach(btn => {
-    btn.disabled = nudges <= 0 || spinning;
+    const ready = nudgeActive;
+    btn.classList.toggle('nudge-ready', ready);
+    btn.disabled = !ready;
+    btn.textContent = ready ? 'NUDGE ▼' : 'NUDGE';
   });
+  reelControls.querySelectorAll('.reel-ctrl').forEach(ctrl => {
+    const c = Number(ctrl.dataset.col);
+    const colEl = getColEl(c);
+    colEl.classList.toggle('nudge-ready', nudgeActive);
+  });
+  setFeatureModes();
 }
 
 function renderReels(winCells = []) {
@@ -861,7 +1091,24 @@ function flashCabinet(kind) {
   cabinet.classList.remove('win-flash', 'jackpot-flash');
   void cabinet.offsetWidth;
   cabinet.classList.add(kind === 'jackpot' ? 'jackpot-flash' : 'win-flash');
+  spawnWinFlare(kind);
   setTimeout(() => cabinet.classList.remove('win-flash', 'jackpot-flash'), 1200);
+}
+
+function animateNudgeColumn(col, finalCol) {
+  return new Promise(resolve => {
+    const colEl = getColEl(col);
+    colEl.classList.add('nudging');
+    setTimeout(() => {
+      finalCol.forEach((sym, r) => {
+        setSymCell(colEl.querySelector(`.sym[data-row="${r}"]`), sym);
+      });
+      colEl.classList.remove('nudging');
+      colEl.classList.add('stopped');
+      setTimeout(() => colEl.classList.remove('stopped'), 280);
+      resolve();
+    }, 420);
+  });
 }
 
 function animateReelColumn(col, finalCol, duration, delay) {
@@ -963,7 +1210,8 @@ function resolveResult() {
   } else {
     nudges = awardNudges();
     if (nudges > 0) {
-      setMessage(`Nudge feature — ${nudges} nudge(s)`, 'nudge');
+      setMessage(`Nudge feature — pick a reel (1 / 2 / 3)`, 'nudge');
+      pulseNudgesCounter();
     } else if (awardHold()) {
       holdsAvailable = true;
       setMessage('Hold feature — lock reels, spin again', 'hold');
@@ -977,8 +1225,11 @@ function resolveResult() {
   updateUI();
 }
 
-function nudgeCol(col) {
+async function nudgeCol(col) {
   if (nudges <= 0 || spinning) return;
+
+  spinning = true;
+  updateUI();
 
   const column = [grid[0][col], grid[1][col], grid[2][col]];
   column.unshift(column.pop());
@@ -986,10 +1237,11 @@ function nudgeCol(col) {
   grid[1][col] = column[1];
   grid[2][col] = column[2];
   nudges--;
+  spawnNudgeSpark(col);
 
-  const colEl = getColEl(col);
-  colEl.classList.add('stopped');
-  setTimeout(() => colEl.classList.remove('stopped'), 280);
+  await animateNudgeColumn(col, column);
+
+  spinning = false;
 
   const result = checkWins();
 
@@ -1011,7 +1263,12 @@ function nudgeCol(col) {
     held = [false, false, false];
     flashCabinet('win');
   } else {
-    setMessage(nudges > 0 ? `${nudges} nudge(s) remaining` : 'No nudges left', nudges > 0 ? 'nudge' : '');
+    if (nudges > 0) {
+      setMessage(`${nudges} nudge(s) left — pick a reel`, 'nudge');
+      pulseNudgesCounter();
+    } else {
+      setMessage('No nudges left. Spin again.');
+    }
   }
 
   setPaylines(result.lines);
@@ -1068,6 +1325,14 @@ document.addEventListener('keydown', e => {
   if (e.code === 'Space') {
     e.preventDefault();
     spin();
+    return;
+  }
+  if (nudges > 0 && !spinning) {
+    const keyMap = { Digit1: 0, Digit2: 1, Digit3: 2, Numpad1: 0, Numpad2: 1, Numpad3: 2 };
+    if (keyMap[e.code] !== undefined) {
+      e.preventDefault();
+      nudgeCol(keyMap[e.code]);
+    }
   }
 });
 
