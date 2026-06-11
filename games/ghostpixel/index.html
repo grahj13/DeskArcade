@@ -224,9 +224,88 @@
 
     .mode-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: 1fr;
       gap: 14px;
       margin-top: 20px;
+    }
+
+    .mode-grid.classic-primary {
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .mode-alt {
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .mode-alt-label {
+      margin: 0 0 10px;
+      color: var(--text-faint);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .mode-alt-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .mode-card.alt-mode {
+      min-height: auto;
+      padding: 12px 14px;
+      opacity: 0.72;
+    }
+
+    .mode-card.alt-mode::after {
+      display: none;
+    }
+
+    .mode-card.alt-mode strong {
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .mode-card.alt-mode small {
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .mode-card.alt-mode:hover {
+      opacity: 1;
+    }
+
+    .game-over-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .grid-cell-bg {
+      position: absolute;
+      pointer-events: none;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.028);
+    }
+
+    .grid-cell-bg.alt {
+      background: rgba(255, 255, 255, 0.065);
+    }
+
+    .grid-dot.target-visible {
+      background: var(--yellow);
+      box-shadow:
+        0 0 0 3px rgba(245, 158, 11, 0.35),
+        0 0 18px rgba(245, 158, 11, 0.9),
+        0 0 36px rgba(245, 158, 11, 0.45);
+      animation: targetPulse 0.52s ease-in-out infinite alternate;
     }
 
     button {
@@ -345,11 +424,6 @@
       transition: background 220ms ease, box-shadow 220ms ease, transform 120ms ease;
     }
 
-    .grid-dot.target-visible {
-      background: var(--danger);
-      box-shadow: 0 0 16px rgba(239, 68, 68, 0.85), 0 0 36px rgba(239, 68, 68, 0.45);
-      animation: dangerPulse 0.52s ease-in-out infinite alternate;
-    }
 
     .grid-dot.selected {
       transform: translate(-50%, -50%) scale(1.42);
@@ -449,9 +523,9 @@
       }
     }
 
-    @keyframes dangerPulse {
-      from { transform: translate(-50%, -50%) scale(0.96); }
-      to { transform: translate(-50%, -50%) scale(1.14); }
+    @keyframes targetPulse {
+      from { transform: translate(-50%, -50%) scale(0.92); }
+      to { transform: translate(-50%, -50%) scale(1.18); }
     }
 
     @media (max-width: 860px) {
@@ -461,7 +535,7 @@
       .stat { padding: 7px 5px; }
       .stat span { font-size: 9px; }
       .stat strong { font-size: 13px; }
-      .mode-grid { grid-template-columns: 1fr; }
+      .mode-grid, .mode-alt-grid { grid-template-columns: 1fr; }
       .mode-card { min-height: auto; }
     }
   </style>
@@ -499,25 +573,33 @@
         <section class="menu">
           <img src="ghostpixellogo.png" alt="Ghost Pixel" class="menu-logo" />
           <p class="tagline">Trust Your Memory.</p>
-          <div class="mode-grid">
+          <div class="mode-grid classic-primary">
             <button class="mode-card" onclick="startGame('classic')">
               <strong>Classic</strong>
               <small>One pixel flashes. Remember the position and click where it vanished.</small>
             </button>
-            <button class="mode-card" onclick="startGame('sequence')">
-              <strong>Sequence</strong>
-              <small>Pixels flash in order. Repeat the pattern without losing your nerve.</small>
-            </button>
-            <button class="mode-card" onclick="startGame('grid')">
-              <strong>Grid Mode</strong>
-              <small>Find the odd pixels before they blend into the grid. Then pick the right ones.</small>
-            </button>
+          </div>
+          <div class="mode-alt">
+            <p class="mode-alt-label">Other modes</p>
+            <div class="mode-alt-grid">
+              <button class="mode-card alt-mode" onclick="startGame('sequence')">
+                <strong>Sequence</strong>
+                <small>Repeat the flashing pattern in order.</small>
+              </button>
+              <button class="mode-card alt-mode" onclick="startGame('grid')">
+                <strong>Grid Mode</strong>
+                <small>Find the odd pixels, then pick them.</small>
+              </button>
+            </div>
+          </div>
+          <div id="gameOverActions" class="game-over-actions hidden">
+            <button onclick="quickRetry()">Quick Retry</button>
+            <button onclick="showMenu()">Change Mode</button>
           </div>
           <div class="top-actions">
             <button onclick="showMenu()">Reset</button>
             <button class="da-back" onclick="returnToArcade()">Back to Arcade</button>
           </div>
-          <p class="footer-note">Tip: accuracy matters. Random clicking will punish you. Focus properly.</p>
           <div id="leaderboard"></div>
         </section>
       </div>
@@ -587,17 +669,13 @@
     }
 
     const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
-    const ARM_DISTANCE = isCoarsePointer ? 8 : 60;
+    let lastMode = 'classic';
 
     function armSelectionAfterMovement() {
-      state.answerArmed = false;
-      state.armStart = null;
-      if (isCoarsePointer) {
-        state.answerArmed = true;
-        showMessage(state.mode === 'grid' ? 'TAP THE HIDDEN PIXELS' : 'TAP NOW');
-        return;
-      }
-      showMessage('MOVE MOUSE, THEN SELECT');
+      state.answerArmed = true;
+      if (state.mode === 'grid') showMessage('SELECT THE HIDDEN PIXELS');
+      else if (isCoarsePointer) showMessage('TAP NOW');
+      else showMessage('CLICK NOW');
     }
 
     function saveBest(mode, score) {
@@ -627,12 +705,20 @@
       hideMessage();
       setInputReady(true);
       overlay.classList.remove('hidden');
+      overlay.querySelector('.tagline').textContent = 'Trust Your Memory.';
+      document.getElementById('gameOverActions').classList.add('hidden');
       updateStats();
+    }
+
+    function quickRetry() {
+      if (lastMode && lastMode !== 'menu') startGame(lastMode);
     }
 
     function startGame(mode) {
       clearField();
       overlay.classList.add('hidden');
+      document.getElementById('gameOverActions').classList.add('hidden');
+      lastMode = mode;
       state.mode = mode;
       DeskArcadeLeaderboard.mountPanel(lbPanel, 'ghostpixel', state.mode);
       state.score = 0;
@@ -741,6 +827,7 @@
       menu.querySelector('.tagline').textContent =
         'Score: ' + state.score + ' · Round ' + state.round +
         (isRecord ? ' · New best!' : ' · Best: ' + best);
+      document.getElementById('gameOverActions').classList.remove('hidden');
 
       DeskArcadeLeaderboard.trySubmit('ghostpixel', state.score, { panel: lbPanel, boardKey: state.mode }).catch(() => {});
     }
@@ -845,10 +932,26 @@
       const size = Math.max(11, Math.min(rect.width / 32, rect.height / 22));
       const gapX = rect.width / (cols + 1);
       const gapY = rect.height / (rows + 1);
+      const cellW = gapX * 0.88;
+      const cellH = gapY * 0.88;
       const targetIndexes = new Set();
 
       while (targetIndexes.size < targetCount) {
         targetIndexes.add(Math.floor(Math.random() * total));
+      }
+
+      for (let r = 1; r <= rows; r++) {
+        for (let c = 1; c <= cols; c++) {
+          const x = c * gapX;
+          const y = r * gapY;
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell-bg' + ((r + c) % 2 ? ' alt' : '');
+          cell.style.left = (x - cellW / 2) + 'px';
+          cell.style.top = (y - cellH / 2) + 'px';
+          cell.style.width = cellW + 'px';
+          cell.style.height = cellH + 'px';
+          playfield.appendChild(cell);
+        }
       }
 
       let index = 0;
@@ -914,36 +1017,6 @@
         }
       });
     }
-
-    function armFromPointer(clientX, clientY) {
-      if (!state.active || state.phase !== 'answer' || state.answerArmed) return;
-      const rect = fieldRect();
-      const x = clientX - rect.left;
-      const y = clientY - rect.top;
-
-      if (!state.armStart) {
-        state.armStart = { x, y };
-        return;
-      }
-
-      const moved = Math.hypot(x - state.armStart.x, y - state.armStart.y);
-      if (moved >= ARM_DISTANCE) {
-        state.answerArmed = true;
-        showMessage(state.mode === 'grid' ? 'SELECT THE HIDDEN PIXELS' : 'SELECT NOW');
-      }
-    }
-
-    playfield.addEventListener('pointermove', (event) => {
-      armFromPointer(event.clientX, event.clientY);
-    });
-
-    playfield.addEventListener('pointerdown', (event) => {
-      if (!state.active || state.phase !== 'answer' || state.answerArmed) return;
-      if (isCoarsePointer) {
-        state.answerArmed = true;
-        showMessage(state.mode === 'grid' ? 'TAP THE HIDDEN PIXELS' : 'TAP NOW');
-      }
-    });
 
     playfield.addEventListener('click', (event) => {
       if (!state.active || !state.inputReady) return;

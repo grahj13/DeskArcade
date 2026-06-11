@@ -160,6 +160,27 @@ body{
   margin-bottom:15px;
 }
 
+.memorize-bar{
+  height:4px;
+  border-radius:var(--radius-pill);
+  background:var(--surface);
+  border:1px solid var(--border);
+  margin-bottom:15px;
+  overflow:hidden;
+  opacity:0;
+  transition:opacity 0.2s ease;
+}
+
+.memorize-bar.active{opacity:1;}
+
+.memorize-bar-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg, var(--accent), var(--accent-2));
+  border-radius:var(--radius-pill);
+  transition:width linear;
+}
+
 .digit-board{
   display:flex;
   flex-wrap:wrap;
@@ -312,6 +333,10 @@ button:disabled{opacity:0.5;cursor:default;}
 
 <div id="message" class="message">Press Start</div>
 
+<div id="memorizeBar" class="memorize-bar">
+  <div id="memorizeBarFill" class="memorize-bar-fill"></div>
+</div>
+
 <div id="digitBoard" class="digit-board"></div>
 
 <div id="answerArea" class="answer-area">
@@ -337,6 +362,9 @@ DeskArcadeLeaderboard.mountPanel(lbPanel, 'signalscan', 'default');
 let round = 1;
 let streak = 0;
 let best = Number(localStorage.getItem("signalscanBest")) || 0;
+let usedSoftFail = false;
+let autoAdvanceTimeout = null;
+let awaitingNext = false;
 
 let digits = [];
 let targets = [];
@@ -354,11 +382,17 @@ const message = document.getElementById("message");
 const historyEl = document.getElementById("history");
 const countdownEl = document.getElementById("countdown");
 const nextBtn = document.getElementById("nextBtn");
+const memorizeBar = document.getElementById("memorizeBar");
+const memorizeBarFill = document.getElementById("memorizeBarFill");
 
 // ---------- SETTINGS ----------
-function getTotal(){ return Math.min(22 + round * 3, 60); }
-function getTargets(){ return Math.min(3 + Math.floor(round * 0.8), 12); }
-function getTime(){ return round <= 5 ? 4000 : Math.max(4000 - (round * 80), 1800); }
+function getTotal(){ return Math.min(12 + (round - 1) * 3, 60); }
+function getTargets(){
+  if (round === 1) return 3;
+  return Math.min(3 + Math.floor(round * 0.8), 12);
+}
+function getMemorizeTime(){ return round === 1 ? 5000 : Math.max(3500 - (round * 60), 1800); }
+function getTime(){ return round === 1 ? 5000 : (round <= 5 ? 4000 : Math.max(4000 - (round * 80), 1800)); }
 
 // ---------- UI ----------
 function updateUI(){
@@ -445,8 +479,30 @@ function endCountdown(){
   });
 }
 
+function clearAutoAdvance(){
+  clearTimeout(autoAdvanceTimeout);
+  autoAdvanceTimeout = null;
+  awaitingNext = false;
+}
+
+function runMemorizeBar(ms){
+  memorizeBar.classList.add("active");
+  memorizeBarFill.style.transition = "none";
+  memorizeBarFill.style.width = "0%";
+  void memorizeBarFill.offsetWidth;
+  memorizeBarFill.style.transition = "width " + ms + "ms linear";
+  memorizeBarFill.style.width = "100%";
+}
+
+function hideMemorizeBar(){
+  memorizeBar.classList.remove("active");
+  memorizeBarFill.style.transition = "none";
+  memorizeBarFill.style.width = "0%";
+}
+
 // ---------- ROUND FLOW ----------
 async function nextRound(){
+  clearAutoAdvance();
   accepting = false;
   submitBtn.disabled = true;
   nextBtn.style.display = "none";
@@ -461,9 +517,16 @@ async function nextRound(){
   answerInput.value = "";
   answerInput.maxLength = answer.length;
 
-  message.textContent = "Memorise " + answer.length + " highlighted digits in order";
+  const memorizeMs = getMemorizeTime();
+  if (round === 1) {
+    message.textContent = "Warmup — memorise " + answer.length + " highlighted digits in order";
+  } else {
+    message.textContent = "Memorise " + answer.length + " highlighted digits in order";
+  }
 
-  await new Promise(r => setTimeout(r, getTime() - 2000));
+  runMemorizeBar(memorizeMs);
+  await new Promise(r => setTimeout(r, memorizeMs));
+  hideMemorizeBar();
 
   await endCountdown();
 
@@ -502,41 +565,60 @@ function submit(){
       localStorage.setItem("signalscanBest", String(best));
     }
 
-    message.textContent = "✔ Correct";
+    message.textContent = "✔ Correct — next round in 1s";
 
     DeskArcadeLeaderboard.trySubmit('signalscan', best, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
 
-  } else {
-    digitBoard.classList.add("board-wrong");
+    updateUI();
 
-    // highlight correct digits
-    targets.forEach(i => {
-      digitBoard.children[i].classList.add("wrong");
-    });
+    history.unshift("✓ " + answer);
+    history = history.slice(0,5);
+    historyEl.textContent = history.join(" | ");
 
-    streak = 0;
-    round = 1;
-
-    message.textContent = "✖ Incorrect";
+    awaitingNext = true;
+    autoAdvanceTimeout = setTimeout(() => {
+      awaitingNext = false;
+      nextRound();
+    }, 1000);
+    return;
   }
 
-  history.unshift(val === answer ? "✓ " + answer : "✗ " + val + " → " + answer);
+  digitBoard.classList.add("board-wrong");
+
+  targets.forEach(i => {
+    digitBoard.children[i].classList.add("wrong");
+  });
+
+  if (!usedSoftFail) {
+    usedSoftFail = true;
+    message.textContent = "✖ Incorrect — streak saved (one free miss)";
+  } else {
+    streak = 0;
+    message.textContent = "✖ Incorrect";
+  }
+  round = 1;
+
+  history.unshift("✗ " + val + " → " + answer);
   history = history.slice(0,5);
   historyEl.textContent = history.join(" | ");
 
   updateUI();
 
+  awaitingNext = true;
   nextBtn.style.display = "inline-block";
 }
 
 // ---------- RESET ----------
 function resetGame(){
+  clearAutoAdvance();
   round = 1;
   streak = 0;
+  usedSoftFail = false;
   history = [];
 
   digitBoard.innerHTML = "";
   answerArea.classList.remove("active");
+  hideMemorizeBar();
 
   startBtn.style.display = "inline-block";
   nextBtn.style.display = "none";
@@ -554,14 +636,40 @@ startBtn.onclick = ()=>{
 
 submitBtn.onclick = submit;
 
-nextBtn.onclick = nextRound;
+nextBtn.onclick = () => {
+  if (!awaitingNext) return;
+  clearAutoAdvance();
+  nextRound();
+};
 
 answerInput.addEventListener("input", () => {
   answerInput.value = answerInput.value.replace(/\D/g, "");
 });
 
 answerInput.addEventListener("keydown", e => {
-  if (e.key === "Enter") submit();
+  if (e.key !== "Enter") return;
+  if (accepting) submit();
+  else if (awaitingNext) {
+    if (autoAdvanceTimeout) {
+      clearAutoAdvance();
+      nextRound();
+    } else if (nextBtn.style.display !== "none") {
+      clearAutoAdvance();
+      nextRound();
+    }
+  }
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter" || document.activeElement === answerInput) return;
+  if (!awaitingNext) return;
+  if (autoAdvanceTimeout) {
+    clearAutoAdvance();
+    nextRound();
+  } else if (nextBtn.style.display !== "none") {
+    clearAutoAdvance();
+    nextRound();
+  }
 });
 
 updateUI();

@@ -245,6 +245,29 @@
         0 0 28px var(--accent-glow);
     }
 
+    .speed-banner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.92);
+      font-family: var(--font-display);
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #fbbf24;
+      text-shadow: 0 0 24px rgba(251, 191, 36, 0.45);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      z-index: 2;
+    }
+
+    .speed-banner.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
     .stat-label {
       color: var(--text-faint);
       font-size: 10px;
@@ -460,6 +483,7 @@
 
         <div class="canvas-wrap">
           <canvas id="gameCanvas" width="600" height="600" aria-label="Grid Viper Snake game board"></canvas>
+          <div class="speed-banner" id="speedBanner" aria-hidden="true">SPEED UP</div>
           <div class="overlay" id="overlay">
             <div class="overlay-box">
               <div class="overlay-title" id="overlayTitle">Grid Viper</div>
@@ -495,6 +519,14 @@
             <option value="normal" selected>Normal</option>
             <option value="hard">Hard</option>
             <option value="chaos">Chaos</option>
+          </select>
+
+          <label for="scoreTarget">Score Target</label>
+          <select id="scoreTarget">
+            <option value="0" selected>Free Play</option>
+            <option value="50">Reach 50</option>
+            <option value="100">Reach 100</option>
+            <option value="200">Reach 200</option>
           </select>
         </div>
 
@@ -536,6 +568,8 @@
     const overlayText = document.getElementById('overlayText');
     const overlayButton = document.getElementById('overlayButton');
     const difficultyEl = document.getElementById('difficulty');
+    const scoreTargetEl = document.getElementById('scoreTarget');
+    const speedBannerEl = document.getElementById('speedBanner');
     const canvasWrap = document.querySelector('.canvas-wrap');
     const levelStat = speedEl.closest('.stat');
 
@@ -571,7 +605,23 @@ const homeBtn = document.getElementById('homeBtn');
     let lastDisplayedLevel = 1;
     let runStartedAt = 0;
     let eatPopups = [];
+    let speedBannerTimer = null;
     const SOFT_OPEN_MS = 4500;
+
+    function getScoreTarget() {
+      return Number(scoreTargetEl.value) || 0;
+    }
+
+    function showSpeedBanner(level) {
+      speedBannerEl.textContent = `SPEED ${level}`;
+      speedBannerEl.classList.add('show');
+      speedBannerEl.setAttribute('aria-hidden', 'false');
+      clearTimeout(speedBannerTimer);
+      speedBannerTimer = setTimeout(() => {
+        speedBannerEl.classList.remove('show');
+        speedBannerEl.setAttribute('aria-hidden', 'true');
+      }, 900);
+    }
 
     function bestStorageKey(diff = difficultyEl.value) {
       return `gridViperBest_${diff}`;
@@ -642,6 +692,7 @@ const homeBtn = document.getElementById('homeBtn');
         lastDisplayedLevel = speedLevel;
         messageEl.textContent = `SPEED ${speedLevel}`;
         flashLevel();
+        showSpeedBanner(speedLevel);
       }
     }
 
@@ -779,6 +830,12 @@ const homeBtn = document.getElementById('homeBtn');
         food = createFood();
         increaseSpeed();
         updateBestScore();
+
+        const target = getScoreTarget();
+        if (target > 0 && score >= target) {
+          winGame(target);
+          return;
+        }
       } else {
         snake.pop();
       }
@@ -796,6 +853,20 @@ const homeBtn = document.getElementById('homeBtn');
         bestScore = score;
         saveBestScore();
       }
+    }
+
+    function winGame(target) {
+      gameOver = true;
+      running = false;
+      clearTimeout(gameLoop);
+      stopRenderLoop();
+      canvasWrap.classList.remove('running');
+      updateBestScore();
+      updateStats();
+      draw();
+      messageEl.textContent = `Target reached — ${target} points.`;
+      showOverlay('Target Hit', `You reached ${target} points. Final score: ${score}.`, 'Play Again');
+      DeskArcadeLeaderboard.trySubmit('snake', score, { panel: lbPanel, boardKey: lbBoardKey() }).catch(() => {});
     }
 
     function endGame(reason) {

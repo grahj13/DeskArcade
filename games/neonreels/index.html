@@ -360,7 +360,11 @@ body {
 .reel-window {
   display:flex;
   flex-direction:column;
-  height:100%;
+  will-change:transform;
+}
+
+.reel-window.spinning-strip {
+  height:auto;
 }
 
 .reel-column::before,
@@ -663,6 +667,48 @@ body {
 
 .bust-overlay.open { display:grid; }
 
+.session-overlay {
+  position:fixed;
+  inset:0;
+  display:none;
+  place-items:center;
+  background:rgba(4,4,10,0.82);
+  backdrop-filter:blur(6px);
+  z-index:50;
+  padding:20px;
+}
+
+.session-overlay.open { display:grid; }
+
+.session-card {
+  max-width:420px;
+  width:100%;
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:var(--surface-strong);
+  padding:28px;
+  text-align:center;
+  box-shadow:var(--shadow-2);
+}
+
+.session-card h2 {
+  margin:0 0 10px;
+  font-family:var(--font-display);
+}
+
+.session-card p {
+  color:var(--text-dim);
+  margin:0 0 8px;
+  line-height:1.5;
+}
+
+.session-stats {
+  margin:14px 0 18px;
+  font-family:var(--font-mono);
+  font-size:0.95rem;
+  color:var(--accent-text);
+}
+
 .bust-card {
   max-width:400px;
   width:100%;
@@ -786,7 +832,12 @@ body {
         </select>
       </label>
       <button class="ghost-btn" id="maxBetBtn">Max £10</button>
+      <button class="ghost-btn" id="skipNudgesBtn" hidden>Skip nudges</button>
       <button class="spin-btn" id="spinBtn">SPIN</button>
+      <span class="led-block" style="padding:6px 12px; min-width:70px;">
+        <div class="led-label">Spins</div>
+        <div class="led-value" id="spinCount" style="font-size:1rem;">0/10</div>
+      </span>
       <span class="led-block" style="padding:6px 12px; min-width:70px;">
         <div class="led-label">Nudges</div>
         <div class="led-value" id="nudges" style="font-size:1rem;">0</div>
@@ -812,6 +863,15 @@ body {
   </div>
 </div>
 
+<div class="session-overlay" id="sessionOverlay">
+  <div class="session-card">
+    <h2>Desk break complete</h2>
+    <p>10 spins finished — here’s your session.</p>
+    <div class="session-stats" id="sessionStats"></div>
+    <button class="spin-btn" id="sessionRestart">New session — £100</button>
+  </div>
+</div>
+
 <script src="../../assets/leaderboard.js?v=5"></script>
 <script>
 const lbPanel = document.getElementById('leaderboard');
@@ -820,6 +880,7 @@ DeskArcadeLeaderboard.mountPanel(lbPanel, 'neonreels', 'default');
 const JACKPOT_SEED = 50;
 const BIG_WIN_MULT = 10;
 const SPIN_COST_TO_POT = 1;
+const SESSION_SPIN_LIMIT = 10;
 
 const SYMBOLS = [
   { icon:'🍒', mult:2, weight:30, jackpot:false },
@@ -843,6 +904,9 @@ const PAYLINES = [
 
 let balance = 100;
 let peakBalance = 100;
+let biggestSingleWin = 0;
+let sessionSpins = 0;
+let sessionTotalWon = 0;
 let jackpot = JACKPOT_SEED;
 let grid = [];
 let held = [false, false, false];
@@ -861,6 +925,7 @@ const betDisplayEl = document.getElementById('betDisplay');
 const lastWinEl = document.getElementById('lastWin');
 const nudgesEl = document.getElementById('nudges');
 const jackpotEl = document.getElementById('jackpot');
+const spinCountEl = document.getElementById('spinCount');
 const messageEl = document.getElementById('message');
 const betSelect = document.getElementById('betSelect');
 const spinBtn = document.getElementById('spinBtn');
@@ -869,8 +934,63 @@ const maxBetBtn = document.getElementById('maxBetBtn');
 const bustOverlay = document.getElementById('bustOverlay');
 const bustText = document.getElementById('bustText');
 const bustRestart = document.getElementById('bustRestart');
+const skipNudgesBtn = document.getElementById('skipNudgesBtn');
+const sessionOverlay = document.getElementById('sessionOverlay');
+const sessionStats = document.getElementById('sessionStats');
+const sessionRestart = document.getElementById('sessionRestart');
 const flareLayer = document.getElementById('flareLayer');
 
+function symHeight() {
+  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sym-h'));
+}
+
+function restoreReelCells(reelWindow, finalCol) {
+  reelWindow.classList.remove('spinning-strip');
+  reelWindow.style.transition = '';
+  reelWindow.style.transform = '';
+  reelWindow.innerHTML = '';
+  for (let r = 0; r < 3; r++) {
+    const div = document.createElement('div');
+    div.className = 'sym';
+    div.dataset.row = String(r);
+    setSymCell(div, finalCol[r]);
+    reelWindow.appendChild(div);
+  }
+}
+
+function recordWin(amount) {
+  if (amount <= 0) return;
+  sessionTotalWon += amount;
+  biggestSingleWin = Math.max(biggestSingleWin, amount);
+}
+
+function forfeitNudges() {
+  if (nudges <= 0 || spinning) return;
+  nudges = 0;
+  setMessage('Nudges skipped. Spin again.');
+  updateUI();
+  maybeEndSession();
+}
+
+function showSessionSummary() {
+  if (biggestSingleWin >= 1) {
+    DeskArcadeLeaderboard.trySubmit('neonreels', biggestSingleWin, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+  }
+  sessionStats.innerHTML =
+    `Spins: ${sessionSpins}<br>` +
+    `Total won: £${sessionTotalWon}<br>` +
+    `Best single win: £${biggestSingleWin}<br>` +
+    `Final balance: £${balance}`;
+  sessionOverlay.classList.add('open');
+  spinBtn.disabled = true;
+  skipNudgesBtn.hidden = true;
+}
+
+function maybeEndSession() {
+  if (sessionSpins >= SESSION_SPIN_LIMIT && !spinning && nudges <= 0) {
+    showSessionSummary();
+  }
+}
 function pickSymbol() {
   const total = SYMBOLS.reduce((s, x) => s + x.weight, 0);
   let roll = Math.random() * total;
@@ -1087,11 +1207,14 @@ function updateUI() {
   betDisplayEl.textContent = `£${bet}`;
   nudgesEl.textContent = nudges;
   jackpotEl.textContent = `£${jackpot}`;
+  spinCountEl.textContent = `${sessionSpins}/${SESSION_SPIN_LIMIT}`;
 
   const locked = spinning || holdsAvailable || held.some(Boolean) || nudges > 0;
-  spinBtn.disabled = spinning || balance < bet || nudges > 0;
-  betSelect.disabled = locked;
-  maxBetBtn.disabled = locked;
+  const sessionDone = sessionSpins >= SESSION_SPIN_LIMIT;
+  spinBtn.disabled = spinning || balance < bet || nudges > 0 || sessionDone;
+  betSelect.disabled = locked || sessionDone;
+  maxBetBtn.disabled = locked || sessionDone;
+  skipNudgesBtn.hidden = !(nudges > 0 && !spinning);
   updateReelControls();
 }
 
@@ -1123,35 +1246,52 @@ function animateReelColumn(col, finalCol, duration, delay) {
   return new Promise(resolve => {
     setTimeout(() => {
       const colEl = getColEl(col);
-      const cells = [0, 1, 2].map(r => colEl.querySelector(`.sym[data-row="${r}"]`));
-      const start = performance.now();
-      colEl.classList.add('spinning');
+      const reelWindow = colEl.querySelector('.reel-window');
+      const h = symHeight();
+      const stripLen = 14 + Math.floor(Math.random() * 5);
+      const strip = Array.from({ length: stripLen }, () => pickSymbol()).concat(finalCol);
 
-      const timer = setInterval(() => {
-        const elapsed = performance.now() - start;
-        if (elapsed >= duration - 70) {
-          clearInterval(timer);
-          cells.forEach((cell, r) => setSymCell(cell, finalCol[r]));
-          colEl.classList.remove('spinning');
-          colEl.classList.add('stopped');
-          setTimeout(() => colEl.classList.remove('stopped'), 280);
-          resolve();
-          return;
-        }
-        cells.forEach(cell => setSymCell(cell, pickSymbol()));
-      }, 65);
+      reelWindow.classList.add('spinning-strip');
+      reelWindow.innerHTML = '';
+      strip.forEach(sym => {
+        const div = document.createElement('div');
+        div.className = 'sym';
+        setSymCell(div, sym);
+        reelWindow.appendChild(div);
+      });
+
+      colEl.classList.add('spinning');
+      reelWindow.style.transition = 'none';
+      reelWindow.style.transform = 'translateY(0)';
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const offset = (strip.length - 3) * h;
+          reelWindow.style.transition = `transform ${duration}ms cubic-bezier(0.12, 0.82, 0.22, 1)`;
+          reelWindow.style.transform = `translateY(-${offset}px)`;
+        });
+      });
+
+      setTimeout(() => {
+        restoreReelCells(reelWindow, finalCol);
+        colEl.classList.remove('spinning');
+        colEl.classList.add('stopped');
+        setTimeout(() => colEl.classList.remove('stopped'), 280);
+        resolve();
+      }, duration + 60);
     }, delay);
   });
 }
 
 async function spin() {
   const bet = Number(betSelect.value);
-  if (spinning || balance < bet || nudges > 0) return;
+  if (spinning || balance < bet || nudges > 0 || sessionSpins >= SESSION_SPIN_LIMIT) return;
   if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
 
   const usedHold = held.some(Boolean);
   spinning = true;
   balance -= bet;
+  sessionSpins++;
   jackpot += SPIN_COST_TO_POT;
   lastBet = bet;
   paidLines.clear();
@@ -1188,6 +1328,7 @@ async function spin() {
 
     resolveResult();
     checkBust();
+    maybeEndSession();
   } finally {
     spinning = false;
     updateUI();
@@ -1200,6 +1341,7 @@ function resolveResult() {
   if (result.jackpotWon) {
     const paid = result.jackpotAmount + result.total;
     balance += paid;
+    recordWin(paid);
     lastWinEl.textContent = `£${paid}`;
     setMessage(`JACKPOT! £${result.jackpotAmount}`, 'jackpot');
     jackpot = JACKPOT_SEED;
@@ -1207,6 +1349,7 @@ function resolveResult() {
     flashCabinet('jackpot');
   } else if (result.total > 0) {
     balance += result.total;
+    recordWin(result.total);
     jackpot += result.total;
     lastWinEl.textContent = `£${result.total}`;
     holdsAvailable = false;
@@ -1261,6 +1404,7 @@ async function nudgeCol(col) {
   if (result.jackpotWon) {
     const paid = result.jackpotAmount + result.total;
     balance += paid;
+    recordWin(paid);
     lastWinEl.textContent = `£${paid}`;
     setMessage(`NUDGE JACKPOT — £${result.jackpotAmount}`, 'jackpot');
     jackpot = JACKPOT_SEED;
@@ -1269,6 +1413,7 @@ async function nudgeCol(col) {
     flashCabinet('jackpot');
   } else if (result.total > 0) {
     balance += result.total;
+    recordWin(result.total);
     jackpot += result.total;
     lastWinEl.textContent = `£${result.total}`;
     setMessage(result.total >= lastBet * BIG_WIN_MULT ? `NUDGE BIG WIN £${result.total}` : `Nudge win £${result.total}`, 'win');
@@ -1288,20 +1433,24 @@ async function nudgeCol(col) {
   renderReels(result.cells);
   updateUI();
   checkBust();
+  maybeEndSession();
 }
 
 function checkBust() {
   if (balance > 0) return;
-  if (peakBalance >= 100) {
-    DeskArcadeLeaderboard.trySubmit('neonreels', peakBalance, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+  if (biggestSingleWin >= 1) {
+    DeskArcadeLeaderboard.trySubmit('neonreels', biggestSingleWin, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
   }
-  bustText.textContent = `Peak balance this session: £${peakBalance}`;
+  bustText.textContent = `Best single win this session: £${biggestSingleWin}`;
   bustOverlay.classList.add('open');
 }
 
 function fullReset(msg) {
   balance = 100;
   peakBalance = 100;
+  biggestSingleWin = 0;
+  sessionSpins = 0;
+  sessionTotalWon = 0;
   jackpot = JACKPOT_SEED;
   held = [false, false, false];
   holdsAvailable = false;
@@ -1315,16 +1464,19 @@ function fullReset(msg) {
   renderReels();
   updateUI();
   bustOverlay.classList.remove('open');
+  sessionOverlay.classList.remove('open');
 }
 
 resetBtn.addEventListener('click', () => {
-  if (peakBalance >= 100 && balance !== 100) {
-    DeskArcadeLeaderboard.trySubmit('neonreels', peakBalance, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+  if (biggestSingleWin >= 1 && balance !== 100) {
+    DeskArcadeLeaderboard.trySubmit('neonreels', biggestSingleWin, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
   }
   fullReset('Reset. Fresh £100 credits.');
 });
 
 bustRestart.addEventListener('click', () => fullReset('New session — £100 credits.'));
+sessionRestart.addEventListener('click', () => fullReset('New session — £100 credits.'));
+skipNudgesBtn.addEventListener('click', forfeitNudges);
 
 betSelect.addEventListener('change', updateUI);
 spinBtn.addEventListener('click', spin);

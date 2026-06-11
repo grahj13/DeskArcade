@@ -95,6 +95,113 @@ body{
   margin-bottom:18px;
 }
 
+.time-wrap{
+  position:relative;
+  width:180px;
+  height:180px;
+  margin:0 auto 6px;
+}
+
+.progress-ring{
+  position:absolute;
+  inset:0;
+  transform:rotate(-90deg);
+}
+
+.progress-ring circle{
+  fill:none;
+  stroke-width:6;
+}
+
+.progress-ring .ring-bg{
+  stroke:rgba(255,255,255,0.08);
+}
+
+.progress-ring .ring-fill{
+  stroke:var(--accent);
+  stroke-linecap:round;
+  stroke-dasharray:339.292;
+  stroke-dashoffset:339.292;
+  opacity:0.55;
+  transition:stroke-dashoffset 0.08s linear;
+}
+
+.time-wrap .result-time{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:0;
+}
+
+.session-bar{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  margin-bottom:12px;
+  min-height:24px;
+}
+
+.session-dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  border:1px solid var(--border-strong);
+  background:rgba(255,255,255,0.06);
+}
+
+.session-dot.done{
+  background:var(--accent);
+  border-color:var(--accent-border);
+  box-shadow:0 0 10px var(--accent-glow);
+}
+
+.session-summary{
+  margin-top:14px;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:rgba(10,10,20,0.45);
+  text-align:left;
+  font-size:0.9rem;
+  color:var(--text-dim);
+  line-height:1.55;
+}
+
+.session-summary strong{
+  color:var(--accent-text);
+  font-family:var(--font-mono);
+}
+
+.mode-toggle{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+  padding:12px 14px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--surface);
+}
+
+.mode-toggle label{
+  color:var(--text-dim);
+  font-size:0.78rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+}
+
+.mode-toggle select{
+  border:1px solid var(--border-strong);
+  background:rgba(10,10,20,0.7);
+  color:var(--text);
+  border-radius:var(--radius-sm);
+  padding:8px 10px;
+  font-family:var(--font-ui);
+}
+
 .status{
   color:var(--text-dim);
   margin-bottom:10px;
@@ -272,10 +379,26 @@ body{
 
   <section class="display-panel">
     <div class="status" id="status">Ready when you are</div>
-    <div class="result-time" id="time">10.00</div>
+    <div class="session-bar" id="sessionBar" hidden></div>
+    <div class="time-wrap">
+      <svg class="progress-ring" viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="ring-bg" cx="60" cy="60" r="54"></circle>
+        <circle class="ring-fill" id="progressRing" cx="60" cy="60" r="54"></circle>
+      </svg>
+      <div class="result-time" id="time">10.00</div>
+    </div>
     <div class="result-detail" id="detail">Target</div>
     <div class="new-best" id="newBest"></div>
+    <div class="session-summary" id="sessionSummary" hidden></div>
   </section>
+
+  <div class="mode-toggle">
+    <label for="sessionMode">Session</label>
+    <select id="sessionMode">
+      <option value="single" selected>Single attempt</option>
+      <option value="best3">Best of 3</option>
+    </select>
+  </div>
 
   <button class="main-button" id="btn">START</button>
 
@@ -306,6 +429,8 @@ const lbPanel = document.getElementById('leaderboard');
 DeskArcadeLeaderboard.mountPanel(lbPanel, 'perfect10', 'default');
 
 const STORAGE_KEY = "perfect10";
+const RING_CIRC = 339.292;
+const TARGET_SECONDS = 10;
 
 let running = false;
 let locked = false;
@@ -314,6 +439,10 @@ let bestDiff = null;
 let bestTime = null;
 let streak = 0;
 let history = [];
+let ringTimer = null;
+let sessionMode = "single";
+let sessionRound = 0;
+let sessionResults = [];
 
 function loadProgress() {
   try {
@@ -346,6 +475,15 @@ const newBest = document.getElementById("newBest");
 const bestEl = document.getElementById("best");
 const streakEl = document.getElementById("streak");
 const historyEl = document.getElementById("history");
+const sessionModeEl = document.getElementById("sessionMode");
+const sessionBarEl = document.getElementById("sessionBar");
+const sessionSummaryEl = document.getElementById("sessionSummary");
+const progressRingEl = document.getElementById("progressRing");
+
+sessionModeEl.addEventListener("change", () => {
+  if (running || locked) return;
+  resetSession();
+});
 
 btn.addEventListener("click", handleButton);
 resetBtn.addEventListener("click", resetGame);
@@ -357,8 +495,81 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+function resetSession() {
+  sessionMode = sessionModeEl.value;
+  sessionRound = 0;
+  sessionResults = [];
+  sessionSummaryEl.hidden = true;
+  sessionSummaryEl.textContent = "";
+  updateSessionBar();
+}
+
+function updateSessionBar() {
+  if (sessionMode !== "best3") {
+    sessionBarEl.hidden = true;
+    sessionBarEl.innerHTML = "";
+    return;
+  }
+
+  sessionBarEl.hidden = false;
+  sessionBarEl.innerHTML = [1, 2, 3].map(round =>
+    `<span class="session-dot${round <= sessionResults.length ? " done" : ""}" title="Round ${round}"></span>`
+  ).join("");
+}
+
+function setRingProgress(ratio) {
+  const clamped = Math.max(0, Math.min(1, ratio));
+  progressRingEl.style.strokeDashoffset = String(RING_CIRC * (1 - clamped));
+}
+
+function startRingTimer() {
+  clearInterval(ringTimer);
+  setRingProgress(0);
+  ringTimer = setInterval(() => {
+    if (!running) return;
+    const elapsed = (performance.now() - start) / 1000;
+    setRingProgress(elapsed / TARGET_SECONDS);
+  }, 50);
+}
+
+function stopRingTimer() {
+  clearInterval(ringTimer);
+  ringTimer = null;
+  setRingProgress(0);
+}
+
+function formatSessionLine(result) {
+  return `R${result.round}: ${result.time}s (${result.diff}s off)`;
+}
+
+function finishSessionSummary() {
+  const sorted = [...sessionResults].sort((a, b) => a.diff - b.diff);
+  const best = sorted[0];
+  const avgDiff = sessionResults.reduce((sum, item) => sum + item.diff, 0) / sessionResults.length;
+
+  sessionSummaryEl.hidden = false;
+  sessionSummaryEl.innerHTML =
+    `<strong>Best of 3 complete</strong><br>` +
+    sessionResults.map(formatSessionLine).join("<br>") +
+    `<br>Best round: <strong>${best.time}s</strong> (${best.diff.toFixed(2)}s off)<br>` +
+    `Average error: <strong>${avgDiff.toFixed(2)}s</strong>`;
+
+  status.textContent = "Session complete — tap START for a new set";
+  btn.textContent = "NEW SESSION";
+}
+
 function handleButton() {
   if (locked) return;
+
+  if (sessionMode === "best3" && sessionResults.length >= 3) {
+    resetSession();
+    btn.textContent = "START";
+    status.textContent = "Ready when you are";
+    detail.textContent = "Target";
+    detail.className = "result-detail";
+    timeEl.textContent = "10.00";
+    return;
+  }
 
   if (!running) {
     startGame();
@@ -370,15 +581,25 @@ function handleButton() {
 function startGame() {
   running = true;
   start = performance.now();
+  sessionMode = sessionModeEl.value;
+
+  if (sessionMode === "best3") {
+    sessionRound = sessionResults.length + 1;
+    updateSessionBar();
+    sessionSummaryEl.hidden = true;
+  }
 
   btn.textContent = "STOP";
   btn.classList.add("stop");
 
-  status.textContent = "Counting... stop when you think it's 10 seconds";
+  status.textContent = sessionMode === "best3"
+    ? `Round ${sessionRound}/3 — stop when you think it's 10 seconds`
+    : "Counting... stop when you think it's 10 seconds";
   timeEl.textContent = "···";
   timeEl.classList.add("counting");
   detail.textContent = "No peeking";
   newBest.textContent = "";
+  startRingTimer();
 }
 
 function stopGame() {
@@ -389,6 +610,7 @@ function stopGame() {
   running = false;
   locked = true;
   btn.disabled = true;
+  stopRingTimer();
 
   setTimeout(() => {
     locked = false;
@@ -459,6 +681,23 @@ function stopGame() {
 
   saveProgress();
 
+  if (sessionMode === "best3") {
+    sessionResults.push({
+      round: sessionRound,
+      time: t.toFixed(2),
+      diff
+    });
+    updateSessionBar();
+
+    if (sessionResults.length >= 3) {
+      finishSessionSummary();
+      btn.textContent = "NEW SESSION";
+    } else {
+      status.textContent = `Round ${sessionResults.length}/3 done — tap START for round ${sessionResults.length + 1}`;
+      btn.textContent = "START";
+    }
+  }
+
   DeskArcadeLeaderboard.trySubmit('perfect10', Math.round(diff * 1000), { panel: lbPanel, boardKey: 'default' }).catch(() => {});
 }
 
@@ -487,6 +726,8 @@ function resetGame() {
   streak = 0;
   history = [];
   localStorage.removeItem(STORAGE_KEY);
+  stopRingTimer();
+  resetSession();
 
   btn.disabled = false;
   btn.textContent = "START";
@@ -505,6 +746,8 @@ function resetGame() {
 }
 
 loadProgress();
+resetSession();
+setRingProgress(0);
 </script>
 
 </body>

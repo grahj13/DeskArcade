@@ -223,6 +223,38 @@
       margin-top: 12px;
     }
 
+    .session-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .session-btn {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 9px 8px;
+      background: var(--surface);
+      color: var(--text-dim);
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+    }
+
+    .session-btn:hover {
+      border-color: var(--accent-border);
+      background: var(--accent-soft);
+      transform: translateY(-1px);
+    }
+
+    .session-btn.active {
+      color: var(--text);
+      border-color: var(--accent-border);
+      background: var(--accent-soft);
+    }
+
     .difficulty-btn {
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
@@ -635,6 +667,11 @@
           <button class="difficulty-btn" data-difficulty="normal">NORMAL</button>
           <button class="difficulty-btn" data-difficulty="hard">HARD</button>
         </div>
+
+        <div class="session-row" aria-label="Session length">
+          <button class="session-btn active" data-session="quick">QUICK · 3 WORDS</button>
+          <button class="session-btn" data-session="open">OPEN SESSION</button>
+        </div>
       </section>
 
       <section class="panel">
@@ -655,7 +692,7 @@
           <a class="da-back" id="return-btn" href="../../index.html">Back to Arcade</a>
         </div>
 
-        <div class="footer-note">Keyboard or click · 6 wrong guesses · Streak builds your score</div>
+        <div class="footer-note">Keyboard or click · 6 wrong guesses · Quick mode: 3 words per run</div>
 
         <div id="leaderboard"></div>
       </section>
@@ -773,7 +810,10 @@
     const endText = document.getElementById('end-text');
     const endWord = document.getElementById('end-word');
     const difficultyButtons = Array.from(document.querySelectorAll('.difficulty-btn'));
+    const sessionButtons = Array.from(document.querySelectorAll('.session-btn'));
     const parts = Array.from({ length: 6 }, (_, i) => document.getElementById(`part-${i + 1}`));
+
+    const SESSION_QUICK_WORDS = 3;
 
     let selectedWord = '';
     let guessedLetters = new Set();
@@ -781,10 +821,12 @@
     let usedWords = new Set();
     let gameOver = false;
     let difficulty = 'easy';
+    let sessionMode = 'quick';
     let score = 0;
     DeskArcadeLeaderboard.mountPanel(lbPanel, 'wordtrap', difficulty);
     let streak = 0;
     let roundsPlayed = 0;
+    let sessionWordsPlayed = 0;
     let lastRevealed = new Set();
     let bestScore = Number(localStorage.getItem('wordtrapBestScore') || 0);
     let bestStreak = Number(localStorage.getItem('wordtrapBestStreak') || 0);
@@ -836,7 +878,9 @@
       wordDisplay.innerHTML = '';
       const revealAll = gameOver && wrongLetters.size >= MAX_WRONG;
       const letterCount = selectedWord.replace(/\s/g, '').length;
-      wordMeta.textContent = `${letterCount} letters · ${getUniqueLetters().length} unique`;
+      wordMeta.textContent = sessionMode === 'quick'
+        ? `${letterCount} letters · ${getUniqueLetters().length} unique · Word ${sessionWordsPlayed}/${SESSION_QUICK_WORDS}`
+        : `${letterCount} letters · ${getUniqueLetters().length} unique`;
 
       selectedWord.split('').forEach(char => {
         const slot = document.createElement('div');
@@ -913,6 +957,8 @@
       endOverlay.setAttribute('aria-hidden', 'false');
       endCard.className = `end-card ${won ? 'win' : 'lose'}`;
 
+      const sessionComplete = sessionMode === 'quick' && sessionWordsPlayed >= SESSION_QUICK_WORDS;
+
       if (won) {
         const roundScore = calculateWinScore();
         score += roundScore;
@@ -928,9 +974,11 @@
           localStorage.setItem('wordtrapBestStreak', String(bestStreak));
         }
         updateStats();
-        endKicker.textContent = 'Word cracked';
-        endTitle.textContent = 'You Escaped';
-        endText.textContent = `+${roundScore} points · Streak ${streak} · Total ${score} · Best ${bestScore}`;
+        endKicker.textContent = sessionComplete ? 'Session complete' : 'Word cracked';
+        endTitle.textContent = sessionComplete ? 'Quick Run Done' : 'You Escaped';
+        endText.textContent = sessionComplete
+          ? `${SESSION_QUICK_WORDS} words played · Streak ${streak} · Total ${score} · Best ${bestScore}`
+          : `+${roundScore} points · Streak ${streak} · Total ${score} · Best ${bestScore}`;
         endWord.textContent = selectedWord;
 
         DeskArcadeLeaderboard.trySubmit('wordtrap', score, { panel: lbPanel, boardKey: difficulty }).catch(() => {});
@@ -940,11 +988,15 @@
         document.body.classList.remove('screen-flash');
         void document.body.offsetWidth;
         document.body.classList.add('screen-flash');
-        endKicker.textContent = 'Out of guesses';
-        endTitle.textContent = 'Trap Sprung';
-        endText.textContent = `Streak reset. Score stays at ${score}.`;
+        endKicker.textContent = sessionComplete ? 'Session complete' : 'Out of guesses';
+        endTitle.textContent = sessionComplete ? 'Quick Run Done' : 'Trap Sprung';
+        endText.textContent = sessionComplete
+          ? `${SESSION_QUICK_WORDS} words played · Score ${score} · Streak reset`
+          : `Streak reset. Score stays at ${score}.`;
         endWord.textContent = selectedWord;
       }
+
+      overlayNewGameBtn.textContent = sessionComplete ? 'New Session' : 'Play Again';
     }
 
     function hideEndOverlay() {
@@ -1014,16 +1066,36 @@
       difficultyLabel.textContent = `${difficulty.toUpperCase()} MODE`;
       DeskArcadeLeaderboard.mountPanel(lbPanel, 'wordtrap', difficulty);
       loadDifficultyBests();
-      streak = 0;
+      usedWords.clear();
+      startGame();
+    }
+
+    function setSessionMode(nextMode) {
+      if (sessionMode === nextMode) return;
+      sessionMode = nextMode;
+      sessionButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.session === sessionMode);
+      });
+      sessionWordsPlayed = 0;
       score = 0;
+      streak = 0;
       roundsPlayed = 0;
       usedWords.clear();
       startGame();
     }
 
-    function startGame() {
+    function startGame(resetSession = false) {
+      if (resetSession) {
+        sessionWordsPlayed = 0;
+        score = 0;
+        streak = 0;
+        roundsPlayed = 0;
+        usedWords.clear();
+      }
+
       selectedWord = pickWord();
       roundsPlayed += 1;
+      sessionWordsPlayed += 1;
       guessedLetters = new Set();
       wrongLetters = new Set();
       lastRevealed = new Set();
@@ -1051,8 +1123,18 @@
       btn.addEventListener('click', () => setDifficulty(btn.dataset.difficulty));
     });
 
-    newGameBtn.addEventListener('click', startGame);
-    overlayNewGameBtn.addEventListener('click', startGame);
+    sessionButtons.forEach(btn => {
+      btn.addEventListener('click', () => setSessionMode(btn.dataset.session));
+    });
+
+    newGameBtn.addEventListener('click', () => startGame(true));
+    overlayNewGameBtn.addEventListener('click', () => {
+      if (sessionMode === 'quick' && sessionWordsPlayed >= SESSION_QUICK_WORDS) {
+        startGame(true);
+      } else {
+        startGame(false);
+      }
+    });
 
     loadDifficultyBests();
     startGame();

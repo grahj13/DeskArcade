@@ -110,6 +110,55 @@ button:hover {
   text-align:center;
   margin-bottom:6px;
   color:var(--text-dim);
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:8px 14px;
+}
+
+.word-count-btns {
+  display:inline-flex;
+  gap:4px;
+}
+
+.word-count-btns button {
+  padding:4px 10px;
+  font-size:11px;
+  box-shadow:none;
+  background:var(--surface-strong);
+  color:var(--text-dim);
+  border:1px solid var(--border);
+}
+
+.word-count-btns button.active {
+  background:linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--accent-2)));
+  color:#fff;
+  border-color:transparent;
+  box-shadow:0 4px 14px var(--accent-glow);
+}
+
+.grid-wrap {
+  position:relative;
+  height:100%;
+  min-height:0;
+}
+
+.path-overlay {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  z-index:2;
+}
+
+.path-overlay line {
+  stroke:var(--accent);
+  stroke-width:3;
+  stroke-linecap:round;
+  filter:drop-shadow(0 0 6px var(--accent-glow));
+  opacity:0.85;
 }
 
 .status-row span {
@@ -281,12 +330,20 @@ button:hover {
 
     <div class="status-row">
       Found: <span id="found">0</span>/<span id="total">0</span>
-      &nbsp;·&nbsp; <span id="timer">0:00</span>
+      &nbsp;·&nbsp; <span id="timer">—</span>
       &nbsp;·&nbsp; Best: <span id="bestTime">--</span>
+      <span class="word-count-btns">
+        <button type="button" id="wc8" class="active" onclick="setWordCount(8)">8</button>
+        <button type="button" id="wc10" onclick="setWordCount(10)">10</button>
+        <button type="button" id="wc14" onclick="setWordCount(14)">14</button>
+      </span>
     </div>
 
     <div class="main-game">
-      <div id="grid" class="grid"></div>
+      <div class="grid-wrap">
+        <svg id="pathOverlay" class="path-overlay" aria-hidden="true"></svg>
+        <div id="grid" class="grid"></div>
+      </div>
 
       <div class="word-panel">
         <ul id="words" class="word-list"></ul>
@@ -311,7 +368,12 @@ button:hover {
 </div><script src="../../assets/leaderboard.js?v=5"></script>
 <script>
 const lbPanel = document.getElementById('leaderboard');
-DeskArcadeLeaderboard.mountPanel(lbPanel, 'neonsearch', 'default');
+
+function getBoardKey(){
+  return 'w' + wordCount;
+}
+
+DeskArcadeLeaderboard.mountPanel(lbPanel, 'neonsearch', getBoardKey());
 
 const size = 12;
 
@@ -327,12 +389,14 @@ const bank = [...new Set([
   "PRISM","VIVID","VAULT","WALTZ","YACHT","ZESTY","JAZZY","OXIDE","QUART","BLINK","GRIND","SHIFT","CRISP","NORTH","SOUTH","EAST"
 ])];
 
-let grid=[], words=[], placed=[], found=[], clickFirst=null;
+let grid=[], words=[], placed=[], found=[], foundPaths=[], clickFirst=null;
 let dragStart=null, dragActive=false, dragMoved=false;
-let startTime=0, timerId=null, elapsedMs=0;
-let bestMs=Number(localStorage.getItem("neonsearchBest"))||null;
+let startTime=0, timerId=null, elapsedMs=0, timerStarted=false;
+let wordCount=8;
+let bestMs=null;
 
 const gridEl=document.getElementById("grid");
+const pathOverlayEl=document.getElementById("pathOverlay");
 const wordsEl=document.getElementById("words");
 const foundEl=document.getElementById("found");
 const totalEl=document.getElementById("total");
@@ -341,8 +405,27 @@ const bestTimeEl=document.getElementById("bestTime");
 const completeTimeEl=document.getElementById("completeTime");
 const msg=document.getElementById("message");
 const complete=document.getElementById("complete");
+const wcBtns={8:document.getElementById("wc8"),10:document.getElementById("wc10"),14:document.getElementById("wc14")};
 
-if(bestMs) bestTimeEl.textContent=formatTime(bestMs);
+function getBestKey(){
+  return "neonsearchBest_"+wordCount;
+}
+
+function loadBestForWordCount(){
+  bestMs=Number(localStorage.getItem(getBestKey()))||null;
+  bestTimeEl.textContent=bestMs?formatTime(bestMs):"--";
+}
+
+function setWordCount(n){
+  if(wordCount===n) return;
+  wordCount=n;
+  Object.entries(wcBtns).forEach(([k,btn])=>btn.classList.toggle("active",+k===n));
+  loadBestForWordCount();
+  DeskArcadeLeaderboard.mountPanel(lbPanel, 'neonsearch', getBoardKey());
+  newGame();
+}
+
+loadBestForWordCount();
 
 function formatTime(ms){
   const s=Math.floor(ms/1000), m=Math.floor(s/60), sec=s%60;
@@ -357,6 +440,8 @@ function flashMsg(text,isBad=false){
 }
 
 function startTimer(){
+  if(timerStarted) return;
+  timerStarted=true;
   if(timerId) clearInterval(timerId);
   startTime=Date.now();
   timerEl.textContent="0:00";
@@ -367,19 +452,27 @@ function startTimer(){
 
 function stopTimer(){
   if(timerId){ clearInterval(timerId); timerId=null; }
-  elapsedMs=Date.now()-startTime;
+  if(timerStarted) elapsedMs=Date.now()-startTime;
+}
+
+function resetTimerDisplay(){
+  stopTimer();
+  timerStarted=false;
+  elapsedMs=0;
+  timerEl.textContent="—";
 }
 
 newGame();
 
 function newGame(){
   complete.style.display="none";
+  resetTimerDisplay();
   let attempts=0;
 
   do{
     grid=Array.from({length:size},()=>Array(size).fill(""));
-    words=[...bank].sort(()=>Math.random()-0.5).slice(0,14);
-    placed=[]; found=[]; clickFirst=null;
+    words=[...bank].sort(()=>Math.random()-0.5).slice(0,wordCount);
+    placed=[]; found=[]; foundPaths=[]; clickFirst=null;
     dragStart=null; dragActive=false; dragMoved=false;
     words.forEach(placeWord);
     attempts++;
@@ -393,8 +486,8 @@ function newGame(){
   draw();
   drawWords();
   update();
-  flashMsg("Find all words — drag or click first & last letter");
-  startTimer();
+  msg.textContent="";
+  msg.className="message";
 }
 
 function placeWord(word){
@@ -434,6 +527,43 @@ function fill(){
   }
 }
 
+function cellCenter(r,c){
+  const cell=getCell(r,c);
+  if(!cell) return null;
+  const gridRect=gridEl.getBoundingClientRect();
+  const cellRect=cell.getBoundingClientRect();
+  return {
+    x:cellRect.left-gridRect.left+cellRect.width/2,
+    y:cellRect.top-gridRect.top+cellRect.height/2
+  };
+}
+
+function drawFoundPaths(){
+  pathOverlayEl.innerHTML="";
+  foundPaths.forEach(({cells})=>{
+    if(cells.length<2) return;
+    const start=cellCenter(cells[0][0],cells[0][1]);
+    const end=cellCenter(cells[cells.length-1][0],cells[cells.length-1][1]);
+    if(!start||!end) return;
+    const line=document.createElementNS("http://www.w3.org/2000/svg","line");
+    line.setAttribute("x1",start.x);
+    line.setAttribute("y1",start.y);
+    line.setAttribute("x2",end.x);
+    line.setAttribute("y2",end.y);
+    pathOverlayEl.appendChild(line);
+  });
+}
+
+function applyFoundStyles(){
+  found.forEach(word=>{
+    const match=placed.find(p=>p.word===word);
+    if(!match) return;
+    match.cells.forEach(([r,c])=>getCell(r,c).classList.add("found"));
+    const li=document.getElementById("w"+word);
+    if(li) li.classList.add("found");
+  });
+}
+
 function getCell(r,c){
   return gridEl.children[r*size+c];
 }
@@ -456,6 +586,8 @@ function draw(){
       gridEl.appendChild(d);
     }
   }
+  applyFoundStyles();
+  drawFoundPaths();
 }
 
 function highlightPath(path, cls="selected"){
@@ -497,21 +629,24 @@ function resolveWord(path){
   let already=found.includes(str)||found.includes(rev);
 
   if(match && word){
+    if(!timerStarted) startTimer();
     found.push(word);
+    foundPaths.push({word, cells: match.cells.slice()});
     match.cells.forEach(([r,c])=>getCell(r,c).classList.add("found"));
     document.getElementById("w"+word).classList.add("found");
+    drawFoundPaths();
     flashMsg("Found: "+word);
     update();
     if(found.length===words.length){
       stopTimer();
       if(!bestMs || elapsedMs<bestMs){
         bestMs=elapsedMs;
-        localStorage.setItem("neonsearchBest", String(bestMs));
+        localStorage.setItem(getBestKey(), String(bestMs));
         bestTimeEl.textContent=formatTime(bestMs);
       }
       completeTimeEl.textContent="Time: "+formatTime(elapsedMs)+(bestMs===elapsedMs?" — new best!":"");
       complete.style.display="flex";
-      DeskArcadeLeaderboard.trySubmit('neonsearch', elapsedMs, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+      DeskArcadeLeaderboard.trySubmit('neonsearch', elapsedMs, { panel: lbPanel, boardKey: getBoardKey() }).catch(() => {});
     }
   } else if(already){
     flashMsg("Already found that word", true);

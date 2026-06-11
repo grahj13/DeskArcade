@@ -255,7 +255,7 @@
           <h2 id="overlayTitle">System Ready</h2>
           <p id="overlayText">Press <span class="key">↑</span> to jump. Hold <span class="key">↓</span> to crouch.</p>
           <p>Cyber bugs need a jump. Firewall beams need a crouch.</p>
-          <p>Press <span class="key">Space</span> to start.</p>
+          <p>90-second desk break. Press <span class="key">Space</span> to start.</p>
           <a class="arcade-btn" href="../../index.html">Return to Arcade</a>
         </div>
       </div>
@@ -289,16 +289,26 @@
     const groundY = 332;
     const gravity = 0.9;
 
+    const WARMUP_DISTANCE = 200;
+    const COYOTE_FRAMES = 9;
+    const JUMP_BUFFER_FRAMES = 9;
+    const SESSION_CAP_SEC = 90;
+    const TELEGRAPH_LEAD = 220;
+
     let state = 'ready';
     let frame = 0;
     let distance = 0;
     let speed = 6;
     let nextSpawn = 160;
     let obstacles = [];
+    let telegraphs = [];
     let particles = [];
     let flashTimer = 0;
     let lastSpeedDisplay = '1.0x';
     let keys = { down: false };
+    let coyoteTimer = 0;
+    let jumpBufferTimer = 0;
+    let sessionStart = 0;
     let best = Number(localStorage.getItem('runExeBest') || 0);
 
     const player = {
@@ -327,10 +337,14 @@
       frame = 0;
       distance = 0;
       speed = 6;
-      nextSpawn = 170;
+      nextSpawn = 220;
       obstacles = [];
+      telegraphs = [];
       particles = [];
       keys.down = false;
+      coyoteTimer = 0;
+      jumpBufferTimer = 0;
+      sessionStart = performance.now();
       player.h = player.normalH;
       player.visualH = player.normalH;
       player.y = groundY - player.h;
@@ -343,27 +357,56 @@
       footerArcadeBtn.classList.remove('hidden');
     }
 
-    function gameOver() {
+    function endSession(title, messageHtml, submitScore = true) {
       if (state !== 'running') return;
       state = 'dead';
-      best = Math.max(best, Math.floor(distance));
+      const finalScore = Math.floor(distance);
+      best = Math.max(best, finalScore);
       localStorage.setItem('runExeBest', best);
       bestEl.textContent = formatScore(best);
-      overlayTitle.textContent = 'Process Killed';
-      overlayText.innerHTML = `System uptime reached: <span class="key">${formatScore(distance)}</span>`;
+      overlayTitle.textContent = title;
+      overlayText.innerHTML = messageHtml;
       overlay.classList.remove('hidden');
       footerArcadeBtn.classList.add('hidden');
-      burst(player.x + player.w / 2, player.y + player.h / 2, 24, '#f43f5e');
+      if (submitScore) {
+        DeskArcadeLeaderboard.trySubmit('runexe', finalScore, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+      }
+    }
 
-      DeskArcadeLeaderboard.trySubmit('runexe', Math.floor(distance), { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+    function gameOver() {
+      if (state !== 'running') return;
+      burst(player.x + player.w / 2, player.y + player.h / 2, 24, '#f43f5e');
+      endSession(
+        'Process Killed',
+        `System uptime reached: <span class="key">${formatScore(distance)}</span>`
+      );
+    }
+
+    function sessionComplete() {
+      endSession(
+        'Desk Break Complete',
+        `90-second run finished.<br>Uptime: <span class="key">${formatScore(distance)}</span><br>Press <span class="key">Space</span> to run again.`
+      );
+    }
+
+    function canJump() {
+      return (player.grounded || coyoteTimer > 0) && !player.crouching;
+    }
+
+    function doJump() {
+      player.vy = -17;
+      player.grounded = false;
+      coyoteTimer = 0;
+      jumpBufferTimer = 0;
+      burst(player.x + 8, groundY, 8, '#a3e635');
     }
 
     function jump() {
       if (state !== 'running') return;
-      if (player.grounded && !player.crouching) {
-        player.vy = -17;
-        player.grounded = false;
-        burst(player.x + 8, groundY, 8, '#a3e635');
+      if (canJump()) {
+        doJump();
+      } else if (!player.crouching) {
+        jumpBufferTimer = JUMP_BUFFER_FRAMES;
       }
     }
 
@@ -392,40 +435,69 @@
         player.y = floorY;
         player.vy = 0;
         player.grounded = true;
+        coyoteTimer = 0;
+        if (jumpBufferTimer > 0 && !player.crouching) {
+          doJump();
+        }
       } else {
+        if (player.grounded) coyoteTimer = COYOTE_FRAMES;
         player.grounded = false;
       }
+
+      if (coyoteTimer > 0) coyoteTimer--;
+      if (jumpBufferTimer > 0) jumpBufferTimer--;
     }
 
     function spawnObstacle() {
+      const inWarmup = distance < WARMUP_DISTANCE;
       const difficulty = Math.min(1, distance / 2600);
-      const highChance = 0.12 + difficulty * 0.24;
+      const highChance = inWarmup ? 0 : 0.12 + difficulty * 0.24;
       const type = Math.random() < highChance ? 'high' : 'low';
 
       if (type === 'low') {
         const size = 38 + Math.random() * 10;
-        obstacles.push({
+        const ob = {
           type: 'low',
-          variant: Math.random() < 0.35 && distance > 250 ? 'glitchBug' : 'bug',
+          variant: inWarmup ? 'bug' : (Math.random() < 0.35 && distance > 250 ? 'glitchBug' : 'bug'),
           x: W + 60,
           y: groundY - size,
           w: size,
           h: size
+        };
+        obstacles.push(ob);
+        telegraphs.push({
+          type: 'low',
+          y: ob.y,
+          w: ob.w,
+          h: ob.h,
+          lead: TELEGRAPH_LEAD
         });
       } else {
-        obstacles.push({
+        const ob = {
           type: 'high',
           variant: 'firewall',
           x: W + 60,
           y: groundY - 86,
           w: 78,
           h: 30
+        };
+        obstacles.push(ob);
+        telegraphs.push({
+          type: 'high',
+          y: ob.y,
+          w: ob.w,
+          h: ob.h,
+          lead: TELEGRAPH_LEAD
         });
       }
 
-      const minGap = Math.max(155, 225 - distance / 180);
-      const maxGap = Math.max(240, 350 - distance / 150);
-      nextSpawn = minGap + Math.random() * maxGap;
+      const minGap = inWarmup
+        ? 260 + Math.random() * 120
+        : Math.max(155, 225 - distance / 180);
+      const maxGap = inWarmup
+        ? minGap + 80
+        : Math.max(240, 350 - distance / 150);
+      nextSpawn = minGap + Math.random() * (maxGap - minGap);
     }
 
     function updateObstacles() {
@@ -433,6 +505,8 @@
       if (nextSpawn <= 0) spawnObstacle();
       obstacles.forEach(ob => ob.x -= speed);
       obstacles = obstacles.filter(ob => ob.x + ob.w > -100);
+      telegraphs.forEach(t => t.lead -= speed);
+      telegraphs = telegraphs.filter(t => t.lead > -40);
     }
 
     function playerHitbox() {
@@ -501,6 +575,10 @@
         updatePlayer();
         updateObstacles();
         checkCollisions();
+
+        if (performance.now() - sessionStart >= SESSION_CAP_SEC * 1000) {
+          sessionComplete();
+        }
 
         scoreEl.textContent = formatScore(distance);
         speedEl.textContent = currentSpeedDisplay;
@@ -682,6 +760,34 @@
       ctx.fillRect(ob.x, scanY, ob.w, 3);
     }
 
+    function drawTelegraphs() {
+      telegraphs.forEach(t => {
+        const alpha = Math.min(0.55, 0.2 + (t.lead / TELEGRAPH_LEAD) * 0.35);
+        const x = W - t.lead;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        if (t.type === 'low') {
+          ctx.strokeStyle = '#f43f5e';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([6, 6]);
+          ctx.strokeRect(x, t.y, t.w, t.h);
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(244,63,94,0.2)';
+          ctx.fillRect(x, groundY - 4, t.w, 4);
+        } else {
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(x, t.y - 8);
+          ctx.lineTo(x, t.y + t.h + 8);
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(245,158,11,0.18)';
+          ctx.fillRect(x - 3, t.y, 6, t.h);
+        }
+        ctx.restore();
+      });
+    }
+
     function drawObstacles() {
       obstacles.forEach(ob => {
         ctx.save();
@@ -718,6 +824,7 @@
       drawGrid();
       drawDifficultyOverlay();
       drawGround();
+      drawTelegraphs();
       drawObstacles();
       drawPlayer();
       drawParticles();

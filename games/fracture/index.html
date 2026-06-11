@@ -229,6 +229,34 @@ canvas {
   line-height:1.45;
 }
 
+.mode-pick {
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:14px 0 4px;
+}
+
+.mode-btn {
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--text-dim);
+  padding:8px 14px;
+  border-radius:var(--radius-pill);
+  font-family:var(--font-ui);
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:0.04em;
+  cursor:pointer;
+  transition:border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.mode-btn.active {
+  border-color:var(--accent-border);
+  background:var(--accent-soft);
+  color:var(--accent-text);
+}
+
 .controls {
   display:flex;
   justify-content:center;
@@ -297,11 +325,13 @@ canvas {
       <div id="overlay" class="overlay">
         <div class="overlay-box">
           <h2 id="overlayTitle">Fracture</h2>
-          <p id="overlayText">
-            Use the left and right arrow keys to move the paddle. Break every breakable block to clear the level.
-          </p>
+          <p id="overlayText">Arrow keys move the paddle. Break every block.</p>
+          <div class="mode-pick">
+            <button type="button" class="mode-btn active" id="modeQuick">Quick Break</button>
+            <button type="button" class="mode-btn" id="modeFull">Full Run</button>
+          </div>
           <div class="controls">
-            <button class="btn" id="startBtn">Start Game</button>
+            <button class="btn" id="startBtn">Start Quick Break</button>
             <a class="btn" href="../../index.html">Return to Arcade</a>
           </div>
         </div>
@@ -332,8 +362,14 @@ const overlay = document.getElementById("overlay");
 const overlayTitle = document.getElementById("overlayTitle");
 const overlayText = document.getElementById("overlayText");
 const startBtn = document.getElementById("startBtn");
+const modeQuickBtn = document.getElementById("modeQuick");
+const modeFullBtn = document.getElementById("modeFull");
 
 let keys = {};
+let quickBreakMode = true;
+let skipLevelModals = true;
+let awaitingLaunch = false;
+let hasPlayedOnce = false;
 let score = 0;
 let best = Number(localStorage.getItem("fractureBest")) || 0;
 let lives = 3;
@@ -385,10 +421,29 @@ const powerTypes = [
   { name:"MULTI", color:"#f43f5e" }
 ];
 
+function setGameMode(quick) {
+  quickBreakMode = quick;
+  skipLevelModals = quick;
+  modeQuickBtn.classList.toggle("active", quick);
+  modeFullBtn.classList.toggle("active", !quick);
+  if (!running && !levelReady) {
+    startBtn.textContent = quick ? "Start Quick Break" : "Start Full Run";
+  }
+}
+
+modeQuickBtn.addEventListener("click", () => setGameMode(true));
+modeFullBtn.addEventListener("click", () => setGameMode(false));
+
 document.addEventListener("keydown", e => {
   if ((e.key === "p" || e.key === "P" || e.key === "Escape") && running && !levelReady) {
     paused = !paused;
     messageEl.textContent = paused ? "Paused — press P to resume" : "";
+    return;
+  }
+
+  if (e.key === " " && running && !levelReady && awaitingLaunch) {
+    e.preventDefault();
+    launchBall();
     return;
   }
 
@@ -405,6 +460,8 @@ document.addEventListener("keyup", e => {
 
 startBtn.addEventListener("click", () => {
   if (!running && !levelReady) {
+    modeQuickBtn.disabled = true;
+    modeFullBtn.disabled = true;
     startGame();
     return;
   }
@@ -414,12 +471,17 @@ startBtn.addEventListener("click", () => {
   }
 });
 
+function getMaxLevel() {
+  return quickBreakMode ? 2 : levels.length;
+}
+
 function startGame() {
   score = 0;
   lives = 3;
   level = 1;
   running = true;
   levelReady = true;
+  awaitingLaunch = false;
   clearAllPowers();
   prepareLevel();
   showLevelIntro();
@@ -440,11 +502,13 @@ function prepareLevel() {
 }
 
 function showLevelIntro() {
+  if (skipLevelModals && level > 1) return;
+
   overlayTitle.textContent = level === 1 ? "Ready?" : `Level ${level}`;
   overlayText.textContent =
     level === 1
-      ? "Use the arrow keys to move. Break every block. No panic, just control."
-      : `Level ${level} starts faster. Score: ${score}. Keep it clean.`;
+      ? "Arrow keys move. Space launches the ball on level 1."
+      : `Level ${level}. Score: ${score}.`;
   startBtn.textContent = level === 1 ? "Start Level 1" : `Start Level ${level}`;
   overlay.classList.remove("hidden");
 }
@@ -452,14 +516,29 @@ function showLevelIntro() {
 function beginLevel() {
   levelReady = false;
   overlay.classList.add("hidden");
-  spawnBall();
+  awaitingLaunch = level === 1;
+  spawnBall(!awaitingLaunch);
 
   if (level === 1) {
-    showMessage("Level 1 — warm up");
+    showMessage(awaitingLaunch ? "Space to launch" : "Level 1");
   } else {
-    showMessage(`Level ${level} — speed increased`);
+    showMessage(`Level ${level}`);
   }
 
+  updateHud();
+}
+
+function launchBall() {
+  if (!awaitingLaunch || balls.length === 0) return;
+
+  const ball = balls[0];
+  const config = getLevelConfig();
+  const speed = powerState.slow ? config.speed * 0.72 : config.speed;
+
+  ball.dx = speed * 0.65;
+  ball.dy = -speed;
+  awaitingLaunch = false;
+  showMessage("Go!");
   updateHud();
 }
 
@@ -467,7 +546,7 @@ function getLevelConfig() {
   return levels[Math.min(level - 1, levels.length - 1)];
 }
 
-function spawnBall(extra = false) {
+function spawnBall(launched = true, extra = false) {
   const config = getLevelConfig();
   const speed = powerState.slow ? config.speed * 0.72 : config.speed;
   const dir = extra ? (Math.random() > 0.5 ? 1 : -1) : 1;
@@ -476,8 +555,8 @@ function spawnBall(extra = false) {
     x: paddle.x + paddle.w / 2,
     y: paddle.y - 18,
     r: 8,
-    dx: speed * (extra ? 0.85 : 0.65) * dir,
-    dy: -speed
+    dx: launched ? speed * (extra ? 0.85 : 0.65) * dir : 0,
+    dy: launched ? -speed : 0
   });
 }
 
@@ -563,6 +642,11 @@ function update() {
 
   paddle.x = Math.max(0, Math.min(canvas.width - paddle.w, paddle.x));
 
+  if (awaitingLaunch && balls.length > 0) {
+    balls[0].x = paddle.x + paddle.w / 2;
+    balls[0].y = paddle.y - 18;
+  }
+
   updateBalls();
   updatePowerups();
   updateParticles();
@@ -575,6 +659,8 @@ function update() {
 
 function updateBalls() {
   balls.forEach(ball => {
+    if (awaitingLaunch && ball.dx === 0 && ball.dy === 0) return;
+
     ball.x += ball.dx;
     ball.y += ball.dy;
 
@@ -805,8 +891,8 @@ function activatePower(type) {
 
   if (type === "MULTI") {
     powerState.multi = true;
-    spawnBall(true);
-    spawnBall(true);
+    spawnBall(true, true);
+    spawnBall(true, true);
     showMessage("Powerup: multi-ball");
 
     clearTimeout(powerTimers.multi);
@@ -836,33 +922,51 @@ function completeLevel() {
   levelReady = true;
   balls = [];
   powerups = [];
+  awaitingLaunch = false;
   clearAllPowers();
   canvasWrap.classList.remove("danger");
 
-  if (level >= levels.length) {
+  if (level >= getMaxLevel()) {
     winGame();
     return;
   }
 
+  const nextLevel = level + 1;
+
+  if (skipLevelModals) {
+    showMessage(`Level ${level} clear!`, 900);
+    level = nextLevel;
+    prepareLevel();
+    setTimeout(() => {
+      if (running && levelReady) beginLevel();
+    }, 700);
+    return;
+  }
+
   overlayTitle.textContent = "Level Clear";
-  overlayText.textContent = `Nice work. Score: ${score}. Next up: Level ${level + 1}.`;
-  startBtn.textContent = `Start Level ${level + 1}`;
+  overlayText.textContent = `Score: ${score}. Next: Level ${nextLevel}.`;
+  startBtn.textContent = `Start Level ${nextLevel}`;
   overlay.classList.remove("hidden");
 
-  level++;
+  level = nextLevel;
   prepareLevel();
 }
 
 function endGame() {
   running = false;
   levelReady = false;
+  awaitingLaunch = false;
+  hasPlayedOnce = true;
+  skipLevelModals = quickBreakMode || hasPlayedOnce;
   cancelAnimationFrame(animationId);
   canvasWrap.classList.remove("danger");
 
   overlayTitle.textContent = "Game Over";
-  overlayText.textContent = `Final score: ${score}. Best: ${best}. You reached level ${level}.`;
-  startBtn.textContent = "Play Again";
+  overlayText.textContent = `Score: ${score}. Best: ${best}. Level ${level}.`;
+  startBtn.textContent = quickBreakMode ? "Quick Break Again" : "Play Again";
   overlay.classList.remove("hidden");
+  modeQuickBtn.disabled = false;
+  modeFullBtn.disabled = false;
 
   DeskArcadeLeaderboard.trySubmit('fracture', score, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
 }
@@ -870,13 +974,20 @@ function endGame() {
 function winGame() {
   running = false;
   levelReady = false;
+  awaitingLaunch = false;
+  hasPlayedOnce = true;
+  skipLevelModals = quickBreakMode || hasPlayedOnce;
   cancelAnimationFrame(animationId);
   canvasWrap.classList.remove("danger");
 
-  overlayTitle.textContent = "Grid Fractured";
-  overlayText.textContent = `You cleared every level. Final score: ${score}.`;
-  startBtn.textContent = "Play Again";
+  overlayTitle.textContent = quickBreakMode ? "Break Complete" : "Grid Fractured";
+  overlayText.textContent = quickBreakMode
+    ? `Quick break done. Score: ${score}.`
+    : `All levels cleared. Score: ${score}.`;
+  startBtn.textContent = quickBreakMode ? "Quick Break Again" : "Play Again";
   overlay.classList.remove("hidden");
+  modeQuickBtn.disabled = false;
+  modeFullBtn.disabled = false;
 
   DeskArcadeLeaderboard.trySubmit('fracture', score, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
 }
@@ -900,14 +1011,14 @@ function checkTension() {
   }
 }
 
-function showMessage(text) {
+function showMessage(text, duration = 2600) {
   messageEl.textContent = text;
 
   setTimeout(() => {
     if (messageEl.textContent === text) {
       messageEl.textContent = "";
     }
-  }, 2600);
+  }, duration);
 }
 
 function screenShake() {

@@ -39,7 +39,7 @@
 
     .shell {
       position: relative;
-      width: min(96vw, 520px);
+      width: min(96vw, 720px);
       max-height: 96vh;
       padding: 14px;
       border: 1px solid var(--border);
@@ -136,6 +136,15 @@
       transform: translateY(-1px);
     }
 
+    button.icon-btn.sound-off {
+      opacity: 0.35;
+      font-size: 0.82rem;
+    }
+
+    button.icon-btn.sound-off:hover {
+      opacity: 0.65;
+    }
+
     .stage-wrap {
       position: relative;
       overflow: hidden;
@@ -147,9 +156,9 @@
     canvas {
       display: block;
       width: 100%;
-      aspect-ratio: 9 / 14;
+      aspect-ratio: 16 / 9;
       max-height: calc(96vh - 190px);
-      min-height: 360px;
+      min-height: 280px;
       background: #0c0c17;
       cursor: pointer;
     }
@@ -333,7 +342,7 @@
     </header>
 
     <section class="stage-wrap">
-      <canvas id="game" width="450" height="700" aria-label="Pixel Glide game canvas"></canvas>
+      <canvas id="game" width="640" height="360" aria-label="Pixel Glide game canvas"></canvas>
       <div class="overlay" id="overlay">
         <div class="panel" id="panel">
           <img src="pixelglidelogo.png" alt="Pixel Glide" class="menu-logo">
@@ -365,7 +374,7 @@
 
       const W = canvas.width;
       const H = canvas.height;
-      const groundH = 70;
+      const groundH = 48;
 
       const keys = {
         best: 'pixelGlideBest',
@@ -379,8 +388,12 @@
       };
 
       let best = Number(localStorage.getItem(keys.best) || 0);
-      let soundOn = localStorage.getItem(keys.sound) !== 'off';
+      let soundOn = localStorage.getItem(keys.sound) === 'on';
       let audioCtx = null;
+
+      const DESK_BREAK_SCORE = 18;
+      const DESK_BREAK_SEC = 75;
+      let sessionStart = 0;
 
       const skins = [
         { name: 'Gold Finch', body: '#f59e0b', wing: '#6366f1', beak: '#ef4444', unlock: 0, type: 'bird' },
@@ -437,9 +450,9 @@
       };
 
       const player = {
-        x: 112,
+        x: Math.round(W * 0.22),
         y: H * 0.43,
-        r: 17,
+        r: 15,
         vy: 0,
         gravity: 0.36,
         lift: -7.05,
@@ -447,7 +460,12 @@
       };
 
       bestScoreEl.textContent = best;
-      soundBtn.textContent = soundOn ? '🔊' : '🔇';
+      function syncSoundBtn() {
+        soundBtn.textContent = soundOn ? '🔊' : '🔇';
+        soundBtn.title = soundOn ? 'Sound on' : 'Sound off — click to enable';
+        soundBtn.classList.toggle('sound-off', !soundOn);
+      }
+      syncSoundBtn();
 
       const rand = (min, max) => Math.random() * (max - min) + min;
       const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -534,7 +552,7 @@
         state.mode = 'playing';
         state.score = 0;
         state.frame = 0;
-        state.speed = 2.75;
+        state.speed = 2.15;
         state.shake = 0;
         state.flash = 0;
         state.combo = 0;
@@ -547,15 +565,26 @@
         state.messageTimer = 0;
         player.y = H * 0.43;
         player.vy = 0;
+        sessionStart = performance.now();
         spawnGate(W + 130);
         spawnGate(W + 360);
         hideOverlay();
         beep(660, 0.07, 'square', 0.035);
       }
 
+      function gapForScore() {
+        if (state.score < 10) return 198 - state.score * 4;
+        return Math.max(118, 172 - Math.floor((state.score - 10) / 6) * 5);
+      }
+
+      function speedForScore() {
+        if (state.score < 10) return Math.min(3.6, 2.15 + state.score * 0.055);
+        return Math.min(5.45, 3.6 + (state.score - 10) * 0.032);
+      }
+
       function spawnGate(x = W + 40) {
-        const gap = Math.max(122, 176 - Math.floor(state.score / 6) * 5);
-        const margin = 82;
+        const gap = gapForScore();
+        const margin = 58;
         const centre = rand(margin + gap / 2, H - groundH - margin - gap / 2);
         const type = state.score >= 15 && Math.random() < 0.22 ? 'moving' : 'normal';
         state.gates.push({
@@ -629,7 +658,7 @@
       function toggleSound() {
         soundOn = !soundOn;
         localStorage.setItem(keys.sound, soundOn ? 'on' : 'off');
-        soundBtn.textContent = soundOn ? '🔊' : '🔇';
+        syncSoundBtn();
         beep(620, 0.06, 'square', 0.025);
       }
 
@@ -665,14 +694,30 @@
         showOverlay(
           title,
           `<p>Score: <strong class="statline">${state.score}</strong></p>
-           <p>Best: <strong>${best}</strong> · Near misses: <strong>${state.nearMisses}</strong> · Deaths: <strong>${stats.totalDeaths}</strong></p>
-           ${state.unlockLine || ''}
-           ${skinMenuHtml()}
-           <p><strong>Achievements</strong></p>
-           ${achievementHtml()}
-           <p class="tiny"><span class="kbd">S</span> skin · <span class="kbd">T</span> theme · <span class="kbd">M</span> sound</p>`,
+           <p>Best: <strong>${best}</strong></p>`,
           'Press to restart'
         );
+      }
+
+      function endDeskBreak(reason) {
+        if (state.mode !== 'playing') return;
+        state.mode = 'gameover';
+        const oldBest = best;
+        if (state.score > best) {
+          best = state.score;
+          localStorage.setItem(keys.best, String(best));
+          bestScoreEl.textContent = best;
+        }
+        const newlyUnlocked = skins.find(s => oldBest < s.unlock && best >= s.unlock);
+        state.unlockLine = newlyUnlocked ? `<p class="unlock">Unlocked: <strong>${newlyUnlocked.name}</strong></p>` : '';
+        showOverlay(
+          'Desk break done',
+          `<p>${reason}</p>
+           <p>Score: <strong class="statline">${state.score}</strong></p>
+           <p>Best: <strong>${best}</strong>${state.unlockLine || ''}</p>`,
+          'Press to play again'
+        );
+        DeskArcadeLeaderboard.trySubmit('pixelglide', state.score, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
       }
 
       function gameOver() {
@@ -740,7 +785,11 @@
 
         if (state.mode !== 'playing') return;
 
-        state.speed = Math.min(5.45, 2.75 + state.score * 0.035);
+        state.speed = speedForScore();
+        if (state.score >= DESK_BREAK_SCORE || (performance.now() - sessionStart) / 1000 >= DESK_BREAK_SEC) {
+          endDeskBreak(state.score >= DESK_BREAK_SCORE ? 'Nice run — score target hit.' : 'Time\'s up — good desk break.');
+          return;
+        }
         player.vy += player.gravity;
         player.vy = Math.min(player.vy, 9.6);
         player.y += player.vy;
@@ -799,7 +848,7 @@
 
         state.gates = state.gates.filter(g => g.x + g.w > -20);
         const lastGate = state.gates[state.gates.length - 1];
-        if (!lastGate || lastGate.x < W - 230) spawnGate();
+        if (!lastGate || lastGate.x < W - 200) spawnGate();
 
         if (state.shake > 0) state.shake--;
         if (state.flash > 0) state.flash--;
@@ -1029,7 +1078,7 @@
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        ctx.font = 'bold 58px \'JetBrains Mono\', monospace';
+        ctx.font = 'bold 42px \'JetBrains Mono\', monospace';
         ctx.fillStyle = 'rgba(8,8,15,.45)';
         ctx.fillText(state.score, W / 2 + 3, 25 + 3);
         ctx.fillStyle = '#f4f4f8';

@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/theme.css">
   <link rel="stylesheet" href="../../assets/leaderboard.css">
-  <script src="dictionary.js"></script>
+  <script src="common-words.js"></script>
   <style>
     :root {
       --accent: #eab308;
@@ -382,22 +382,56 @@
     }
 
     .found-list {
-      min-height: 280px;
-      max-height: 350px;
+      min-height: 300px;
+      max-height: 380px;
       overflow: auto;
       display: flex;
       align-content: flex-start;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
+      padding: 2px;
     }
 
     .word-chip {
       border: 1px solid var(--accent-border);
-      border-radius: var(--radius-pill);
-      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
       background: var(--accent-soft);
       color: var(--text);
-      font-size: 0.9rem;
+      font-family: var(--font-display);
+      font-size: 1.08rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: transform 0.14s ease, box-shadow 0.14s ease;
+    }
+
+    .word-chip.long {
+      border-color: rgba(250, 204, 21, 0.55);
+      background: rgba(250, 204, 21, 0.12);
+      color: var(--gold);
+    }
+
+    .word-chip.full {
+      border-color: rgba(250, 204, 21, 0.75);
+      background: linear-gradient(135deg, rgba(250, 204, 21, 0.22), rgba(234, 179, 8, 0.1));
+      box-shadow: 0 6px 18px rgba(234, 179, 8, 0.2);
+    }
+
+    .word-chip.pop {
+      animation: chipPop 0.22s ease;
+    }
+
+    @keyframes chipPop {
+      0% { transform: scale(0.88); }
+      55% { transform: scale(1.06); }
+      100% { transform: scale(1); }
+    }
+
+    .found-empty {
+      color: var(--text-faint);
+      font-size: 0.95rem;
+      padding: 12px 4px;
     }
 
     .rules {
@@ -524,7 +558,7 @@
     <div class="menu-card-wrap">
       <button id="startChallenge" class="mode-card" type="button">
         <h2>Challenge Mode</h2>
-        <p>60 seconds while testing. Push for the highest score before the forge goes cold.</p>
+        <p>45 seconds on the clock. Push for the highest score before the forge goes cold.</p>
       </button>
       <button id="startChill" class="mode-card" type="button">
         <h2>Chill Mode</h2>
@@ -548,8 +582,8 @@
       <div class="stats">
         <div class="stat"><span>Score</span><strong id="score">0</strong></div>
         <div class="stat"><span>Words</span><strong id="wordCount">0</strong></div>
-        <div class="stat"><span>Available</span><strong id="availableCount">0</strong></div>
-        <div class="stat"><span>Time</span><strong id="timer">60</strong></div>
+        <div class="stat"><span>Left</span><strong id="availableCount">0</strong></div>
+        <div class="stat"><span>Time</span><strong id="timer">45</strong></div>
       </div>
     </header>
 
@@ -568,7 +602,7 @@
         </div>
         <div id="message" class="message">Use only the letters shown. Minimum 3 letters.</div>
         <div class="rules">
-          Scoring: 3 letters = 10, 4 = 20, 5 = 40, 6 = 70, 7 = 110, 8 = 170. Use all 8 letters for a bonus.
+          Longer words score more. 8-letter words earn a full-forge bonus.
         </div>
       </section>
 
@@ -595,32 +629,29 @@
   <script>
     const lbPanel = document.getElementById('leaderboard');
 
-    const wordBank = [
-      'ace','act','add','ado','age','ago','aid','aim','air','ale','all','and','ant','any','ape','apt','arc','are','ark','arm','art','ash','ask','ate','awe','bad','bag','ban','bar','bat','bay','bed','bee','beg','bet','bid','big','bin','bit','boa','bog','bow','box','boy','bra','bud','bug','bus','but','buy','bye','cab','can','cap','car','cat','cog','con','cop','cow','cry','cub','cue','cup','cut','dad','dam','day','den','dew','did','die','dig','dim','din','dip','dog','dot','dry','due','dug','ear','eat','egg','ego','elf','elm','end','era','eve','eye','fad','fan','far','fat','fax','fed','fee','few','fig','fin','fit','fix','fly','fog','for','fox','fun','fur','gap','gas','gel','gem','get','gig','gin','got','gum','gun','gut','guy','had','ham','has','hat','hay','hem','hen','her','hid','him','hip','his','hit','hog','hop','hot','how','hug','hut','ice','ill','ink','inn','ion','ire','ivy','jam','jar','jaw','jet','job','jog','joy','key','kid','kin','kit','lab','lad','lag','lap','law','lay','led','leg','let','lid','lie','lip','lit','log','lot','low','mad','man','map','mat','may','men','met','mix','mob','mud','mug','net','new','nod','nor','not','now','nut','oak','oar','odd','off','oil','old','one','opt','ore','our','out','owl','own','pad','pal','pan','par','pat','pay','pea','pen','pet','pie','pin','pit','pod','pop','pot','pub','put','rag','ram','ran','rap','rat','raw','ray','red','rib','rid','rig','rim','rip','rob','rod','rot','row','rub','rug','run','sad','sag','sap','sat','saw','say','sea','see','set','she','sin','sip','sir','sit','six','sky','sob','son','sow','soy','spa','spy','sub','sun','tab','tag','tan','tap','tar','tax','tea','ten','the','tie','tin','tip','toe','ton','top','toy','try','tub','two','use','van','vet','via','war','was','wax','way','web','wed','wet','who','why','win','wit','won','wow','yes','yet','you','able','acid','acne','acre','aged','aide','aims','airs','ally','also','amen','amid','anal','ante','arch','area','arms','army','arts','atom','aunt','auto','avid','away','axis','bake','bald','bale','band','bane','bank','bare','bark','barn','base','bash','bask','bath','bead','beak','beam','bean','bear','beat','beef','been','beer','bell','belt','bend','bent','best','bias','bike','bind','bird','bite','blow','blue','boat','body','boil','bold','bolt','bond','bone','book','boot','bore','born','boss','both','bowl','brag','bran','brat','brew','brim','buck','bulk','burn','bush','busy','cafe','cage','cake','calm','came','camp','cane','card','care','cart','case','cash','cast','cave','cell','cent','chat','chef','chew','chip','city','clan','clap','clay','clip','club','coal','coat','code','coil','coin','cold','come','cone','copy','cord','core','corn','cost','crab','crew','crop','cube','cure','curl','cute','dare','dark','data','date','dawn','dead','deal','dear','debt','deck','deep','deer','desk','dial','dice','dine','dirt','dish','disk','dive','dock','does','doll','done','door','down','drag','draw','drop','drum','duck','dust','duty','each','earn','ease','east','easy','echo','edge','edit','else','envy','epic','even','ever','evil','exam','exit','face','fact','fade','fail','fair','fake','fall','fame','farm','fast','fate','fear','feed','feel','feet','file','film','find','fine','fire','firm','fish','five','flag','flat','flaw','flow','fold','folk','food','fool','foot','form','fort','free','frog','from','fuel','full','fund','gain','game','gate','gear','gift','girl','give','glad','glow','goal','goat','gold','golf','gone','good','grab','gray','grid','grin','grip','grow','gulf','hail','hair','half','hall','hand','hard','harm','hate','have','head','heal','heap','hear','heat','held','hell','help','herb','hero','hide','high','hill','hire','hold','hole','holy','home','hope','host','hour','huge','hung','hunt','hurt','idea','idle','inch','into','iron','item','jail','jazz','join','joke','jump','junk','just','keen','keep','kick','kind','king','knee','knew','knit','know','lace','lack','lady','laid','lake','land','lane','last','late','lead','leaf','leak','lean','left','lend','lens','less','life','lift','like','limb','lime','line','link','lion','list','live','load','loan','lock','lone','long','look','loop','lord','lose','loss','lost','loud','love','luck','made','mail','main','make','male','many','mark','mask','mass','mate','math','meal','mean','meat','meet','melt','menu','mild','mile','milk','mind','mine','mint','miss','mode','mood','moon','more','most','move','much','must','name','near','neat','neck','need','nest','news','next','nice','nine','node','none','noon','nose','note','noun','oath','once','only','open','oral','over','pace','pack','page','paid','pain','pair','pale','palm','park','part','pass','past','path','peak','pear','peer','perk','pick','pile','pine','pink','pipe','plan','play','plot','plug','poem','poet','pole','pond','pool','poor','port','pose','post','pour','pray','pull','pure','push','quit','race','rack','rage','rail','rain','rank','rare','rate','read','real','rear','redo','reed','reef','rely','rent','rest','rice','rich','ride','ring','rise','risk','road','rock','role','roll','roof','room','root','rope','rose','rule','rush','safe','sage','said','sail','sale','salt','same','sand','save','scan','scar','seal','seat','seed','seek','seem','seen','self','sell','send','sent','ship','shoe','shop','shot','show','shut','sick','side','sign','silk','sing','sink','site','skin','slab','slam','slap','slim','slot','slow','slug','snap','snow','soap','soft','soil','sold','sole','some','song','soon','sort','soul','soup','spin','spot','star','stay','stem','step','stir','stop','such','suit','sure','swim','tail','take','tale','talk','tall','tank','task','team','tear','tell','tend','term','text','than','that','them','then','thin','this','tick','tide','tile','time','tiny','tire','told','tone','tool','torn','tour','town','trap','tree','trip','true','tube','tune','turn','twin','type','unit','upon','used','user','vain','vary','vast','very','vest','view','vote','wage','wait','wake','walk','wall','want','warm','warn','wash','wave','weak','wear','week','well','went','were','west','what','when','wild','will','wind','wine','wing','wire','wise','wish','with','wolf','wood','word','work','worm','yard','year','yell','yoga','young','about','above','actor','acute','adapt','admit','adopt','adult','after','again','agent','agree','alert','alien','align','alike','alive','allow','alone','along','alter','amend','among','angel','anger','angle','apple','apply','arena','argue','arise','armed','arrow','aside','asset','audio','audit','avoid','badge','baker','basic','batch','beach','beard','began','begin','being','below','bench','blade','blank','blast','blend','blind','block','board','boast','bonus','brain','brand','brave','bread','break','brick','bring','broad','brown','build','cable','carry','catch','cause','chain','chair','chalk','change','chant','chart','chase','cheap','cheat','check','cheer','chest','chief','child','claim','class','clean','clear','climb','clock','close','cloud','coach','coast','craft','crane','crash','crate','cream','crime','cross','crowd','crown','dance','danger','debug','decay','delay','delta','dense','depth','design','direct','dream','drive','eagle','early','earth','elite','empty','enemy','enjoy','enter','equal','error','event','exact','extra','feast','field','fight','final','first','flame','flash','fleet','floor','focus','force','forge','frame','fresh','front','garden','ghost','giant','given','glass','glide','glory','grade','grain','grand','grant','graph','grave','great','green','group','guard','guess','guide','habit','heart','heavy','hidden','house','ideal','image','index','inner','input','judge','knife','label','labor','large','laser','layer','learn','least','leave','legal','lemon','level','light','limit','logic','loose','magic','major','maker','maple','march','match','matter','maybe','metal','meter','might','minor','mixed','model','money','month','moral','motor','mouse','mouth','music','never','night','noise','north','novel','ocean','offer','often','orbit','order','other','outer','paint','panel','paper','party','pause','peace','phase','phone','piece','pilot','place','plain','plane','plant','plate','point','power','press','prime','print','prize','proof','proud','pulse','quick','quiet','radio','range','rapid','reach','react','ready','realm','reason','record','reduce','relay','reset','right','river','robot','rough','round','route','royal','scale','score','screen','script','search','season','second','secret','sector','sense','serve','shade','shake','shape','share','sharp','sheet','shift','shine','shore','short','signal','silent','simple','skill','slate','smart','snake','solid','solve','sound','space','spark','speak','speed','spell','spend','spike','split','sport','stack','stage','stand','start','steam','stone','storm','story','stream','strike','strong','table','taken','target','teach','theme','thing','think','timer','title','toast','today','token','tower','trace','track','trade','trail','train','trial','trick','trust','truth','under','union','urban','value','video','voice','water','watch','wheel','white','whole','world','worth','write','wrong','beauty','before','better','border','bottle','branch','breath','bridge','bright','broken','camera','career','castle','center','chance','circle','client','coffee','corner','course','danger','detail','doctor','double','dragon','effect','energy','engine','escape','family','father','figure','filter','finger','forest','friend','future','golden','ground','handle','health','hunter','impact','island','letter','little','market','master','matter','memory','middle','minute','modern','mother','motion','nature','number','object','office','orange','parent','planet','player','pocket','reason','record','remote','rocket','screen','search','second','shadow','silver','simple','single','sister','source','spring','square','station','summer','system','target','temple','thread','ticket','travel','tunnel','update','valley','victor','vision','window','winner','wonder','yellow','ancient','another','balance','battery','between','builder','capture','central','channel','classic','control','counter','creator','diamond','digital','display','dynamic','element','evening','gateway','general','harvest','holding','journal','kingdom','landing','machine','manager','natural','network','nothing','opening','package','perfect','picture','project','quality','reactor','rebuild','recover','release','running','science','section','speaker','storage','strange','student','support','teacher','trainer','trouble','variant','victory','weather','welcome','western','working','writing','anything','building','challenge','computer','creative','developer','distance','friendly','generate','graphics','learning','lighting','magnetic','movement','platform','practice','reaction','security','strategy','strength','terminal','training','triangle','wireless','wordplay'
-    ];
+    const dictionary = [...new Set((window.forgeWords || []).map(word => String(word).trim().toLowerCase()).filter(word => word.length >= 3 && word.length <= 8 && /^[a-z]+$/.test(word)))];
 
-    const extraWordsText = "abase abate abbot abide abode abort abound abuse abyss accent accept access accord accuse ache acorn across action active addict adhere adjoin adjust admire admit adopt adore adult advent advice advise affair affect afford afraid agency agenda agreed ahead alarm album alias alibi alien align alike alive allege allied allure almond almost alone along alpine alter amaze amber amend amount anchor ancient animal ankle annex annual answer anthem anyone appeal appear append archer archive ardent arrest arrive artist ascend ashore asking aspect aspire assist assume assure atlas attack attain attend author autumn awake aware awkward backed badge bagel baker ballot bamboo bandit banker banner barley barrel basic basin basket beacon beagle beaker beauty become before behave behind belief belong better beyond bitter bladed blanket blazer bleach blister blossom border borrow bother bottle bottom bounce bounty branch brave breach breath bridge bright broken bronze browse bubble bucket budget buffer bundle bunker burden bureau burger button cabinet cactus caller camera candle canine cannon canvas carbon career cargo carpet castle casual cattle centre cereal chain chair chalk chance change chapel charge chase cheek cheer cherry chest choice choose chorus circle circus claim clamp clang clash class clean clear clever client cliff climb clinic clock closet cloud coarse coast coffee collar collect colony combat comedy common corner cotton course cousin cover crack craft crane crash create credit creek cricket crime crisis critic crown crush crystal custom cycle damage dancer danger daring debate decay decent decide decked degree demand depart depend deploy design desire detail detect device differ digest dinner direct doctor dollar domain double dragon drawer dream driven driver during dynamic eager eagle early easier easily eastern effect effort either elder eleven emerge empire employ empty ending endure energy engine enough enrich entire equal escape estate ethnic event every exact exceed except excite excuse expand expect expire export extend extra fabric factor fallen family famous farmer fasten father favour feeder fellow female figure final finely finger finish fitted flower fluent follow forest forget formal former fortune forward foster found frozen future galaxy garden garlic gather gentle giant given glider golden govern grammar grand gravel greedy green ground growth guard guilty guitar hammer handle happen harbour hardly hazard health heaven helmet hidden higher hollow honest hunter hurdle ignore image impact import income indeed infant inform inhale inject injury inner input insect inside intend island itself jacket jewel joined journal journey jungle junior justice kernel kettle kicker kitten knight ladder ladies landing laptop larger lasting lately latter leader league leather legal lemon length lesson letter lifted likely limit linear linked liquid listen little loaded locate logic lonely longer lovely lumber machine magnet mainly manage manner marble margin market master matrix matter meadow medium memory mental method middle mighty mirror mobile modern module moment money monkey mother motion motive mouse mouth moving murder museum music mutual myself narrow nation native nature nearby neatly needle never nickel night nobody normal notice number object office orange origin output oxygen packet palace parent parcel pardon parked parser partial party patent patrol pencil pepper perfect person phase phone phrase picked picnic picture pirate planet player pocket poetry police policy portal postal powder power practice prefer pretty prince prison proper public puzzle quarry quarter question quick quiet rabbit random rarely rather rating reader reason recent record reduce refuge reject relate remain remote render repair repeat report rescue result retail retain return reveal reward rhythm ribbon riding rocket roster rough round router rubber runner sacred safety sailor sample saving scanner school science scored screen search season second secret sector secure seeing select sensor serial server settle shadow shaken shaped shared sharp shelter shield shine signal silent silver simple single sister skill skull sleep slight slowly smart smooth social socket softer solid solve source spark speaker speed spell spend spider spiral spirit split spoken spring square stable staged standard starter static station status steady storage strange stream street strength strike string strong struck studio sudden summer supply surely system tablet tackle target teacher temple tender tennis theory thing third though thread ticket timber timing title today token tower traced track trader trail train travel treaty trick trouble tunnel turtle twenty under union unique unless update upload useful using usual utility valley value velvet vendor verbal verify vessel victim victor video village violet vision visual volume voyage waited walker wallet wander wanted warmth washer water wealth weapon weekly weight western window winner winter wisdom within wonder wooden worker world worthy writer written yellow absolute abstract academy accident account accurate achieve acquire actress address advance adverse adviser airport amateur amazing ancient another anxiety anyone anymore apology apparel arrange arrival article aspirin athlete attempt attract average balance battery because bedroom believe beneath benefit between bicycle biology biscuit brother builder calcium capture careful carrier central chamber channel chapter charity chicken chronic circuit citizen classic climate closing clothes college command comment compact company compare compete complex concern conduct confirm connect consent content contest context control convert correct council counter country courage creative creator culture current curious customer damaged dealing decimal decline default defence deliver density deposit desktop develop diamond digital display distant divide drawing earlier easiest economy edition educate element elevate emotion endless evening evident examine example exclude express extreme faithful failure farther fashion feature fiction fighter filter finding fitness flavour foreign forever formula founder freedom friendly funeral further generate genuine gesture gateway graphic greater habitat harvest heading healthy hearing heavier holiday hundred imagine include index industry initial install instant instead intense interest kitchen lantern lateral lawsuit leading learned lecture leisure lending liberal liberty licence lighter limited listing logical manager maximum meaning measure medical meeting member message million mineral minimum neither network neutral noticed nuclear observe obvious offence officer opening operate opinion optical outdoor painter pattern payment perform perhaps phoenix popular portion poverty prepare present pretend prevent primary printer privacy problem process produce product profile project promise protect provide purpose quickly rebuild receive recipe recover reflect regular release remove replace request respond safety section security segment serious sketch social special speech square student subject success support suppose surface survive uniform variant vehicle version visual weather working writing challenge computer creative developer distance friendly graphics learning lighting magnetic movement platform reaction security strategy terminal training triangle wireless wordplay anything building generate practice strength";
-
-    const dictionary = [...new Set((window.dictionary || wordBank).map(word => String(word).trim().toLowerCase()).filter(word => word.length >= 3 && word.length <= 8))];
-
-    const letterSets = [
-      'FORGEMAP', 'TRIANGLE', 'NOTECAST', 'SILENTAR', 'STREAMON', 'CRAFTERS',
-      'PLANTERS', 'ROASTING', 'REACTING', 'MASTERED', 'WORDPLAY', 'BRIGHTEN',
-      'SCOREPAD', 'HOLDINGS', 'TRAINERS', 'SHARPEND', 'CLEANORT', 'PAINTERS',
-      'READINGS', 'LISTENER', 'CREATION', 'STORAGED', 'TEACHERS', 'PLAYERS',
-      'FARMINGS', 'CARTOONS', 'DEALINGS', 'PARTNERS', 'CLEANERS', 'MARKETED',
-      'TRAILERS', 'GARDENER', 'REPAINTS', 'STEAMING', 'LEARNING', 'REACTORS'
-    ];
+    const LETTER_SEEDS = [
+      'TRIANGLE', 'NOTEBOOK', 'KEYBOARD', 'GAMEPLAY', 'LEARNING', 'PAINTERS', 'CHAMPION',
+      'SUNSHINE', 'MOUNTAIN', 'ELEPHANT', 'PLANNING', 'CLEANING', 'GRAPHICS', 'TERMINAL',
+      'REACTION', 'TRAINING', 'PORTABLE', 'COOKBOOK', 'MEETINGS', 'MONITORS', 'PRINTERS',
+      'WORDGAME', 'READINGS', 'FRIENDLY', 'HOLIDAYS', 'BIRTHDAY', 'SANDWICH',
+      'BASEBALL', 'FOOTBALL', 'SWIMMING', 'CREATION', 'DOLPHINS', 'GARDENER', 'MARKETED',
+      'TRAILERS', 'GOLDMINE', 'STREAMED', 'WONDERED', 'STANDARD', 'WORDPLAY',
+      'BREAKOUT', 'PLAYTIME', 'TEACHING', 'STUDENTS', 'BUILDERS', 'PAINTING',
+      'GOLDFISH', 'HANDMADE', 'FORESTED', 'CREATORS', 'SANDWICH', 'BASEBALL'
+    ].filter((set, i, arr) => set.length === 8 && arr.indexOf(set) === i);
 
     const vowels = ['A', 'E', 'I', 'O', 'U'];
-    const minimumPossibleWords = 12;
+    const minimumPossibleWords = 18;
+    const CHALLENGE_SECONDS = 45;
 
     const state = {
       mode: 'challenge',
       letters: [],
       found: [],
       score: 0,
-      time: 60,
+      time: CHALLENGE_SECONDS,
       timerId: null,
       active: false
     };
@@ -684,27 +715,46 @@
       return dictionary.filter(word => word.length >= 3 && word.length <= 8 && canBuildFromLetters(word, letters));
     }
 
+    function scoreLetters(letters) {
+      const possible = possibleWordsForLetters(letters);
+      const longWords = possible.filter(w => w.length >= 5).length;
+      const eightLetter = possible.filter(w => w.length === 8).length;
+      return possible.length + longWords * 0.6 + eightLetter * 2;
+    }
+
     function pickGoodLetters() {
       const eightLetterWords = dictionary.filter(word => word.length === 8);
+      let best = null;
+      let bestScore = 0;
 
-      for (let i = 0; i < 60; i++) {
+      const tryLetters = (letters) => {
+        if (!hasEnoughVowels(letters)) return;
+        const count = possibleWordsForLetters(letters).length;
+        if (count < minimumPossibleWords) return;
+        const score = scoreLetters(letters);
+        if (score > bestScore) {
+          bestScore = score;
+          best = letters;
+        }
+      };
+
+      for (let i = 0; i < 80; i++) {
         const word = eightLetterWords[Math.floor(Math.random() * eightLetterWords.length)];
         if (!word) break;
-        const letters = shuffleArray(word.toUpperCase().split(''));
-        if (hasEnoughVowels(letters) && possibleWordsForLetters(letters).length >= minimumPossibleWords) {
-          return letters;
-        }
+        tryLetters(shuffleArray(word.toUpperCase().split('')));
       }
 
-      const shuffledSets = shuffleArray(letterSets);
-      for (const set of shuffledSets) {
-        const letters = shuffleArray(set.split(''));
-        if (hasEnoughVowels(letters) && possibleWordsForLetters(letters).length >= minimumPossibleWords) {
-          return letters;
-        }
-      }
+      shuffleArray(LETTER_SEEDS).forEach(set => {
+        tryLetters(shuffleArray(set.split('')));
+      });
 
-      return shuffleArray('REACTING'.split(''));
+      if (best) return best;
+      return shuffleArray('TRIANGLE'.split(''));
+    }
+
+    function getRemainingWords() {
+      const possible = getPossibleWords();
+      return possible.filter(word => !state.found.includes(word));
     }
 
     function scoreWord(word) {
@@ -761,13 +811,15 @@
       return remaining > 0 ? `${visible}<br><br>+ ${remaining} more...` : visible;
     }
 
-    function render() {
+    function render(highlightWord = '') {
       els.score.textContent = state.score;
       els.wordCount.textContent = state.found.length;
-      els.availableCount.textContent = getPossibleWords().length;
+      els.availableCount.textContent = getRemainingWords().length;
       els.timer.textContent = state.mode === 'challenge' ? state.time : '∞';
       els.modeLabel.textContent = state.mode === 'challenge' ? 'Challenge' : 'Chill';
-      els.gameSubtitle.textContent = state.mode === 'challenge' ? 'Challenge Mode: 60 seconds testing' : 'Chill Mode: no timer';
+      els.gameSubtitle.textContent = state.mode === 'challenge'
+        ? `Challenge — ${CHALLENGE_SECONDS} seconds`
+        : 'Chill — no timer';
       els.letters.innerHTML = '';
       state.letters.forEach((letter, index) => {
         const tile = document.createElement('button');
@@ -780,12 +832,22 @@
       });
       updateTileUsage();
       els.foundList.innerHTML = '';
-      state.found.slice().sort((a, b) => b.length - a.length || a.localeCompare(b)).forEach(word => {
-        const chip = document.createElement('div');
-        chip.className = 'word-chip';
-        chip.textContent = word;
-        els.foundList.appendChild(chip);
-      });
+      if (!state.found.length) {
+        const empty = document.createElement('div');
+        empty.className = 'found-empty';
+        empty.textContent = 'Forged words appear here.';
+        els.foundList.appendChild(empty);
+      } else {
+        state.found.slice().sort((a, b) => b.length - a.length || a.localeCompare(b)).forEach(word => {
+          const chip = document.createElement('div');
+          chip.className = 'word-chip';
+          if (word.length === 8) chip.classList.add('full');
+          else if (word.length >= 6) chip.classList.add('long');
+          if (word === highlightWord) chip.classList.add('pop');
+          chip.textContent = word;
+          els.foundList.appendChild(chip);
+        });
+      }
     }
 
     function startTimer() {
@@ -818,7 +880,7 @@
       }
       state.found = [];
       state.score = 0;
-      state.time = 60;
+      state.time = CHALLENGE_SECONDS;
       state.active = true;
       els.overlay.classList.remove('show');
       els.input.value = '';
@@ -831,7 +893,7 @@
 
     function startMode(mode) {
       if (!dictionary.length) {
-        alert('Dictionary failed to load. Check dictionary.js is in the same folder as index.html and starts with: window.dictionary = [...]');
+        alert('Word list failed to load. Check common-words.js is in the same folder as index.html.');
         return;
       }
       state.mode = mode;
@@ -898,7 +960,7 @@
         return;
       }
       if (!dictionary.includes(word)) {
-        setMessage('Not in the forge dictionary yet.', 'bad');
+        setMessage('Not a recognised word — try another.', 'bad');
         shakeInput();
         return;
       }
@@ -906,8 +968,14 @@
       const points = scoreWord(word);
       state.found.push(word);
       state.score += points;
-      setMessage(word.length === 8 ? `FULL FORGE! +${points}` : `Forged: ${word.toUpperCase()} +${points}`, word.length === 8 ? 'gold' : 'good');
-      render();
+      const left = getRemainingWords().length;
+      setMessage(
+        word.length === 8
+          ? `FULL FORGE! +${points} · ${left} left`
+          : `${word.toUpperCase()} +${points} · ${left} left`,
+        word.length === 8 ? 'gold' : 'good'
+      );
+      render(word);
       flashTiles(word.length === 8);
     }
 
@@ -926,26 +994,20 @@
       state.active = false;
       els.input.disabled = true;
       const possibleWords = getPossibleWords();
-      const missedWords = possibleWords.filter(word => !state.found.includes(word));
-      const foundDisplay = formatWordList(state.found, 50);
-      const missedDisplay = formatWordList(missedWords, 50);
+      const foundDisplay = formatWordList(state.found, 60);
       const best = saveBestScore(state.mode, state.score);
       const isRecord = state.score >= best && state.score > 0;
+      const pct = possibleWords.length ? Math.round((state.found.length / possibleWords.length) * 100) : 0;
       els.finalText.innerHTML = `
-        You forged <strong>${state.found.length}</strong> words and scored <strong>${state.score}</strong> points${isRecord ? ' — <strong>new best!</strong>' : ''}.<br>
+        You forged <strong>${state.found.length}</strong> words for <strong>${state.score}</strong> points${isRecord ? ' — <strong>new best!</strong>' : ''}.<br>
         Best (${state.mode}): <strong>${best}</strong><br><br>
         Best word: <strong>${getBestWord()}</strong><br>
         Longest word: <strong>${getLongestWord()}</strong><br>
-        Possible words found: <strong>${state.found.length}/${possibleWords.length}</strong><br>
-        Missed words: <strong>${missedWords.length}</strong>
+        Common words found: <strong>${state.found.length}/${possibleWords.length}</strong> (${pct}%)
         <div class="results-grid">
           <div class="results-box">
             <h3>Words Found</h3>
             <div class="results-words">${foundDisplay}</div>
-          </div>
-          <div class="results-box">
-            <h3>Words Missed</h3>
-            <div class="results-words">${missedDisplay}</div>
           </div>
         </div>
       `;
@@ -961,8 +1023,13 @@
     });
     els.submitBtn.addEventListener('click', submitWord);
     els.input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') submitWord();
-      setTimeout(updateTileUsage, 0);
+      if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitWord();
+      } else if (e.key === 'Backspace' || e.key === 'Delete') {
+        setTimeout(updateTileUsage, 0);
+      }
     });
     els.input.addEventListener('input', updateTileUsage);
     els.shuffleBtn.addEventListener('click', () => {
@@ -976,6 +1043,7 @@
     els.menuBtn.addEventListener('click', showMenu);
 
     DeskArcadeLeaderboard.mountPanel(lbPanel, 'wordforge', 'challenge');
+    startMode('challenge');
   </script>
 </body>
 </html>

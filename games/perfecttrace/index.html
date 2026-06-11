@@ -132,6 +132,14 @@
       margin: 0;
     }
 
+    .shape-best {
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--accent-text);
+      font-weight: 600;
+    }
+
     .draw-topbar {
       display: flex;
       justify-content: space-between;
@@ -189,8 +197,6 @@
     }
 
     .countdown.show { display: flex; }
-
-    .hint { margin-top: 12px; font-size: 0.9rem; }
 
     .results-layout {
       display: grid;
@@ -293,13 +299,13 @@
       <section id="menuScreen" class="screen active">
         <p class="intro-copy">Choose your target shape. You get a 3–2–1 countdown, then a blank screen. Your ink is invisible until the result reveal.</p>
         <div class="menu-grid">
-          <div class="shape-card" data-shape="square" onclick="window.startPerfectTrace && window.startPerfectTrace('square')"><div class="shape-icon"><svg width="86" height="86" viewBox="0 0 100 100"><rect x="18" y="18" width="64" height="64" fill="none" stroke="#0ea5e9" stroke-width="7"/></svg></div><div><h2>Square</h2><p>Must have 4 sides. Equal length matters.</p></div></div>
-          <div class="shape-card" data-shape="triangle" onclick="window.startPerfectTrace && window.startPerfectTrace('triangle')"><div class="shape-icon"><svg width="96" height="86" viewBox="0 0 110 100"><polygon points="55,14 92,84 18,84" fill="none" stroke="#0ea5e9" stroke-width="7"/></svg></div><div><h2>Triangle</h2><p>Must have 3 sides. Lengths can vary.</p></div></div>
-          <div class="shape-card" data-shape="circle" onclick="window.startPerfectTrace && window.startPerfectTrace('circle')"><div class="shape-icon"><svg width="90" height="90" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="#0ea5e9" stroke-width="7"/></svg></div><div><h2>Circle</h2><p>No sides. Smooth and closed.</p></div></div>
+          <div class="shape-card" data-shape="square" onclick="window.startPerfectTrace && window.startPerfectTrace('square')"><div class="shape-icon"><svg width="86" height="86" viewBox="0 0 100 100"><rect x="18" y="18" width="64" height="64" fill="none" stroke="#0ea5e9" stroke-width="7"/></svg></div><div><h2>Square</h2><p>Must have 4 sides. Equal length matters.</p><div class="shape-best" data-best-for="square"></div></div></div>
+          <div class="shape-card" data-shape="triangle" onclick="window.startPerfectTrace && window.startPerfectTrace('triangle')"><div class="shape-icon"><svg width="96" height="86" viewBox="0 0 110 100"><polygon points="55,14 92,84 18,84" fill="none" stroke="#0ea5e9" stroke-width="7"/></svg></div><div><h2>Triangle</h2><p>Must have 3 sides. Lengths can vary.</p><div class="shape-best" data-best-for="triangle"></div></div></div>
+          <div class="shape-card" data-shape="circle" onclick="window.startPerfectTrace && window.startPerfectTrace('circle')"><div class="shape-icon"><svg width="90" height="90" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="#0ea5e9" stroke-width="7"/></svg></div><div><h2>Circle</h2><p>No sides. Smooth and closed.</p><div class="shape-best" data-best-for="circle"></div></div></div>
         </div>
         <div id="leaderboard"></div>
       </section>
-      <section id="drawScreen" class="screen"><div class="draw-topbar"><div id="targetLabel" class="target-label">Target: Square</div><div id="timer" class="timer">5.0s</div></div><div class="canvas-wrap"><canvas id="gameCanvas" width="900" height="440"></canvas><div id="countdown" class="countdown">3</div></div><div class="hint">Invisible ink mode: your drawing is hidden until the timer hits zero.</div></section>
+      <section id="drawScreen" class="screen"><div class="draw-topbar"><div id="targetLabel" class="target-label">Target: Square</div><div id="timer" class="timer">5.0s</div></div><div class="canvas-wrap"><canvas id="gameCanvas" width="900" height="440"></canvas><div id="countdown" class="countdown">3</div></div></section>
       <section id="resultsScreen" class="screen"><div class="results-layout"><div class="canvas-wrap"><canvas id="resultCanvas" width="900" height="440"></canvas></div><div class="results-panel"><div class="score-mini" id="resultShape">Square Attempt</div><div class="score-number" id="scoreNumber">0%</div><div class="verdict" id="verdict">FAIL</div><div class="breakdown" id="breakdown">Your result will appear here.</div><div class="buttons"><button class="primary" id="retryBtn">Retry Shape</button><button id="menuBtn">Change Shape</button><button onclick="window.location.href='../../index.html'">Back to Arcade</button></div></div></div></section>
     </main>
     
@@ -311,8 +317,17 @@
   const menuScreen=$('menuScreen'), drawScreen=$('drawScreen'), resultsScreen=$('resultsScreen');
   const countdownEl=$('countdown'), timerEl=$('timer'), targetLabel=$('targetLabel'), resultShape=$('resultShape'), scoreNumber=$('scoreNumber'), verdictEl=$('verdict'), breakdownEl=$('breakdown');
   const canvas=$('gameCanvas'), ctx=canvas.getContext('2d'), resultCanvas=$('resultCanvas'), rctx=resultCanvas.getContext('2d');
-  let selectedShape='square', points=[], drawing=false, canDraw=false, finished=false, timerFrame=null, countdownTimer=null, finishTimeout=null, endTime=0;
+  let selectedShape='square', points=[], drawing=false, canDraw=false, finished=false, timerFrame=null, countdownTimer=null, finishTimeout=null, endTime=0, warmupRound=false;
   const shapeBests=JSON.parse(localStorage.getItem('perfecttraceBests')||'{}');
+  const WARMUP_KEY='perfecttraceWarmupDone';
+
+  function updateShapeBestsUI(){
+    document.querySelectorAll('[data-best-for]').forEach(el=>{
+      const shape=el.dataset.bestFor;
+      const best=shapeBests[shape];
+      el.textContent=best?`Best: ${best}%`:'No best yet';
+    });
+  }
 
   function saveShapeBest(shape,score){
     if(score>(shapeBests[shape]||0)){
@@ -332,7 +347,7 @@
   const point=e=>{const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*(canvas.width/r.width),y:(e.clientY-r.top)*(canvas.height/r.height)}};
   function resetTimers(){if(timerFrame)cancelAnimationFrame(timerFrame);if(countdownTimer)clearInterval(countdownTimer);if(finishTimeout)clearTimeout(finishTimeout);timerFrame=countdownTimer=finishTimeout=null}
 
-  function start(shape){resetTimers();selectedShape=shape;DeskArcadeLeaderboard.mountPanel(lbPanel,'perfecttrace',selectedShape);points=[];drawing=false;canDraw=false;finished=false;timerEl.textContent='5.0s';timerEl.classList.remove('low');targetLabel.textContent='Target: '+pretty(shape);clear(ctx,canvas);show(drawScreen);countdown()}
+  function start(shape){resetTimers();selectedShape=shape;warmupRound=!localStorage.getItem(WARMUP_KEY);DeskArcadeLeaderboard.mountPanel(lbPanel,'perfecttrace',selectedShape);points=[];drawing=false;canDraw=false;finished=false;timerEl.textContent='5.0s';timerEl.classList.remove('low');targetLabel.textContent='Target: '+pretty(shape)+(warmupRound?' · Warmup':'');clear(ctx,canvas);show(drawScreen);countdown()}
   function countdown(){let n=3;countdownEl.textContent=n;countdownEl.classList.add('show');countdownTimer=setInterval(()=>{n--;if(n>0)countdownEl.textContent=n;else if(n===0)countdownEl.textContent='GO';else{clearInterval(countdownTimer);countdownEl.classList.remove('show');begin()}},750)}
   function begin(){
     finished=false;
@@ -380,6 +395,12 @@
     }
 
     show(resultsScreen);
+
+    if(warmupRound){
+      localStorage.setItem(WARMUP_KEY,'1');
+      warmupRound=false;
+    }
+    updateShapeBestsUI();
 
     DeskArcadeLeaderboard.trySubmit('perfecttrace', result.score, { panel: lbPanel, boardKey: selectedShape }).catch(() => {});
   }
@@ -500,9 +521,9 @@
   const prevBest=shapeBests[selectedShape]||0;
   const isNewBest=saveShapeBest(selectedShape,result.score);
 
-  // --- Human-friendly feedback ---
+  // --- Human-friendly feedback (max 2 bullets) ---
   const msgs=[];
-  if(isNewBest) msgs.push('New personal best for '+pretty(selectedShape)+'!');
+  if(isNewBest) msgs.push('New personal best!');
   else if(prevBest) msgs.push('Personal best: '+prevBest+'%');
   const edges=analyseEdges(points);
   const connection=closeScore(points,b);
@@ -512,45 +533,41 @@
   if(selectedShape==='square'){
     const m=squareMetrics(points,b);
     if(edges.sides<4) msgs.push('Missing sides');
-    if(m.equal<70) msgs.push('Sides are uneven');
-    if(m.line<75) msgs.push('Lines are wobbly');
-    if(connection<80) msgs.push('Shape not fully closed');
-    if(intersects) msgs.push('Lines cross over');
-    if(ex>90) msgs.push('Too much overdraw');
-  }
-
-  if(selectedShape==='triangle'){
+    else if(m.equal<70) msgs.push('Uneven sides');
+    else if(m.line<75) msgs.push('Wobbly lines');
+    else if(connection<80) msgs.push('Not fully closed');
+    else if(intersects) msgs.push('Lines cross');
+    else if(ex>90) msgs.push('Too much overdraw');
+  } else if(selectedShape==='triangle'){
     if(edges.sides<3) msgs.push('Missing sides');
-    if(connection<80) msgs.push('Shape not fully closed');
-    if(intersects) msgs.push('Lines cross over');
-    if(ex>90) msgs.push('Too much overdraw');
-  }
-
-  if(selectedShape==='circle'){
+    else if(connection<80) msgs.push('Not fully closed');
+    else if(intersects) msgs.push('Lines cross');
+    else if(ex>90) msgs.push('Too much overdraw');
+  } else if(selectedShape==='circle'){
     const sm=smooth(points);
     if(sm<75) msgs.push('Not smooth enough');
-    if(connection<80) msgs.push('Shape not fully closed');
-    if(ex>90) msgs.push('Too much overdraw');
+    else if(connection<80) msgs.push('Not fully closed');
+    else if(ex>90) msgs.push('Too much overdraw');
   }
 
-  if(msgs.length===0){
+  if(msgs.length<=1){
     if(result.score>=93) msgs.push('Clean and controlled');
     else if(result.score>=82) msgs.push('Solid shape');
-    else msgs.push('Keep refining your control');
+    else if(!prevBest && !isNewBest) msgs.push('Keep refining');
   }
 
-  // Limit to 3 messages
-  breakdownEl.textContent = msgs.slice(0,3).map(m=>`• ${m}`).join(' ');
+  breakdownEl.textContent = msgs.slice(0,2).map(m=>`• ${m}`).join(' ');
 }
 
-  canvas.addEventListener('pointerdown',e=>{if(!canDraw)return;drawing=true;canvas.setPointerCapture?.(e.pointerId);points.push(point(e))});
-  canvas.addEventListener('pointermove',e=>{if(!canDraw||!drawing)return;const p=point(e),last=points[points.length-1];if(!last||dist(last,p)>3)points.push(p)});
+  canvas.addEventListener('pointerdown',e=>{if(!canDraw)return;drawing=true;canvas.setPointerCapture?.(e.pointerId);points.push(point(e));if(warmupRound)drawPath(ctx,points)});
+  canvas.addEventListener('pointermove',e=>{if(!canDraw||!drawing)return;const p=point(e),last=points[points.length-1];if(!last||dist(last,p)>3){points.push(p);if(warmupRound){clear(ctx,canvas);drawPath(ctx,points)}}});
   window.addEventListener('pointerup',()=>drawing=false);
   window.startPerfectTrace=start;
   document.querySelectorAll('.shape-card').forEach(card=>card.addEventListener('click',()=>start(card.dataset.shape)));
   $('retryBtn').addEventListener('click',()=>start(selectedShape));
-  $('menuBtn').addEventListener('click',()=>{resetTimers();show(menuScreen)});
+  $('menuBtn').addEventListener('click',()=>{resetTimers();updateShapeBestsUI();show(menuScreen)});
   clear(ctx,canvas);
+  updateShapeBestsUI();
   DeskArcadeLeaderboard.mountPanel(lbPanel, 'perfecttrace', 'square');
 })();
 </script>

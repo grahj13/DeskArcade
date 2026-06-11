@@ -83,7 +83,7 @@ body{
 
 .stats{
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(4,1fr);
   gap:12px;
   margin-bottom:12px;
 }
@@ -278,6 +278,10 @@ button.active{
     <div class="stat-label" id="bestLabel">BEST NORMAL</div>
     <div class="stat-value" id="best">--</div>
   </div>
+  <div class="stat">
+    <div class="stat-label">ROUTE</div>
+    <div class="stat-value" id="routeLabel">—</div>
+  </div>
 </div>
 
 <div class="game-area" id="gameArea">
@@ -314,6 +318,7 @@ const statusEl = document.getElementById("status");
 const timeEl = document.getElementById("time");
 const bestEl = document.getElementById("best");
 const bestLabelEl = document.getElementById("bestLabel");
+const routeLabelEl = document.getElementById("routeLabel");
 const messageEl = document.getElementById("message");
 
 const easyBtn = document.getElementById("easyBtn");
@@ -321,19 +326,40 @@ const normalBtn = document.getElementById("normalBtn");
 const hardBtn = document.getElementById("hardBtn");
   const homeBtn = document.getElementById("homeBtn");
 
-const path = [
-  {x:95,y:215},
-  {x:185,y:135},
-  {x:275,y:285},
-  {x:390,y:145},
-  {x:500,y:240},
-  {x:615,y:120},
-  {x:725,y:285},
-  {x:825,y:210}
+const ROUTES = [
+  {
+    name: "A",
+    path: [
+      {x:95,y:215},{x:185,y:135},{x:275,y:285},{x:390,y:145},
+      {x:500,y:240},{x:615,y:120},{x:725,y:285},{x:825,y:210}
+    ],
+    startNode: {x:65,y:215,r:28},
+    endNode: {x:855,y:210,r:28}
+  },
+  {
+    name: "B",
+    path: [
+      {x:90,y:320},{x:200,y:280},{x:310,y:350},{x:420,y:200},
+      {x:530,y:320},{x:640,y:180},{x:750,y:300},{x:830,y:220}
+    ],
+    startNode: {x:60,y:330,r:28},
+    endNode: {x:860,y:215,r:28}
+  },
+  {
+    name: "C",
+    path: [
+      {x:100,y:120},{x:210,y:200},{x:320,y:90},{x:430,y:260},
+      {x:540,y:130},{x:650,y:250},{x:760,y:110},{x:820,y:200}
+    ],
+    startNode: {x:70,y:105,r:28},
+    endNode: {x:850,y:205,r:28}
+  }
 ];
 
-const startNode = {x:65,y:215,r:28};
-const endNode = {x:855,y:210,r:28};
+let path = [];
+let startNode = {x:0,y:0,r:28};
+let endNode = {x:0,y:0,r:28};
+let routeName = "A";
 
 const settings = {
   easy:{safe:18,cursor:5},
@@ -353,16 +379,31 @@ let elapsed = 0;
 let best = null;
 let progress = 0;
 let sparks = [];
+let failMarker = null;
 const SOFT_OPEN_MS = 2800;
 const softOpenBonus = { easy: 10, normal: 7, hard: 5 };
 
 const segmentLengths = [];
 let totalPathLength = 0;
 
-for(let i=0; i<path.length-1; i++){
-  const len = Math.hypot(path[i+1].x-path[i].x, path[i+1].y-path[i].y);
-  segmentLengths.push(len);
-  totalPathLength += len;
+function recomputePathMetrics(){
+  segmentLengths.length = 0;
+  totalPathLength = 0;
+  for(let i = 0; i < path.length - 1; i++){
+    const len = Math.hypot(path[i + 1].x - path[i].x, path[i + 1].y - path[i].y);
+    segmentLengths.push(len);
+    totalPathLength += len;
+  }
+}
+
+function pickRandomRoute(){
+  const route = ROUTES[Math.floor(Math.random() * ROUTES.length)];
+  path = route.path;
+  startNode = route.startNode;
+  endNode = route.endNode;
+  routeName = route.name;
+  recomputePathMetrics();
+  routeLabelEl.textContent = "Route " + routeName;
 }
 
 function getBestKey(){
@@ -459,6 +500,7 @@ function startRun(){
 }
 
 function reset(){
+  pickRandomRoute();
   gameState = "ready";
   isMouseDown = false;
   hasLeftStart = false;
@@ -466,6 +508,7 @@ function reset(){
   elapsed = 0;
   progress = 0;
   sparks = [];
+  failMarker = null;
   gameArea.classList.remove("active", "charged");
   setStatus("Ready","status-ready");
   timeEl.textContent = "0.00s";
@@ -519,7 +562,9 @@ function fail(text){
 
   gameState = "failed";
   gameArea.classList.remove("active", "charged");
-  spawnSparks(mouse.x, mouse.y);
+  const pathInfo = closestPathInfo(mouse);
+  failMarker = pointAtProgress(pathInfo.progress);
+  spawnSparks(failMarker.x, failMarker.y);
   setStatus("Shock!","status-shock");
   messageEl.textContent = text;
   messageEl.classList.remove("shock-message");
@@ -848,6 +893,15 @@ function drawNode(node,label,color){
     ctx.strokeStyle = "rgba(56,189,248,0.35)";
     ctx.lineWidth = 2;
     ctx.stroke();
+
+    const safe = getSafeTolerance();
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, safe, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(245,158,11,0.22)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
   }
 
   ctx.shadowBlur = 0;
@@ -902,16 +956,38 @@ function drawCursor(){
   ctx.restore();
 }
 
+function drawFailMarker(){
+  if(!failMarker) return;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(failMarker.x, failMarker.y, 10, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(239,68,68,0.35)";
+  ctx.fill();
+  ctx.strokeStyle = "#ef4444";
+  ctx.lineWidth = 2.5;
+  ctx.shadowBlur = 16;
+  ctx.shadowColor = "#ef4444";
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(failMarker.x - 7, failMarker.y - 7);
+  ctx.lineTo(failMarker.x + 7, failMarker.y + 7);
+  ctx.moveTo(failMarker.x + 7, failMarker.y - 7);
+  ctx.lineTo(failMarker.x - 7, failMarker.y + 7);
+  ctx.strokeStyle = "#ef4444";
+  ctx.lineWidth = 2;
+  ctx.shadowBlur = 0;
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawHelpText(){
   ctx.save();
 
-  ctx.fillStyle = "rgba(155,155,176,0.6)";
+  ctx.fillStyle = "rgba(155,155,176,0.55)";
   ctx.font = "bold 11px 'Space Grotesk', sans-serif";
-  ctx.textAlign = "left";
-  ctx.fillText("HOLD CLICK + TRACE THE LINE", 34, 28);
-
   ctx.textAlign = "right";
-  ctx.fillText(`MODE: ${difficulty.toUpperCase()}`, canvas.width - 34, 28);
+  ctx.fillText(`ROUTE ${routeName} · ${difficulty.toUpperCase()}`, canvas.width - 34, 28);
 
   ctx.restore();
 }
@@ -925,6 +1001,7 @@ function draw(){
   drawProgressTrail();
   drawNode(startNode, "START", "#38bdf8");
   drawNode(endNode, "END", "#fbbf24");
+  drawFailMarker();
   drawSparks();
   drawCursor();
 }

@@ -229,6 +229,62 @@
       border-color: rgba(239, 68, 68, 0.55);
     }
 
+    #keyDisplay {
+      position: fixed;
+      bottom: 78px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px;
+      max-width: min(680px, 92vw);
+      z-index: 6;
+      pointer-events: none;
+    }
+
+    .kbd-key {
+      min-width: 28px;
+      padding: 5px 7px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--border-strong);
+      border-radius: 5px;
+      background: rgba(10, 10, 20, 0.72);
+      color: var(--text-faint);
+      text-transform: lowercase;
+    }
+
+    .kbd-key.target {
+      color: #fbbf24;
+      border-color: rgba(245, 158, 11, 0.65);
+      background: rgba(245, 158, 11, 0.14);
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.28);
+      transform: scale(1.08);
+    }
+
+    .freeze-bank.active {
+      animation: freezePulse 1s ease-in-out infinite;
+    }
+
+    @keyframes freezePulse {
+      0%, 100% { box-shadow: 0 0 0 rgba(56,189,248,0); }
+      50% { box-shadow: 0 0 12px rgba(56,189,248,0.35); }
+    }
+
+    #runTimer {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-top: 2px;
+      font-family: var(--font-mono);
+    }
+
+    #runTimer.urgent {
+      color: var(--red);
+    }
+
     @keyframes inputShake {
       0%, 100% { transform: translateX(-50%); }
       25% { transform: translateX(calc(-50% - 6px)); }
@@ -782,6 +838,7 @@
       <div class="hud-group hud-score">
         <span id="scoreLabel">SCORE</span>
         <strong id="score">0</strong>
+        <span id="runTimer" hidden></span>
       </div>
 
       <div class="hud-group hud-stats">
@@ -810,6 +867,7 @@
     <div id="inputBar">
       <span id="inputText" class="empty">Type target...</span>
     </div>
+    <div id="keyDisplay" aria-hidden="true"></div>
 
     <div id="dangerZone"></div>
     <div id="deadline"></div>
@@ -872,6 +930,16 @@
               <option value="normal" selected>Normal</option>
               <option value="hard">Hard</option>
               <option value="jill">Jill Mode</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="setting-card">
+          <label>
+            Run Length
+            <select id="runLength">
+              <option value="quick" selected>Quick (60s / 3 waves)</option>
+              <option value="endless">Endless</option>
             </select>
           </label>
         </div>
@@ -940,6 +1008,9 @@
     const inputTextEl = document.getElementById("inputText");
     const waveBannerEl = document.getElementById("waveBanner");
     const powerupStatusEl = document.getElementById("powerupStatus");
+    const runTimerEl = document.getElementById("runTimer");
+    const keyDisplayEl = document.getElementById("keyDisplay");
+    const freezeBankWrap = document.querySelector(".freeze-bank");
 
     const menuScreen = document.getElementById("menuScreen");
     const pauseScreen = document.getElementById("pauseScreen");
@@ -947,6 +1018,17 @@
     const finalStatsEl = document.getElementById("finalStats");
     const gameModeEl = document.getElementById("gameMode");
     const difficultyEl = document.getElementById("difficulty");
+    const runLengthEl = document.getElementById("runLength");
+
+    const QUICK_RUN_MS = 60000;
+    const QUICK_RUN_MAX_WAVE = 3;
+    const FREEZE_DURATION = 7000;
+    const KEYBOARD_ROWS = [
+      "1234567890",
+      "qwertyuiop",
+      "asdfghjkl",
+      "zxcvbnm"
+    ];
 
     function lbBoardKey(mode = gameModeEl.value, diff = difficultyEl.value) {
       const resolvedDiff = mode !== "numbers" && diff === "jill" ? "normal" : diff;
@@ -1068,6 +1150,63 @@
     let gameFrozen = false;
     let freezeBank = 0;
     let wipeBank = 0;
+    let selectedRunLength = "quick";
+    let freezeEndsAt = 0;
+    let quickRunEnded = false;
+
+    function buildKeyDisplay() {
+      keyDisplayEl.innerHTML = KEYBOARD_ROWS.map(row =>
+        `<div style="display:flex;gap:4px;justify-content:center;width:100%;">${[...row].map(ch =>
+          `<span class="kbd-key" data-key="${ch}">${ch}</span>`
+        ).join("")}</div>`
+      ).join("");
+    }
+
+    buildKeyDisplay();
+
+    function getPrimaryTargetChar() {
+      const candidates = enemies
+        .filter(enemy => !enemy.removing && (input.length === 0 || enemy.text.startsWith(input)))
+        .sort((a, b) => b.y - a.y);
+      if (candidates.length === 0) return null;
+      const targetText = candidates[0].text;
+      return targetText[input.length] || null;
+    }
+
+    function updateKeyDisplay() {
+      const nextChar = getPrimaryTargetChar();
+      keyDisplayEl.querySelectorAll(".kbd-key").forEach(keyEl => {
+        keyEl.classList.toggle("target", nextChar && keyEl.dataset.key === nextChar.toLowerCase());
+      });
+    }
+
+    function getRunElapsedMs() {
+      return runStartedAt ? Date.now() - runStartedAt : 0;
+    }
+
+    function checkQuickRunEnd(reason) {
+      if (selectedRunLength !== "quick" || quickRunEnded || gameState !== "playing") return false;
+      quickRunEnded = true;
+      endGame(reason);
+      return true;
+    }
+
+    function updateRunTimer() {
+      if (selectedRunLength !== "quick" || gameState !== "playing") {
+        runTimerEl.hidden = true;
+        return;
+      }
+
+      const remainingMs = Math.max(0, QUICK_RUN_MS - getRunElapsedMs());
+      const secs = Math.ceil(remainingMs / 1000);
+      runTimerEl.hidden = false;
+      runTimerEl.textContent = `${secs}s · wave cap ${QUICK_RUN_MAX_WAVE}`;
+      runTimerEl.classList.toggle("urgent", secs <= 10);
+
+      if (remainingMs <= 0) {
+        checkQuickRunEnd("time");
+      }
+    }
 
     let highScore = loadStoredHighScore();
     highScoreEl.textContent = highScore;
@@ -1235,12 +1374,20 @@
       waveEl.textContent = wave;
       livesEl.textContent = lives;
       streakEl.textContent = streak;
-      freezeBankEl.textContent = freezeBank;
+      if (gameFrozen && freezeEndsAt > Date.now()) {
+        freezeBankEl.textContent = (Math.max(0, freezeEndsAt - Date.now()) / 1000).toFixed(1) + "s";
+        freezeBankWrap.classList.add("active");
+      } else {
+        freezeBankEl.textContent = freezeBank;
+        freezeBankWrap.classList.remove("active");
+      }
       wipeBankEl.textContent = wipeBank;
       highScoreEl.textContent = highScore;
       inputTextEl.textContent = input || "Type target...";
       inputTextEl.classList.toggle("empty", input.length === 0);
       hudEl.classList.toggle("streak-hot", streak >= 5);
+      updateRunTimer();
+      updateKeyDisplay();
     }
 
     function updateEnemyStyles() {
@@ -1298,16 +1445,19 @@
         }
       });
 
-      triggerPowerupVisual("FREEZE ACTIVE", 7000);
+      triggerPowerupVisual("FREEZE ACTIVE", FREEZE_DURATION);
       clearTimeout(freezeTimer);
+      freezeEndsAt = Date.now() + FREEZE_DURATION;
 
       freezeTimer = setTimeout(() => {
         gameFrozen = false;
+        freezeEndsAt = 0;
         enemies.forEach(enemy => {
           enemy.frozen = false;
           enemy.el.classList.remove("frozen");
         });
-      }, 7000);
+        updateHud();
+      }, FREEZE_DURATION);
 
       updateHud();
     }
@@ -1378,6 +1528,10 @@
 
     function nextWave() {
       wave++;
+      if (selectedRunLength === "quick" && wave > QUICK_RUN_MAX_WAVE) {
+        checkQuickRunEnd("waves");
+        return;
+      }
       destroyedThisWave = 0;
       powerupSpawnedThisWave = false;
       enemiesNeededForNextWave = 8 + wave * 2;
@@ -1404,7 +1558,7 @@
       input = "";
 
       if (lives <= 0) {
-        endGame();
+        endGame("lives");
       }
     }
 
@@ -1505,6 +1659,7 @@
     function startGame() {
       selectedMode = gameModeEl.value;
       selectedDifficulty = difficultyEl.value;
+      selectedRunLength = runLengthEl.value;
 
       if (selectedMode !== "numbers" && selectedDifficulty === "jill") {
         selectedDifficulty = "normal";
@@ -1526,6 +1681,8 @@
       gameFrozen = false;
       freezeBank = 0;
       wipeBank = 0;
+      quickRunEnded = false;
+      freezeEndsAt = 0;
       enemiesNeededForNextWave = 8;
       speed = settings.baseSpeed;
       spawnInterval = settings.spawnInterval;
@@ -1564,18 +1721,24 @@
       animationId = requestAnimationFrame(update);
     }
 
-    function endGame() {
+    function endGame(reason) {
       gameState = "gameover";
       stopSpawnTimer();
       cancelAnimationFrame(animationId);
       clearTimeout(freezeTimer);
       gameFrozen = false;
+      freezeEndsAt = 0;
       clearEnemies();
 
       const totalOutcomes = successfulHits + missedEnemies;
       const accuracy = totalOutcomes === 0 ? 100 : Math.round((successfulHits / totalOutcomes) * 100);
+      const runNote = reason === "time"
+        ? "<br>Quick run complete — time limit reached."
+        : reason === "waves"
+          ? "<br>Quick run complete — wave cap reached."
+          : "";
 
-      finalStatsEl.innerHTML = `Mode: <strong>${selectedMode.toUpperCase()}</strong><br>Difficulty: <strong>${selectedDifficulty.toUpperCase()}</strong><br>Final Score: <strong>${score}</strong><br>Wave Reached: <strong>${wave}</strong><br>Best Streak: <strong>${bestStreak}</strong><br>Accuracy: <strong>${accuracy}%</strong><br>High Score: <strong>${highScore}</strong>`;
+      finalStatsEl.innerHTML = `Mode: <strong>${selectedMode.toUpperCase()}</strong><br>Difficulty: <strong>${selectedDifficulty.toUpperCase()}</strong><br>Run: <strong>${selectedRunLength === "quick" ? "QUICK" : "ENDLESS"}</strong><br>Final Score: <strong>${score}</strong><br>Wave Reached: <strong>${wave}</strong><br>Best Streak: <strong>${bestStreak}</strong><br>Accuracy: <strong>${accuracy}%</strong><br>High Score: <strong>${highScore}</strong>${runNote}`;
       gameOverScreen.classList.add("active");
       updateHud();
       DeskArcadeLeaderboard.trySubmit('keystorm', score, { panel: lbPanel, boardKey: lbBoardKey(selectedMode, selectedDifficulty) }).catch(() => {});
@@ -1589,6 +1752,7 @@
       clearTimeout(powerupVisualTimer);
       clearTimeout(freezeTimer);
       gameFrozen = false;
+      freezeEndsAt = 0;
       clearEnemies();
       input = "";
       powerupStatusEl.classList.remove("active");

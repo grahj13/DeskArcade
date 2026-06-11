@@ -88,11 +88,11 @@ Upstash free tier includes 10,000 commands/day — plenty for a desk-break arcad
 | KeyStorm | `keystorm` | `default` | Higher |
 | Grid Viper | `snake` | `default` | Higher |
 | Shockline | `shockline` | `easy` / `normal` / `hard` | Lower (time) |
-| NeonReels | `neonreels` | `default` | Higher |
+| NeonReels | `neonreels` | `default` | Higher (biggest single win) |
 | Reacto | `reacto` | `default` | Lower (reaction ms) |
 | Perfect 10 | `perfect10` | `default` | Lower (diff ms) |
 | Lane Dash | `lanedash` | `default` | Higher |
-| Neon Search | `neonsearch` | `default` | Lower (time ms) |
+| Neon Search | `neonsearch` | `w8` / `w10` / `w14` | Lower (time ms) |
 | Fracture | `fracture` | `default` | Higher |
 | Signal Scan | `signalscan` | `default` | Higher (round) |
 | Word Forge | `wordforge` | `challenge` / `chill` | Higher |
@@ -143,6 +143,32 @@ Opening HTML files directly (`file://`) shows “Leaderboard offline” — expe
 - Scores can be spoofed without server validation; fine for casual office fun
 - For stricter anti-cheat later: validate game logic in the API before accepting scores
 
-## 9. Existing feedback form
+## 9. Word Forge dictionary
+
+Word Forge loads `games/wordforge/common-words.js` (~7k common words). Rebuild after editing word banks:
+
+```bash
+node games/wordforge/build-common-words.mjs
+```
+
+The legacy `dictionary.js` (~1.4MB Scrabble list) is not loaded by the game page.
+
+## 10. Desk-break session defaults
+
+Games ship with short-session defaults where applicable:
+
+| Game | Default session |
+|------|-----------------|
+| Reacto | Quick — 3 rounds, auto-advance |
+| KeyStorm | Quick — 60s or 3 waves |
+| NeonReels | 10 spins per session |
+| Run.exe | 90-second cap |
+| Pixel Glide | Desk break — 75s or 18 points |
+| Word Trap | Quick — 3 words |
+| Word Forge | Challenge — 45s (auto-starts) |
+| Fracture | Quick Break — levels 1–2 |
+| Signal Scan | Warmup round 1, soft-fail streak |
+
+## 11. Existing feedback form
 
 The hub feedback form still uses Google Apps Script — unchanged. Leaderboards are separate (Upstash only).
