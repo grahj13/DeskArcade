@@ -42,11 +42,28 @@
       overflow: hidden;
       border-left: 1px solid var(--border);
       border-right: 1px solid var(--border);
+      background:
+        repeating-linear-gradient(90deg, transparent 0, transparent 58px, rgba(255,255,255,0.018) 59px, transparent 60px),
+        radial-gradient(ellipse 80% 55% at 50% 0%, rgba(59,130,246,0.08), transparent 70%),
+        linear-gradient(180deg, rgba(8,8,18,0.4), rgba(6,6,12,0.95));
       transition: background 0.3s ease;
     }
 
     #game.powerup-active {
-      background: radial-gradient(circle at center, rgba(56,189,248,0.14), rgba(6,6,12,0.9));
+      background:
+        repeating-linear-gradient(90deg, transparent 0, transparent 58px, rgba(56,189,248,0.04) 59px, transparent 60px),
+        radial-gradient(circle at center, rgba(56,189,248,0.16), rgba(6,6,12,0.92));
+    }
+
+    #dangerZone {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 55px;
+      height: 22vh;
+      background: linear-gradient(180deg, transparent, rgba(239,68,68,0.06));
+      pointer-events: none;
+      z-index: 1;
     }
 
     #hud {
@@ -229,22 +246,109 @@
       color: var(--text);
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
       white-space: nowrap;
+      transition: color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
     }
 
     .enemy.powerup {
       color: var(--blue);
       border-color: rgba(56, 189, 248, 0.55);
       box-shadow: 0 4px 16px rgba(56, 189, 248, 0.22);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .power-badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      background: rgba(56, 189, 248, 0.14);
+      color: var(--blue);
+      flex-shrink: 0;
+    }
+
+    .power-badge.life {
+      border-color: rgba(239, 68, 68, 0.45);
+      background: rgba(239, 68, 68, 0.12);
+      color: #fca5a5;
     }
 
     .enemy.targeted {
       color: #fbbf24;
       border-color: rgba(245, 158, 11, 0.6);
+      box-shadow: 0 0 18px rgba(245, 158, 11, 0.22);
+      transform: scale(1.03);
     }
 
     .enemy.danger {
       color: var(--red);
       border-color: rgba(239, 68, 68, 0.6);
+      animation: dangerPulse 0.8s ease-in-out infinite;
+    }
+
+    .enemy.frozen {
+      color: #bae6fd;
+      border-color: rgba(125, 211, 252, 0.55);
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.28);
+      filter: saturate(0.85);
+    }
+
+    .enemy.pop {
+      animation: enemyPop 0.22s ease forwards;
+    }
+
+    .enemy.pop-power {
+      animation: enemyPopPower 0.28s ease forwards;
+    }
+
+    @keyframes dangerPulse {
+      0%, 100% { box-shadow: 0 0 0 rgba(239, 68, 68, 0); }
+      50% { box-shadow: 0 0 14px rgba(239, 68, 68, 0.35); }
+    }
+
+    @keyframes enemyPop {
+      to {
+        opacity: 0;
+        transform: scale(1.15);
+        filter: blur(2px);
+      }
+    }
+
+    @keyframes enemyPopPower {
+      to {
+        opacity: 0;
+        transform: scale(1.25);
+        filter: blur(3px) brightness(1.3);
+      }
+    }
+
+    .score-popup {
+      position: absolute;
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent-text);
+      pointer-events: none;
+      z-index: 7;
+      animation: scoreFloat 0.75s ease forwards;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+    }
+
+    .score-popup.power {
+      color: var(--blue);
+    }
+
+    .score-popup.streak {
+      color: #fbbf24;
+      font-size: 22px;
+    }
+
+    @keyframes scoreFloat {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-42px); }
     }
 
     #deadline {
@@ -275,7 +379,7 @@
       position: fixed;
       top: 30%;
       left: 50%;
-      transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%) scale(0.92);
       font-size: 42px;
       font-family: var(--font-display);
       font-weight: 700;
@@ -283,11 +387,24 @@
       opacity: 0;
       z-index: 10;
       pointer-events: none;
-      transition: opacity 0.35s ease;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      letter-spacing: 0.06em;
+      text-shadow: 0 4px 24px var(--accent-glow);
     }
 
     #waveBanner.show {
       opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    #hud.streak-hot #streak {
+      color: #fbbf24;
+      animation: streakPulse 0.9s ease-in-out infinite;
+    }
+
+    @keyframes streakPulse {
+      0%, 100% { text-shadow: 0 0 0 rgba(251,191,36,0); }
+      50% { text-shadow: 0 0 12px rgba(251,191,36,0.55); }
     }
 
     #sidePanel {
@@ -433,6 +550,17 @@
       color: var(--text-dim);
       font-size: 15px;
       opacity: 0.92;
+    }
+
+    .menu-best {
+      margin: 14px 0 0;
+      font-size: 14px;
+      color: var(--text-faint);
+    }
+
+    .menu-best strong {
+      color: var(--accent-text);
+      font-family: var(--font-mono);
     }
 
     h2 {
@@ -683,6 +811,7 @@
       <span id="inputText" class="empty">Type target...</span>
     </div>
 
+    <div id="dangerZone"></div>
     <div id="deadline"></div>
     <div id="deadlineLabel">DEAD LINE</div>
   </div>
@@ -719,7 +848,8 @@
     <div class="panel">
 <div class="menu-title-wrap">
   <img src="keystorm-logo.png" class="logo" alt="KeyStorm Logo">
-  <p class="tagline">Lock in, clear targets, build streaks. don’t hit the deadline</p>
+  <p class="tagline">Lock in, clear targets, build streaks — don’t cross the deadline.</p>
+  <p class="menu-best" id="menuBest">Best this board: <strong>0</strong></p>
 </div>
 
       <div class="settings">
@@ -798,6 +928,8 @@
     const lbPanel = document.getElementById('leaderboard');
 
     const game = document.getElementById("game");
+    const hudEl = document.getElementById("hud");
+    const menuBestEl = document.getElementById("menuBest");
     const scoreEl = document.getElementById("score");
     const waveEl = document.getElementById("wave");
     const livesEl = document.getElementById("lives");
@@ -821,8 +953,29 @@
       return `${mode}-${resolvedDiff}`;
     }
 
+    function highScoreStorageKey(mode = gameModeEl.value, diff = difficultyEl.value) {
+      return `keyStormBest_${lbBoardKey(mode, diff)}`;
+    }
+
+    function loadStoredHighScore(mode = gameModeEl.value, diff = difficultyEl.value) {
+      const boardKey = highScoreStorageKey(mode, diff);
+      const stored = Number(localStorage.getItem(boardKey) || 0);
+      const legacy = Number(localStorage.getItem("keyStormHighScore") || 0);
+      return Math.max(stored, legacy);
+    }
+
+    function saveHighScore() {
+      localStorage.setItem(highScoreStorageKey(selectedMode, selectedDifficulty), String(highScore));
+    }
+
+    function updateMenuBest() {
+      if (!menuBestEl) return;
+      menuBestEl.innerHTML = `Best this board: <strong>${loadStoredHighScore()}</strong>`;
+    }
+
     function refreshLeaderboard() {
       DeskArcadeLeaderboard.mountPanel(lbPanel, 'keystorm', lbBoardKey());
+      updateMenuBest();
     }
 
     refreshLeaderboard();
@@ -901,6 +1054,10 @@
     let spawnInterval = 1500;
     let spawnTimer = null;
     let animationId = null;
+    let runStartedAt = 0;
+    let awaitingFirstSpawn = false;
+    const SOFT_OPEN_MS = 6000;
+    const SOFT_OPEN_FIRST_DELAY = 1800;
     let gameState = "menu";
     let settings = difficultySettings.normal;
     let selectedMode = "numbers";
@@ -912,7 +1069,7 @@
     let freezeBank = 0;
     let wipeBank = 0;
 
-    let highScore = Number(localStorage.getItem("keyStormHighScore") || 0);
+    let highScore = loadStoredHighScore();
     highScoreEl.textContent = highScore;
 
     function updateDifficultyOptions() {
@@ -1023,12 +1180,13 @@
           text = Math.random() < 0.5 ? randomPowerupString() : randomPowerupWord();
         }
         el.className = "enemy powerup";
+        const badgeClass = power === "LIFE" ? "power-badge life" : "power-badge";
+        el.innerHTML = `<span class="${badgeClass}">${power}</span><span class="power-text">${text}</span>`;
       } else {
         text = randomTargetString();
         el.className = "enemy";
+        el.textContent = text;
       }
-
-      el.textContent = text;
       el.style.left = Math.random() * maxLeft + "px";
       el.style.top = safeTopGap + "px";
       game.appendChild(el);
@@ -1049,6 +1207,29 @@
       });
     }
 
+    function showScorePopup(x, y, text, type = "normal") {
+      const pop = document.createElement("div");
+      pop.className = "score-popup" + (type === "power" ? " power" : type === "streak" ? " streak" : "");
+      pop.textContent = text;
+      pop.style.left = x + "px";
+      pop.style.top = y + "px";
+      game.appendChild(pop);
+      setTimeout(() => pop.remove(), 800);
+    }
+
+    function destroyEnemy(index, popupText, popupType) {
+      const enemy = enemies[index];
+      if (!enemy || enemy.removing) return;
+      enemy.removing = true;
+      enemy.el.classList.add(enemy.type === "powerup" ? "pop-power" : "pop");
+      if (popupText) showScorePopup(enemy.x, enemy.y, popupText, popupType);
+      setTimeout(() => {
+        if (enemy.el.parentNode) enemy.el.remove();
+        const idx = enemies.indexOf(enemy);
+        if (idx !== -1) enemies.splice(idx, 1);
+      }, 220);
+    }
+
     function updateHud() {
       scoreEl.textContent = score;
       waveEl.textContent = wave;
@@ -1059,10 +1240,12 @@
       highScoreEl.textContent = highScore;
       inputTextEl.textContent = input || "Type target...";
       inputTextEl.classList.toggle("empty", input.length === 0);
+      hudEl.classList.toggle("streak-hot", streak >= 5);
     }
 
     function updateEnemyStyles() {
       enemies.forEach(enemy => {
+        if (enemy.removing) return;
         enemy.el.classList.toggle("targeted", input.length > 0 && enemy.text.startsWith(input));
         enemy.el.classList.toggle("danger", enemy.type === "enemy" && enemy.y > window.innerHeight * 0.72);
       });
@@ -1109,7 +1292,10 @@
       freezeBank--;
       gameFrozen = true;
       enemies.forEach(enemy => {
-        if (enemy.type === "enemy") enemy.frozen = true;
+        if (enemy.type === "enemy") {
+          enemy.frozen = true;
+          enemy.el.classList.add("frozen");
+        }
       });
 
       triggerPowerupVisual("FREEZE ACTIVE", 7000);
@@ -1117,7 +1303,10 @@
 
       freezeTimer = setTimeout(() => {
         gameFrozen = false;
-        enemies.forEach(enemy => enemy.frozen = false);
+        enemies.forEach(enemy => {
+          enemy.frozen = false;
+          enemy.el.classList.remove("frozen");
+        });
       }, 7000);
 
       updateHud();
@@ -1143,16 +1332,23 @@
     }
 
     function checkInputMatch() {
-      const matchIndex = enemies.findIndex(enemy => enemy.text === input);
+      const matchIndex = enemies.findIndex(enemy => !enemy.removing && enemy.text === input);
       if (matchIndex === -1) return;
 
       const enemy = enemies[matchIndex];
+      let popupText = "";
+      let popupType = "normal";
 
       if (enemy.type === "powerup") {
         activatePowerup(enemy.power);
-        score += Math.round(50 * settings.scoreMultiplier);
+        const bonus = Math.round(50 * settings.scoreMultiplier);
+        score += bonus;
+        popupText = `+${bonus} ${enemy.power}`;
+        popupType = "power";
       } else {
-        score += Math.round((enemy.text.length * 10 + wave * 5) * settings.scoreMultiplier);
+        const base = Math.round((enemy.text.length * 10 + wave * 5) * settings.scoreMultiplier);
+        score += base;
+        popupText = `+${base}`;
         streak++;
         successfulHits++;
         bestStreak = Math.max(bestStreak, streak);
@@ -1161,18 +1357,18 @@
           const streakBonus = Math.round(streak * 5 * settings.scoreMultiplier);
           score += streakBonus;
           showWaveBanner(`STREAK x${streak}`);
+          showScorePopup(enemy.x, enemy.y - 24, `+${streakBonus} STREAK`, "streak");
         }
 
         destroyedThisWave++;
       }
 
-      enemy.el.remove();
-      enemies.splice(matchIndex, 1);
+      destroyEnemy(matchIndex, popupText, popupType);
       input = "";
 
       if (score > highScore) {
         highScore = score;
-        localStorage.setItem("keyStormHighScore", String(highScore));
+        saveHighScore();
       }
 
       if (destroyedThisWave >= enemiesNeededForNextWave) {
@@ -1197,7 +1393,9 @@
 
     function loseLife(enemyIndex) {
       const enemy = enemies[enemyIndex];
-      enemy.el.remove();
+      if (!enemy || enemy.removing) return;
+      enemy.el.classList.add("pop");
+      setTimeout(() => { if (enemy.el.parentNode) enemy.el.remove(); }, 180);
       enemies.splice(enemyIndex, 1);
 
       missedEnemies++;
@@ -1215,9 +1413,10 @@
 
       for (let i = enemies.length - 1; i >= 0; i--) {
         const enemy = enemies[i];
+        if (enemy.removing) continue;
 
         if (!enemy.frozen) {
-          enemy.y += speed * enemy.speedMultiplier;
+          enemy.y += speed * enemy.speedMultiplier * getFallSpeedScale();
 
           if (enemy.zigzag) {
             const gameRect = game.getBoundingClientRect();
@@ -1248,11 +1447,48 @@
       animationId = requestAnimationFrame(update);
     }
 
+    function getSoftOpenProgress() {
+      if (!runStartedAt) return 1;
+      const elapsed = Date.now() - runStartedAt;
+      if (elapsed >= SOFT_OPEN_MS) return 1;
+      return elapsed / SOFT_OPEN_MS;
+    }
+
+    function getFallSpeedScale() {
+      const progress = getSoftOpenProgress();
+      return 0.5 + progress * 0.5;
+    }
+
+    function getSpawnDelay() {
+      const progress = getSoftOpenProgress();
+      const eased = progress * progress;
+      const multiplier = 2.4 - eased * 1.4;
+      return Math.round(spawnInterval * multiplier);
+    }
+
+    function scheduleNextSpawn() {
+      clearTimeout(spawnTimer);
+      if (gameState !== "playing") return;
+
+      let delay = getSpawnDelay();
+      if (awaitingFirstSpawn) {
+        delay = Math.max(delay, SOFT_OPEN_FIRST_DELAY);
+        awaitingFirstSpawn = false;
+      }
+
+      spawnTimer = setTimeout(() => {
+        if (gameState === "playing" && !gameFrozen) spawnEnemy();
+        scheduleNextSpawn();
+      }, delay);
+    }
+
     function resetSpawnTimer() {
-      clearInterval(spawnTimer);
-      spawnTimer = setInterval(() => {
-        if (!gameFrozen) spawnEnemy();
-      }, spawnInterval);
+      scheduleNextSpawn();
+    }
+
+    function stopSpawnTimer() {
+      clearTimeout(spawnTimer);
+      spawnTimer = null;
     }
 
     function clearEnemies() {
@@ -1276,7 +1512,8 @@
       }
 
       settings = difficultySettings[selectedDifficulty] || difficultySettings.normal;
-      lives = 1;
+      highScore = loadStoredHighScore(selectedMode, selectedDifficulty);
+      lives = selectedDifficulty === "easy" ? 2 : 1;
       score = 0;
       wave = 1;
       input = "";
@@ -1293,8 +1530,10 @@
       speed = settings.baseSpeed;
       spawnInterval = settings.spawnInterval;
       gameState = "playing";
+      runStartedAt = Date.now();
+      awaitingFirstSpawn = true;
 
-      clearInterval(spawnTimer);
+      stopSpawnTimer();
       clearTimeout(powerupVisualTimer);
       clearTimeout(freezeTimer);
       powerupStatusEl.classList.remove("active");
@@ -1304,7 +1543,6 @@
       updateHud();
       showWaveBanner("Wave 1");
       resetSpawnTimer();
-      spawnEnemy();
 
       cancelAnimationFrame(animationId);
       animationId = requestAnimationFrame(update);
@@ -1313,7 +1551,7 @@
     function pauseGame() {
       if (gameState !== "playing") return;
       gameState = "paused";
-      clearInterval(spawnTimer);
+      stopSpawnTimer();
       cancelAnimationFrame(animationId);
       pauseScreen.classList.add("active");
     }
@@ -1328,7 +1566,7 @@
 
     function endGame() {
       gameState = "gameover";
-      clearInterval(spawnTimer);
+      stopSpawnTimer();
       cancelAnimationFrame(animationId);
       clearTimeout(freezeTimer);
       gameFrozen = false;
@@ -1345,7 +1583,8 @@
 
     function quitToMenu() {
       gameState = "menu";
-      clearInterval(spawnTimer);
+      runStartedAt = 0;
+      stopSpawnTimer();
       cancelAnimationFrame(animationId);
       clearTimeout(powerupVisualTimer);
       clearTimeout(freezeTimer);
@@ -1414,7 +1653,7 @@
     document.getElementById("restartButton").addEventListener("click", startGame);
     document.getElementById("menuButton").addEventListener("click", quitToMenu);
 
-const homeUrl = "../../index.html";
+const homeUrl = "../../";
 
 document.getElementById("homeButtonMenu").addEventListener("click", () => {
   window.location.href = homeUrl;
