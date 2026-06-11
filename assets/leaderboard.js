@@ -3,7 +3,7 @@
  *
  * Usage in a game page:
  *   <link rel="stylesheet" href="../../assets/leaderboard.css">
- *   <script src="../../assets/leaderboard.js?v=3"></script>
+ *   <script src="../../assets/leaderboard.js?v=4"></script>
  *
  *   DeskArcadeLeaderboard.mountPanel(document.getElementById('lbMount'), 'snake');
  *
@@ -35,6 +35,14 @@
     const s = Math.floor(ms / 1000);
     const m = Math.floor(s / 60);
     return m + ':' + String(s % 60).padStart(2, '0');
+  }
+
+  function formatBoardLabel(boardKey) {
+    if (!boardKey || boardKey === 'default') return 'Arcade board';
+    return boardKey
+      .split(/[-_]/)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' · ');
   }
 
   function isLocalPreview() {
@@ -219,11 +227,13 @@
         '</tbody></table>';
     }
 
+    const boardLabel = formatBoardLabel(container.dataset.lbBoard || 'default');
+
     container.innerHTML = `
       <div class="da-lb-panel">
         <div class="da-lb-head">
           <span class="da-lb-title">Top 10</span>
-          <span class="da-lb-sub">Arcade board</span>
+          <span class="da-lb-sub">${boardLabel}</span>
         </div>
         ${body}
       </div>`;

@@ -73,63 +73,11 @@
     }
 
     .subline {
-      margin: 0 0 22px;
+      margin: 0;
       font-size: 15px;
       font-weight: 500;
       color: var(--text-dim);
       letter-spacing: 0.01em;
-    }
-
-    .hero-meta {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .meta-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 7px 15px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-pill);
-      background: var(--surface);
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-dim);
-      letter-spacing: 0.04em;
-    }
-
-    .meta-pill .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      box-shadow: 0 0 8px var(--accent);
-    }
-
-    /* ---------- Section heading ---------- */
-    .section-head {
-      display: flex;
-      align-items: baseline;
-      gap: 14px;
-      margin: 0 4px 18px;
-    }
-
-    .section-head h1 {
-      margin: 0;
-      font-family: var(--font-display);
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      color: var(--text);
-    }
-
-    .section-head .count {
-      font-family: var(--font-mono);
-      font-size: 13px;
-      color: var(--text-faint);
     }
 
     /* ---------- Game grid ---------- */
@@ -385,22 +333,12 @@
 
     <section class="hero">
       <img src="deskarcadelogo.png" alt="DeskArcade logo" class="main-logo">
-      <p class="subline">A curated collection of quick-hit desk games. Pick one, waste a few minutes in style.</p>
-      <div class="hero-meta">
-        <span class="meta-pill"><span class="dot"></span>16 games</span>
-        <span class="meta-pill"><span class="dot"></span>No installs</span>
-        <span class="meta-pill"><span class="dot"></span>Free forever</span>
-      </div>
+      <p class="subline">Quick desk-break games. Pick one and play.</p>
     </section>
-
-    <div class="section-head">
-      <h1>The Collection</h1>
-      <span class="count">16 titles</span>
-    </div>
 
     <section class="games-grid">
 
-      <a class="game-card" href="games/keystorm/index.html" aria-label="Play KeyStorm" style="--accent:#3b82f6">
+      <a class="game-card" href="games/keystorm/" aria-label="Play KeyStorm" style="--accent:#3b82f6">
         <div class="card-art"><img src="games/keystorm/keystorm-logo.png" alt="KeyStorm logo"></div>
         <div class="card-body">
           <h2>KeyStorm</h2>
@@ -409,7 +347,7 @@
         </div>
       </a>
 
-      <a class="game-card" href="games/snake/index.html" aria-label="Play Grid Viper" style="--accent:#10b981">
+      <a class="game-card" href="games/snake/" aria-label="Play Grid Viper" style="--accent:#10b981">
         <div class="card-art"><img src="games/snake/gridviperlogov2.png" alt="Grid Viper logo"></div>
         <div class="card-body">
           <h2>Grid Viper</h2>
@@ -418,7 +356,7 @@
         </div>
       </a>
 
-      <a class="game-card" href="games/shockline/index.html" aria-label="Play Shockline" style="--accent:#f59e0b">
+      <a class="game-card" href="games/shockline/" aria-label="Play Shockline" style="--accent:#f59e0b">
         <div class="card-art"><img src="games/shockline/shocklinelogo.png" alt="Shockline logo"></div>
         <div class="card-body">
           <h2>Shockline</h2>
@@ -427,7 +365,7 @@
         </div>
       </a>
 
-      <a class="game-card" href="games/neonreels/index.html" aria-label="Play NeonReels" style="--accent:#ec4899">
+      <a class="game-card" href="games/neonreels/" aria-label="Play NeonReels" style="--accent:#ec4899">
         <div class="card-art"><img src="games/neonreels/neonreelslogo.png" alt="NeonReels logo"></div>
         <div class="card-body">
           <h2>NeonReels</h2>
@@ -436,7 +374,7 @@
         </div>
       </a>
 
-      <a class="game-card" href="games/reacto/index.html" aria-label="Play Reacto" style="--accent:#ef4444">
+      <a class="game-card" href="games/reacto/" aria-label="Play Reacto" style="--accent:#ef4444">
         <div class="card-art"><img src="games/reacto/reactologo.png" alt="Reacto logo"></div>
         <div class="card-body">
           <h2>Reacto</h2>
@@ -445,7 +383,7 @@
         </div>
       </a>
 
-      <a class="game-card" href="games/perfect10/index.html" aria-label="Play Perfect 10" style="--accent:#06b6d4">
+      <a class="game-card" href="games/perfect10/" aria-label="Play Perfect 10" style="--accent:#06b6d4">
         <div class="card-art"><img src="games/perfect10/perfect10logo.png" alt="Perfect 10 logo"></div>
         <div class="card-body">
           <h2>Perfect 10</h2>
@@ -454,7 +392,7 @@
         </div>
       </a>
 
-      <a class="game-card" href="games/lanedash/index.html" aria-label="Play Lane Dash" style="--accent:#f97316">
+      <a class="game-card" href="games/lanedash/" aria-label="Play Lane Dash" style="--accent:#f97316">
         <div class="card-art"><img src="games/lanedash/lanedashlogo.png" alt="Lane Dash logo"></div>
         <div class="card-body">
           <h2>Lane Dash</h2>
@@ -463,7 +401,7 @@
         </div>
       </a>
 
-      <a class="game-card" href="games/neonsearch/index.html" aria-label="Play Neon Search" style="--accent:#8b5cf6">
+      <a class="game-card" href="games/neonsearch/" aria-label="Play Neon Search" style="--accent:#8b5cf6">
         <div class="card-art"><img src="games/neonsearch/neonsearchlogo.png" alt="Neon Search logo"></div>
         <div class="card-body">
           <h2>Neon Search</h2>
@@ -472,7 +410,7 @@
         </div>
       </a>
 
-      <a class="game-card" href="games/fracture/index.html" aria-label="Play Fracture" style="--accent:#a855f7">
+      <a class="game-card" href="games/fracture/" aria-label="Play Fracture" style="--accent:#a855f7">
         <div class="card-art"><img src="games/fracture/fracturelogo.png" alt="Fracture logo"></div>
         <div class="card-body">
           <h2>Fracture</h2>
@@ -481,7 +419,7 @@
         </div>
       </a>
 
-      <a class="game-card" href="games/signalscan/index.html" aria-label="Play Signal Scan" style="--accent:#14b8a6">
+      <a class="game-card" href="games/signalscan/" aria-label="Play Signal Scan" style="--accent:#14b8a6">
         <div class="card-art"><img src="games/signalscan/signalscanlogo.png" alt="Signal Scan logo"></div>
         <div class="card-body">
           <h2>Signal Scan</h2>
@@ -490,7 +428,7 @@
         </div>
       </a>
 
-      <a class="game-card" href="games/wordforge/index.html" aria-label="Play Word Forge" style="--accent:#eab308">
+      <a class="game-card" href="games/wordforge/" aria-label="Play Word Forge" style="--accent:#eab308">
         <div class="card-art"><img src="games/wordforge/wordforgelogo.png" alt="Word Forge logo"></div>
         <div class="card-body">
           <h2>Word Forge</h2>
@@ -499,7 +437,7 @@
         </div>
       </a>
 
-      <a class="game-card" href="games/runexe/index.html" aria-label="Play Run.exe" style="--accent:#84cc16">
+      <a class="game-card" href="games/runexe/" aria-label="Play Run.exe" style="--accent:#84cc16">
         <div class="card-art"><img src="games/runexe/runexelogo.png" alt="Run.exe logo"></div>
         <div class="card-body">
           <h2>Run.exe</h2>
@@ -508,7 +446,7 @@
         </div>
       </a>
 
-      <a class="game-card" href="games/perfecttrace/index.html" aria-label="Play Perfect Trace" style="--accent:#0ea5e9">
+      <a class="game-card" href="games/perfecttrace/" aria-label="Play Perfect Trace" style="--accent:#0ea5e9">
         <div class="card-art"><img src="games/perfecttrace/perfecttracelogo.png" alt="Perfect Trace logo"></div>
         <div class="card-body">
           <h2>Perfect Trace</h2>
@@ -517,7 +455,7 @@
         </div>
       </a>
 
-      <a class="game-card" href="games/pixelglide/index.html" aria-label="Play Pixel Glide" style="--accent:#6366f1">
+      <a class="game-card" href="games/pixelglide/" aria-label="Play Pixel Glide" style="--accent:#6366f1">
         <div class="card-art"><img src="games/pixelglide/pixelglidelogo.png" alt="Pixel Glide logo"></div>
         <div class="card-body">
           <h2>Pixel Glide</h2>
@@ -526,7 +464,7 @@
         </div>
       </a>
 
-      <a class="game-card" href="games/wordtrap/index.html" aria-label="Play Word Trap" style="--accent:#f43f5e">
+      <a class="game-card" href="games/wordtrap/" aria-label="Play Word Trap" style="--accent:#f43f5e">
         <div class="card-art"><img src="games/wordtrap/wordtraplogo.png" alt="Word Trap logo"></div>
         <div class="card-body">
           <h2>Word Trap</h2>
@@ -535,7 +473,7 @@
         </div>
       </a>
 
-      <a class="game-card" href="games/ghostpixel/index.html" aria-label="Play Ghost Pixel" style="--accent:#d946ef">
+      <a class="game-card" href="games/ghostpixel/" aria-label="Play Ghost Pixel" style="--accent:#d946ef">
         <div class="card-art"><img src="games/ghostpixel/ghostpixellogo.png" alt="Ghost Pixel logo"></div>
         <div class="card-body">
           <h2>Ghost Pixel</h2>

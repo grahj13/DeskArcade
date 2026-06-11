@@ -223,15 +223,15 @@
       font-size: 24px;
       font-family: var(--font-mono);
       padding: 6px 12px;
-      border: 1px solid var(--accent-border);
+      border: 1px solid var(--border-strong);
       border-radius: var(--radius-sm);
       background: rgba(10, 10, 20, 0.78);
-      color: var(--accent-text);
+      color: var(--text);
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
       white-space: nowrap;
     }
 
-    .powerup {
+    .enemy.powerup {
       color: var(--blue);
       border-color: rgba(56, 189, 248, 0.55);
       box-shadow: 0 4px 16px rgba(56, 189, 248, 0.22);
@@ -793,10 +793,9 @@
 		<button id="homeButton2" class="secondary">Return to Arcade</button>
       </div>
     </div>
-  </div>  <script src="../../assets/leaderboard.js?v=3"></script>
+  </div>  <script src="../../assets/leaderboard.js?v=4"></script>
   <script>
     const lbPanel = document.getElementById('leaderboard');
-    DeskArcadeLeaderboard.mountPanel(lbPanel, 'keystorm', 'default');
 
     const game = document.getElementById("game");
     const scoreEl = document.getElementById("score");
@@ -816,6 +815,17 @@
     const finalStatsEl = document.getElementById("finalStats");
     const gameModeEl = document.getElementById("gameMode");
     const difficultyEl = document.getElementById("difficulty");
+
+    function lbBoardKey(mode = gameModeEl.value, diff = difficultyEl.value) {
+      const resolvedDiff = mode !== "numbers" && diff === "jill" ? "normal" : diff;
+      return `${mode}-${resolvedDiff}`;
+    }
+
+    function refreshLeaderboard() {
+      DeskArcadeLeaderboard.mountPanel(lbPanel, 'keystorm', lbBoardKey());
+    }
+
+    refreshLeaderboard();
 
     const difficultySettings = {
       easy: {
@@ -1330,7 +1340,7 @@
       finalStatsEl.innerHTML = `Mode: <strong>${selectedMode.toUpperCase()}</strong><br>Difficulty: <strong>${selectedDifficulty.toUpperCase()}</strong><br>Final Score: <strong>${score}</strong><br>Wave Reached: <strong>${wave}</strong><br>Best Streak: <strong>${bestStreak}</strong><br>Accuracy: <strong>${accuracy}%</strong><br>High Score: <strong>${highScore}</strong>`;
       gameOverScreen.classList.add("active");
       updateHud();
-      DeskArcadeLeaderboard.trySubmit('keystorm', score, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+      DeskArcadeLeaderboard.trySubmit('keystorm', score, { panel: lbPanel, boardKey: lbBoardKey(selectedMode, selectedDifficulty) }).catch(() => {});
     }
 
     function quitToMenu() {
@@ -1393,7 +1403,11 @@
       updateHud();
     });
 
-    gameModeEl.addEventListener("change", updateDifficultyOptions);
+    gameModeEl.addEventListener("change", () => {
+      updateDifficultyOptions();
+      refreshLeaderboard();
+    });
+    difficultyEl.addEventListener("change", refreshLeaderboard);
     document.getElementById("startButton").addEventListener("click", startGame);
     document.getElementById("resumeButton").addEventListener("click", resumeGame);
     document.getElementById("quitButton").addEventListener("click", quitToMenu);

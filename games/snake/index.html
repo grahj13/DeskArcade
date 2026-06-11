@@ -493,10 +493,17 @@
         <div id="leaderboard"></div>
       </aside>
     </section>
-  </main>  <script src="../../assets/leaderboard.js?v=3"></script>
+  </main>  <script src="../../assets/leaderboard.js?v=4"></script>
   <script>
     const lbPanel = document.getElementById('leaderboard');
-    DeskArcadeLeaderboard.mountPanel(lbPanel, 'snake', 'default');
+
+    function lbBoardKey() {
+      return difficultyEl ? difficultyEl.value : 'normal';
+    }
+
+    function refreshLeaderboard() {
+      DeskArcadeLeaderboard.mountPanel(lbPanel, 'snake', lbBoardKey());
+    }
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -512,6 +519,8 @@
     const difficultyEl = document.getElementById('difficulty');
     const canvasWrap = document.querySelector('.canvas-wrap');
     const levelStat = speedEl.closest('.stat');
+
+    refreshLeaderboard();
 
 const startBtn = document.getElementById('startBtn');
 const pauseBtn = document.getElementById('pauseBtn');
@@ -695,7 +704,7 @@ const homeBtn = document.getElementById('homeBtn');
       draw();
       messageEl.textContent = reason;
       showOverlay('Game Over', `${reason} Final score: ${score}.`, 'Play Again');
-      DeskArcadeLeaderboard.trySubmit('snake', score, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+      DeskArcadeLeaderboard.trySubmit('snake', score, { panel: lbPanel, boardKey: lbBoardKey() }).catch(() => {});
     }
 
     function createFood() {
@@ -862,6 +871,7 @@ const homeBtn = document.getElementById('homeBtn');
     difficultyEl.addEventListener('change', () => {
       clearTimeout(gameLoop);
       resetState();
+      refreshLeaderboard();
       showOverlay('Difficulty Changed', `${difficultySettings[difficultyEl.value].label} mode loaded. Start when ready.`, 'Start Game');
     });
 
