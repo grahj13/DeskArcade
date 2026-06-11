@@ -510,7 +510,7 @@
         <div id="leaderboard"></div>
       </aside>
     </section>
-  </main>  <script src="../../assets/leaderboard.js?v=4"></script>
+  </main>  <script src="../../assets/leaderboard.js?v=5"></script>
   <script>
     const lbPanel = document.getElementById('leaderboard');
 
@@ -992,7 +992,15 @@ const homeBtn = document.getElementById('homeBtn');
       return messages[Math.floor(Math.random() * messages.length)];
     }
 
+    function shouldIgnoreGameKeys(event) {
+      if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return true;
+      const tag = event.target && event.target.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+    }
+
     document.addEventListener('keydown', (event) => {
+      if (shouldIgnoreGameKeys(event)) return;
+
       const key = event.key.toLowerCase();
 
       if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 'a', 's', 'd'].includes(key)) {

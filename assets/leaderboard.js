@@ -53,6 +53,11 @@
     return !isLocalPreview();
   }
 
+  function isModalOpen() {
+    const modal = document.getElementById('daLbModal');
+    return !!(modal && modal.classList.contains('open'));
+  }
+
   async function apiPost(body) {
     const res = await fetch(API, {
       method: 'POST',
@@ -154,6 +159,7 @@
         if (input.value && idx < 2) inputs[idx + 1].focus();
       };
       input.onkeydown = (e) => {
+        e.stopPropagation();
         if (e.key === 'Backspace' && !input.value && idx > 0) inputs[idx - 1].focus();
         if (e.key === 'Enter') submitBtn.click();
         if (e.key === 'Escape') skipBtn.click();
@@ -283,6 +289,7 @@
   global.DeskArcadeLeaderboard = {
     GAME_META,
     isEnabled,
+    isModalOpen,
     mountPanel,
     refreshPanel,
     trySubmit,

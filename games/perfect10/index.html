@@ -106,6 +106,19 @@ body{
   font-weight:700;
   color:var(--accent-text);
   margin-bottom:6px;
+  transition:color 0.2s ease, opacity 0.2s ease;
+}
+
+.result-time.counting{
+  color:var(--text-faint);
+  font-size:2.4rem;
+  letter-spacing:0.18em;
+  animation:countPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes countPulse{
+  0%,100%{opacity:0.35;}
+  50%{opacity:0.85;}
 }
 
 .result-detail{
@@ -287,7 +300,7 @@ body{
 
   <div class="footer">Created by JGDev</div>
 
-</main><script src="../../assets/leaderboard.js?v=4"></script>
+</main><script src="../../assets/leaderboard.js?v=5"></script>
 <script>
 const lbPanel = document.getElementById('leaderboard');
 DeskArcadeLeaderboard.mountPanel(lbPanel, 'perfect10', 'default');
@@ -297,7 +310,6 @@ const STORAGE_KEY = "perfect10";
 let running = false;
 let locked = false;
 let start = 0;
-let tickId = null;
 let bestDiff = null;
 let bestTime = null;
 let streak = 0;
@@ -362,27 +374,14 @@ function startGame() {
   btn.textContent = "STOP";
   btn.classList.add("stop");
 
-  status.textContent = "Counting...";
-  timeEl.textContent = "0.00";
-  detail.textContent = "";
+  status.textContent = "Counting... stop when you think it's 10 seconds";
+  timeEl.textContent = "···";
+  timeEl.classList.add("counting");
+  detail.textContent = "No peeking";
   newBest.textContent = "";
-
-  if (tickId) cancelAnimationFrame(tickId);
-  const tick = () => {
-    if (!running) return;
-    const elapsed = (performance.now() - start) / 1000;
-    timeEl.textContent = elapsed.toFixed(2);
-    tickId = requestAnimationFrame(tick);
-  };
-  tickId = requestAnimationFrame(tick);
 }
 
 function stopGame() {
-  if (tickId) {
-    cancelAnimationFrame(tickId);
-    tickId = null;
-  }
-
   const t = (performance.now() - start) / 1000;
   const diff = Math.abs(t - 10);
   const earlyLate = t < 10 ? "E" : "L";
@@ -399,6 +398,7 @@ function stopGame() {
   btn.textContent = "START";
   btn.classList.remove("stop");
 
+  timeEl.classList.remove("counting");
   timeEl.textContent = t.toFixed(2) + "s";
 
   let cls = "bad";
@@ -479,11 +479,6 @@ function updateHistory() {
 }
 
 function resetGame() {
-  if (tickId) {
-    cancelAnimationFrame(tickId);
-    tickId = null;
-  }
-
   running = false;
   locked = false;
   start = 0;
@@ -499,6 +494,7 @@ function resetGame() {
 
   status.textContent = "Ready when you are";
   timeEl.textContent = "10.00";
+  timeEl.classList.remove("counting");
   detail.textContent = "Target";
   detail.className = "result-detail";
   newBest.textContent = "";
