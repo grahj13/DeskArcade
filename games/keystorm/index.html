@@ -301,19 +301,7 @@
       z-index: 4;
     }
 
-    #notesPanel {
-      position: fixed;
-      right: 16px;
-      bottom: 24px;
-      width: 250px;
-      color: var(--text-dim);
-      font-size: 12px;
-      opacity: 0.9;
-      z-index: 4;
-    }
-
-    .side-section,
-    #notesContent {
+    .side-section {
       margin-bottom: 20px;
       padding: 14px 16px;
       border: 1px solid var(--border);
@@ -322,19 +310,7 @@
       box-shadow: var(--shadow-1);
     }
 
-
-    .side-section,
-    #notesContent {
-      margin-bottom: 20px;
-      padding: 14px 16px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      background: rgba(14,14,24,0.66);
-      box-shadow: var(--shadow-1);
-    }
-
-    .side-title,
-    .notes-header {
+    .side-title {
       font-size: 16px;
       margin-bottom: 12px;
       letter-spacing: 1px;
@@ -343,8 +319,7 @@
       color: var(--text);
     }
 
-    .side-text,
-    #notesContent {
+    .side-text {
       line-height: 1.7;
     }
 
@@ -452,19 +427,6 @@
 }
 	  
 	  
-    .version-badge {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 4px 10px;
-      border: 1px solid rgba(56,189,248,0.45);
-      border-radius: var(--radius-pill);
-      color: var(--blue);
-      font-size: 12px;
-      letter-spacing: 1px;
-      font-family: var(--font-mono);
-      background: var(--surface);
-    }
-
     .tagline {
       margin: 12px auto 0;
       max-width: 560px;
@@ -617,8 +579,7 @@
     }
 
     @media (max-width: 1200px) {
-      #sidePanel,
-      #notesPanel {
+      #sidePanel {
         display: none;
       }
     }
@@ -754,23 +715,10 @@
     <div id="leaderboard"></div>
   </div>
 
-  <div id="notesPanel">
-    <div class="notes-header">PATCH NOTES</div>
-    <div id="notesContent">
-		2.1 - UI & QOL Updates<br>
-        2.0 - Rebrand & Added Words / Mixed modes<br>
-        1.3 - Easy mode balanced, freeze fixed, scoring updated<br>
-        1.2 - Added Power-ups<br>
-        1.1 - Added Accuracy & Streaks<br>
-        1.0 - Game Release
-      </div>
-  </div>
-
   <div id="menuScreen" class="screen active">
     <div class="panel">
 <div class="menu-title-wrap">
   <img src="keystorm-logo.png" class="logo" alt="KeyStorm Logo">
-  <div class="version-badge">VERSION 2.1</div>
   <p class="tagline">Lock in, clear targets, build streaks. don’t hit the deadline</p>
 </div>
 
@@ -819,7 +767,7 @@
       </div>
 
       <p class="small" style="margin-top:14px;">Targets crossing the red line cost 1 life.</p>
-      <p class="small" style="margin-top:12px; opacity:0.6; position:relative; z-index:1;">Created by Jason</p>
+      <p class="small" style="margin-top:12px; opacity:0.6; position:relative; z-index:1;">Created by JGDev</p>
     </div>
   </div>
 
@@ -845,10 +793,7 @@
 		<button id="homeButton2" class="secondary">Return to Arcade</button>
       </div>
     </div>
-  </div>
-
-  <script src="../../assets/deskarcade-config.js"></script>
-  <script src="../../assets/leaderboard.js"></script>
+  </div>  <script src="../../assets/leaderboard.js"></script>
   <script>
     const lbPanel = document.getElementById('leaderboard');
     DeskArcadeLeaderboard.mountPanel(lbPanel, 'keystorm', 'default');

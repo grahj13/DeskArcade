@@ -1,17 +1,17 @@
 /**
- * DeskArcade — shared TOP 10 leaderboard (Supabase)
+ * DeskArcade — shared TOP 10 leaderboard (Upstash Redis via /api/leaderboard)
  *
  * Usage in a game page:
  *   <link rel="stylesheet" href="../../assets/leaderboard.css">
- *   <script src="../../assets/deskarcade-config.js"></script>
  *   <script src="../../assets/leaderboard.js"></script>
  *
  *   DeskArcadeLeaderboard.mountPanel(document.getElementById('lbMount'), 'snake');
  *
- *   // When the player finishes with a score:
  *   await DeskArcadeLeaderboard.trySubmit('snake', rawScore, { boardKey: 'default' });
  */
 (function (global) {
+  const API = '/api/leaderboard';
+
   const GAME_META = {
     keystorm:     { label: 'KeyStorm',      higher: true,  format: v => String(v) },
     snake:        { label: 'Grid Viper',    higher: true,  format: v => String(v) },
@@ -31,83 +31,82 @@
     ghostpixel:   { label: 'Ghost Pixel',   higher: true,  format: v => String(v) }
   };
 
+  let apiAvailable = null;
+
   function formatMs(ms) {
     const s = Math.floor(ms / 1000);
     const m = Math.floor(s / 60);
     return m + ':' + String(s % 60).padStart(2, '0');
   }
 
-  function getConfig() {
-    return global.DESK_ARCADE_CONFIG || null;
+  function isLocalPreview() {
+    return global.location.protocol === 'file:';
   }
 
   function isEnabled() {
-    const cfg = getConfig();
-    return !!(cfg && cfg.supabaseUrl && cfg.supabaseAnonKey);
+    return !isLocalPreview();
   }
 
-  function headers() {
-    const cfg = getConfig();
-    return {
-      'Content-Type': 'application/json',
-      apikey: cfg.supabaseAnonKey,
-      Authorization: 'Bearer ' + cfg.supabaseAnonKey
-    };
+  async function checkApi() {
+    if (apiAvailable !== null) return apiAvailable;
+    if (!isEnabled()) {
+      apiAvailable = false;
+      return false;
+    }
+    try {
+      const res = await fetch(API + '?game=snake&board=default');
+      apiAvailable = res.ok || res.status === 400;
+    } catch (_) {
+      apiAvailable = false;
+    }
+    return apiAvailable;
   }
 
-  function rpc(name, body) {
-    const cfg = getConfig();
-    return fetch(cfg.supabaseUrl + '/rest/v1/rpc/' + name, {
+  async function apiPost(body) {
+    const res = await fetch(API, {
       method: 'POST',
-      headers: headers(),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
-    }).then(r => r.json());
+    });
+    return res.json();
   }
 
   function normalizeScore(gameSlug, rawScore, meta) {
     const n = Number(rawScore);
     if (!Number.isFinite(n)) return null;
-    if (meta.higher) return Math.max(0, Math.round(n));
     return Math.max(0, Math.round(n));
   }
 
   async function fetchTop10(gameSlug, boardKey = 'default') {
-    if (!isEnabled()) return [];
+    if (!(await checkApi())) return [];
 
     const meta = GAME_META[gameSlug];
     if (!meta) return [];
 
-    const cfg = getConfig();
-    const order = meta.higher ? 'score.desc' : 'score.asc';
     const params = new URLSearchParams({
-      select: 'initials,score,created_at',
-      game_slug: 'eq.' + gameSlug,
-      board_key: 'eq.' + boardKey,
-      order: order,
-      limit: '10'
+      game: gameSlug,
+      board: boardKey
     });
 
-    const res = await fetch(
-      cfg.supabaseUrl + '/rest/v1/game_leaderboard_entries?' + params.toString(),
-      { headers: headers() }
-    );
-
+    const res = await fetch(API + '?' + params.toString());
     if (!res.ok) return [];
-    return res.json();
+
+    const data = await res.json();
+    return Array.isArray(data.entries) ? data.entries : [];
   }
 
   async function qualifies(gameSlug, score, boardKey = 'default') {
     const meta = GAME_META[gameSlug];
-    if (!meta || !isEnabled()) return false;
+    if (!meta || !(await checkApi())) return false;
 
-    const result = await rpc('leaderboard_qualifies', {
-      p_game_slug: gameSlug,
-      p_board_key: boardKey,
-      p_score: score,
-      p_higher_is_better: meta.higher
+    const result = await apiPost({
+      action: 'qualifies',
+      game: gameSlug,
+      boardKey,
+      score
     });
 
-    return result === true;
+    return result.qualifies === true;
   }
 
   function ensureModal() {
@@ -184,12 +183,12 @@
         }
 
         submitBtn.disabled = true;
-        const result = await rpc('submit_leaderboard_score', {
-          p_game_slug: gameSlug,
-          p_board_key: boardKey,
-          p_initials: initials,
-          p_score: score,
-          p_higher_is_better: meta.higher
+        const result = await apiPost({
+          action: 'submit',
+          game: gameSlug,
+          boardKey,
+          initials,
+          score
         });
         submitBtn.disabled = false;
 
@@ -199,17 +198,17 @@
     });
   }
 
-  function renderPanel(container, rows, gameSlug) {
+  function renderPanel(container, rows, gameSlug, offline) {
     const meta = GAME_META[gameSlug];
     if (!container) return;
 
-    if (!isEnabled()) {
+    if (offline) {
       container.innerHTML = `
         <div class="da-lb-panel">
           <div class="da-lb-head">
             <span class="da-lb-title">Top 10</span>
           </div>
-          <div class="da-lb-offline">Leaderboard offline — add deskarcade-config.js to enable.</div>
+          <div class="da-lb-offline">Leaderboard offline — deploy to Vercel with Upstash to enable.</div>
         </div>`;
       return;
     }
@@ -244,10 +243,11 @@
     container.dataset.lbGame = gameSlug;
     container.dataset.lbBoard = boardKey;
     try {
-      const rows = await fetchTop10(gameSlug, boardKey);
-      renderPanel(container, rows, gameSlug);
+      const offline = !(await checkApi());
+      const rows = offline ? [] : await fetchTop10(gameSlug, boardKey);
+      renderPanel(container, rows, gameSlug, offline);
     } catch (_) {
-      renderPanel(container, [], gameSlug);
+      renderPanel(container, [], gameSlug, true);
     }
   }
 
@@ -256,13 +256,9 @@
     await mountPanel(container, container.dataset.lbGame, container.dataset.lbBoard || 'default');
   }
 
-  /**
-   * Check qualification, prompt for initials if needed, submit, refresh panel.
-   * rawScore: game-native value (will be normalized to integer for storage)
-   */
   async function trySubmit(gameSlug, rawScore, options = {}) {
     const meta = GAME_META[gameSlug];
-    if (!meta || !isEnabled()) return false;
+    if (!meta || !(await checkApi())) return false;
 
     const boardKey = options.boardKey || 'default';
     const score = normalizeScore(gameSlug, rawScore, meta);

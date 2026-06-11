@@ -1,6 +1,6 @@
-# DeskArcade — Vercel + Supabase setup
+# DeskArcade — Vercel + Upstash setup
 
-DeskArcade is a **static site** (HTML/CSS/JS). No build step required.
+DeskArcade is a **static site** (HTML/CSS/JS) with a small **Vercel serverless API** for leaderboards. No build step required.
 
 ## 1. Push to GitHub
 
@@ -23,6 +23,8 @@ git push -u origin main
 5. Output directory: leave as **/** (root)
 6. Click **Deploy**
 
+Vercel will install `package.json` dependencies automatically for the `/api` routes.
+
 Your site will be live at `https://your-project.vercel.app` within a minute.
 
 ## 3. Connect DeskArcade.co.uk
@@ -41,53 +43,43 @@ Your site will be live at `https://your-project.vercel.app` within a minute.
 4. Wait for DNS propagation (often 5–30 minutes, sometimes up to 48h)
 5. Vercel will issue HTTPS automatically
 
-## 4. Supabase leaderboard
+## 4. Upstash Redis leaderboard
 
-### Create project
+### Create database
 
-1. [supabase.com](https://supabase.com) → **New project**
-2. Choose a region close to UK users (e.g. **London** if available, else **Frankfurt**)
-3. Save your database password
+1. Go to [console.upstash.com](https://console.upstash.com) → **Create database**
+2. Choose a region close to UK users (e.g. **London** / **eu-west-2**)
+3. Name it something like `deskarcade-lb`
+4. After creation, open the database → **REST API** tab
+5. Copy:
+   - **UPSTASH_REDIS_REST_URL**
+   - **UPSTASH_REDIS_REST_TOKEN**
 
-### Run the schema
+### Add env vars to Vercel
 
-1. Supabase dashboard → **SQL Editor**
-2. Paste the contents of [`supabase/schema.sql`](supabase/schema.sql)
-3. Click **Run**
+1. Vercel project → **Settings** → **Environment Variables**
+2. Add both variables for **Production** (and Preview if you want leaderboards on preview deploys):
 
-This creates:
-- `game_leaderboard_entries` table
-- `leaderboard_qualifies()` — checks if a score makes top 10
-- `submit_leaderboard_score()` — saves a 3-character name + score
+| Name | Value |
+|------|-------|
+| `UPSTASH_REDIS_REST_URL` | From Upstash REST API tab |
+| `UPSTASH_REDIS_REST_TOKEN` | From Upstash REST API tab |
 
-### Get API keys
+3. **Redeploy** the project (Deployments → ⋯ → Redeploy) so the API picks up the new vars.
 
-1. **Project Settings** → **API**
-2. Copy:
-   - **Project URL** → `supabaseUrl`
-   - **anon public** key → `supabaseAnonKey`
+No client-side config file is needed — secrets stay on the server.
 
-### Configure the site
+### Free tier notes
 
-```bash
-cp assets/deskarcade-config.example.js assets/deskarcade-config.js
-```
-
-Edit `assets/deskarcade-config.js` with your real values.
-
-> `deskarcade-config.js` is gitignored. For Vercel, either:
-> - Commit a build step that writes the file from env vars, or
-> - Add the file in Vercel’s file tree once (acceptable for anon key + RLS), or
-> - Use Vercel **Environment Variables** and a tiny build script (optional upgrade)
-
-Redeploy after adding config.
+Upstash free tier includes 10,000 commands/day — plenty for a desk-break arcade. Each score submit uses a handful of Redis commands; reads are cheap.
 
 ## 5. How leaderboards work
 
-- Each game has its own **Top 10** board in Supabase
+- Each game has its own **Top 10** board stored in Upstash Redis (sorted sets)
 - When a player beats the 10th-place score, they get the classic **3-character name** prompt (`JAS`, `BOB`, `X7K`…)
 - Scores are stored as integers; display formatting is handled per game in `assets/leaderboard.js`
 - Lower-is-better games (Reacto, Perfect 10, Shockline, Neon Search) store time/diff in **milliseconds**
+- API route: `GET /api/leaderboard?game=snake&board=default` and `POST /api/leaderboard`
 
 ### Per-game score keys
 
@@ -122,7 +114,6 @@ Before `</body>`:
 
 ```html
 <div id="leaderboard"></div>
-<script src="../../assets/deskarcade-config.js"></script>
 <script src="../../assets/leaderboard.js"></script>
 <script>
   DeskArcadeLeaderboard.mountPanel(document.getElementById('leaderboard'), 'snake');
@@ -137,12 +128,21 @@ await DeskArcadeLeaderboard.trySubmit('snake', score, {
 });
 ```
 
-## 7. Office / desktop notes
+## 7. Local development
+
+Leaderboards need the Vercel API and Upstash env vars. Options:
+
+- **`vercel dev`** — runs static files + API locally (install Vercel CLI, link project, pull env vars)
+- **Preview deploy** — test on a Vercel preview URL after pushing a branch
+
+Opening HTML files directly (`file://`) shows “Leaderboard offline” — expected.
+
+## 8. Office / desktop notes
 
 - Leaderboards are **global** (all visitors compete) — perfect for a public desk-break arcade
 - Scores can be spoofed without server validation; fine for casual office fun
-- For stricter anti-cheat later: add Vercel serverless functions that validate game logic before insert
+- For stricter anti-cheat later: validate game logic in the API before accepting scores
 
-## 8. Existing feedback form
+## 9. Existing feedback form
 
-The hub feedback form still uses Google Apps Script — unchanged. Leaderboards are separate (Supabase only).
+The hub feedback form still uses Google Apps Script — unchanged. Leaderboards are separate (Upstash only).
