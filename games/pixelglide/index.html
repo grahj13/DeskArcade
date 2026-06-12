@@ -648,7 +648,30 @@
       }
 
       let lastFlapAt = 0;
+      let scoreSubmitPending = false;
+
+      function lbBlocksInput() {
+        return scoreSubmitPending ||
+          (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen());
+      }
+
+      async function submitRunScore() {
+        scoreSubmitPending = true;
+        try {
+          if (state.score > 0) {
+            await DeskArcadeLeaderboard.trySubmit('pixelglide', state.score, { panel: lbPanel, boardKey: 'default' });
+          } else {
+            await DeskArcadeLeaderboard.refreshPanel(lbPanel);
+          }
+        } catch (_) {
+          await DeskArcadeLeaderboard.refreshPanel(lbPanel).catch(() => {});
+        } finally {
+          scoreSubmitPending = false;
+        }
+      }
+
       function flap() {
+        if (lbBlocksInput()) return;
         const now = performance.now();
         if (state.mode === 'playing' && now - lastFlapAt < 110) return;
         if (state.mode === 'ready' || state.mode === 'gameover') {
@@ -677,7 +700,7 @@
         state.messageTimer = 75;
         beep(760, 0.06, 'triangle', 0.025);
         if (state.mode === 'paused') renderPauseMenu();
-        if (state.mode === 'gameover') renderDeathMenu('Wiped Out');
+        if (state.mode === 'gameover') renderEndScreen('Wiped Out', '', 'Press to restart');
       }
 
       function cycleTheme() {
@@ -687,7 +710,7 @@
         state.messageTimer = 70;
         beep(620, 0.06, 'triangle', 0.025);
         if (state.mode === 'paused') renderPauseMenu();
-        if (state.mode === 'gameover') renderDeathMenu('Wiped Out');
+        if (state.mode === 'gameover') renderEndScreen('Wiped Out', '', 'Press to restart');
       }
 
       function toggleSound() {
@@ -725,18 +748,7 @@
         state.mode === 'paused' ? resume() : pause();
       }
 
-      function renderDeathMenu(title) {
-        showOverlay(
-          title,
-          `<p>Score: <strong class="statline">${state.score}</strong></p>
-           <p>Best: <strong>${best}</strong></p>`,
-          'Press to restart'
-        );
-      }
-
-      function endDeskBreak(reason) {
-        if (state.mode !== 'playing') return;
-        state.mode = 'gameover';
+      function applyPersonalBest() {
         const oldBest = best;
         if (state.score > best) {
           best = state.score;
@@ -745,14 +757,37 @@
         }
         const newlyUnlocked = skins.find(s => oldBest < s.unlock && best >= s.unlock);
         state.unlockLine = newlyUnlocked ? `<p class="unlock">Unlocked: <strong>${newlyUnlocked.name}</strong></p>` : '';
+        state.personalBestLine = state.score > oldBest && state.score > 0
+          ? '<p class="unlock">New personal best saved.</p>'
+          : '';
+        return oldBest;
+      }
+
+      function renderEndScreen(title, extraLines, pulse) {
+        const extras = [extraLines, state.personalBestLine, state.unlockLine].filter(Boolean).join('');
         showOverlay(
-          'Desk break done',
-          `<p>${reason}</p>
-           <p>Score: <strong class="statline">${state.score}</strong></p>
-           <p>Best: <strong>${best}</strong>${state.unlockLine || ''}</p>`,
-          'Press to play again'
+          title,
+          `<p>Score: <strong class="statline">${state.score}</strong></p>
+           <p>Best: <strong>${best}</strong></p>${extras}
+           <p class="tiny">Top-10 runs can be entered on the board below.</p>`,
+          pulse
         );
-        DeskArcadeLeaderboard.trySubmit('pixelglide', state.score, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+      }
+
+      function endDeskBreak(reason) {
+        if (state.mode !== 'playing') return;
+        state.mode = 'gameover';
+        applyPersonalBest();
+        renderEndScreen(
+          'Desk break done',
+          `<p>${reason}</p>`,
+          scoreSubmitPending ? 'Saving score…' : 'Press to play again'
+        );
+        void submitRunScore().then(() => {
+          if (state.mode === 'gameover') {
+            renderEndScreen('Desk break done', `<p>${reason}</p>`, 'Press to play again');
+          }
+        });
       }
 
       function gameOver() {
@@ -773,18 +808,13 @@
         burst(player.x, player.y, 32, '#ef4444');
         beep(110, 0.2, 'sawtooth', 0.04);
 
-        const oldBest = best;
-        if (state.score > best) {
-          best = state.score;
-          localStorage.setItem(keys.best, String(best));
-          bestScoreEl.textContent = best;
-        }
-
-        const newlyUnlocked = skins.find(s => oldBest < s.unlock && best >= s.unlock);
-        state.unlockLine = newlyUnlocked ? `<p class="unlock">Unlocked skin: <strong>${newlyUnlocked.name}</strong></p>` : '';
-        renderDeathMenu('Wiped Out');
-
-        DeskArcadeLeaderboard.trySubmit('pixelglide', state.score, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+        applyPersonalBest();
+        renderEndScreen('Wiped Out', '', scoreSubmitPending ? 'Saving score…' : 'Press to restart');
+        void submitRunScore().then(() => {
+          if (state.mode === 'gameover') {
+            renderEndScreen('Wiped Out', '', 'Press to restart');
+          }
+        });
       }
 
       function update(dt) {
@@ -1195,6 +1225,7 @@
       }
 
       function handleKey(e) {
+        if (lbBlocksInput()) return;
         if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) {
           if (e.repeat) return;
           e.preventDefault();
@@ -1208,6 +1239,7 @@
 
       canvas.addEventListener('pointerdown', flap);
       panel.addEventListener('pointerdown', () => {
+        if (lbBlocksInput()) return;
         if ((state.mode === 'paused' || state.mode === 'gameover') && panel.scrollHeight > panel.clientHeight) {
           const nearBottom = panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 8;
           if (!nearBottom) return;
