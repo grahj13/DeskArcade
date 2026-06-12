@@ -348,7 +348,7 @@
           <img src="pixelglidelogo.png" alt="Pixel Glide" class="menu-logo">
           <h2>Ready?</h2>
           <p>Tap, click, or press <span class="kbd">Space</span> to glide upward.</p>
-          <p>Near-miss gates to build combo. Every milestone unlocks a new skin.</p>
+          <p>Thread the gaps — desk break ends at 18 points or 75 seconds.</p>
           <p class="tiny"><span class="kbd">P</span> pause · <span class="kbd">M</span> sound · <span class="kbd">S</span> skin · <span class="kbd">T</span> theme</p>
           <p class="pulse">Press to start</p>
         </div>
@@ -375,6 +375,12 @@
       const W = canvas.width;
       const H = canvas.height;
       const groundH = 48;
+      const TARGET_FPS = 60;
+      const MIN_GATE_SPACING = 290;
+      const COLLISION_PAD = 5;
+      const SPAWN_INVINC_MS = 900;
+      let lastFrameTime = performance.now();
+      let shakePhase = 0;
 
       const keys = {
         best: 'pixelGlideBest',
@@ -453,9 +459,10 @@
         x: Math.round(W * 0.22),
         y: H * 0.43,
         r: 15,
+        hitR: 11,
         vy: 0,
-        gravity: 0.36,
-        lift: -7.05,
+        gravity: 0.34,
+        lift: -6.65,
         rot: 0
       };
 
@@ -470,10 +477,15 @@
       const rand = (min, max) => Math.random() * (max - min) + min;
       const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
+      let lastBeepAt = 0;
       function beep(freq = 440, dur = 0.08, type = 'square', gain = 0.03) {
         if (!soundOn) return;
+        const now = performance.now();
+        if (now - lastBeepAt < 45) return;
+        lastBeepAt = now;
         try {
           audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+          if (audioCtx.state === 'suspended') audioCtx.resume();
           const osc = audioCtx.createOscillator();
           const g = audioCtx.createGain();
           osc.type = type;
@@ -552,7 +564,7 @@
         state.mode = 'playing';
         state.score = 0;
         state.frame = 0;
-        state.speed = 2.15;
+        state.speed = 2.05;
         state.shake = 0;
         state.flash = 0;
         state.combo = 0;
@@ -563,32 +575,37 @@
         state.particles = [];
         state.message = '';
         state.messageTimer = 0;
+        state.invincibleUntil = performance.now() + SPAWN_INVINC_MS;
         player.y = H * 0.43;
         player.vy = 0;
         sessionStart = performance.now();
-        spawnGate(W + 130);
-        spawnGate(W + 360);
+        lastFrameTime = performance.now();
+        spawnGate(W + 160);
+        spawnGate(W + 160 + MIN_GATE_SPACING);
         hideOverlay();
         beep(660, 0.07, 'square', 0.035);
       }
 
       function gapForScore() {
-        if (state.score < 10) return 198 - state.score * 4;
-        return Math.max(118, 172 - Math.floor((state.score - 10) / 6) * 5);
+        if (state.score < 12) return 210 - state.score * 3;
+        return Math.max(128, 180 - Math.floor((state.score - 12) / 8) * 4);
       }
 
       function speedForScore() {
-        if (state.score < 10) return Math.min(3.6, 2.15 + state.score * 0.055);
-        return Math.min(5.45, 3.6 + (state.score - 10) * 0.032);
+        if (state.score < 12) return Math.min(3.2, 2.05 + state.score * 0.04);
+        return Math.min(4.6, 3.2 + (state.score - 12) * 0.022);
       }
 
-      function spawnGate(x = W + 40) {
+      function spawnGate(x) {
         const gap = gapForScore();
-        const margin = 58;
+        const margin = 52;
         const centre = rand(margin + gap / 2, H - groundH - margin - gap / 2);
-        const type = state.score >= 15 && Math.random() < 0.22 ? 'moving' : 'normal';
+        const type = state.score >= 28 && Math.random() < 0.15 ? 'moving' : 'normal';
+        const spawnX = x ?? W + 50;
+        const last = state.gates[state.gates.length - 1];
+        if (last && spawnX - last.x < MIN_GATE_SPACING) return;
         state.gates.push({
-          x,
+          x: spawnX,
           w: 68,
           gapY: centre - gap / 2,
           baseGapY: centre - gap / 2,
@@ -597,9 +614,22 @@
           near: false,
           pulse: rand(0, Math.PI * 2),
           type,
-          amp: rand(16, 34),
+          amp: rand(10, 18),
           phase: rand(0, Math.PI * 2)
         });
+      }
+
+      function gateCollision(gate) {
+        const pad = COLLISION_PAD;
+        const left = gate.x + pad;
+        const right = gate.x + gate.w - pad;
+        const gapTop = gate.gapY + pad;
+        const gapBottom = gate.gapY + gate.gapH - pad;
+        const hr = player.hitR;
+        const withinX = player.x + hr > left && player.x - hr < right;
+        const hitsTop = player.y - hr < gapTop;
+        const hitsBottom = player.y + hr > gapBottom;
+        return withinX && (hitsTop || hitsBottom);
       }
 
       function burst(x, y, amount, colour) {
@@ -617,9 +647,13 @@
         }
       }
 
+      let lastFlapAt = 0;
       function flap() {
+        const now = performance.now();
+        if (state.mode === 'playing' && now - lastFlapAt < 110) return;
         if (state.mode === 'ready' || state.mode === 'gameover') {
           resetGame();
+          lastFlapAt = now;
           player.vy = player.lift;
           burst(player.x - 10, player.y + 16, 8, '#818cf8');
           return;
@@ -629,6 +663,7 @@
           return;
         }
         if (state.mode !== 'playing') return;
+        lastFlapAt = now;
         player.vy = player.lift;
         burst(player.x - 12, player.y + 14, 5, '#818cf8');
         beep(520, 0.045, 'square', 0.025);
@@ -642,7 +677,7 @@
         state.messageTimer = 75;
         beep(760, 0.06, 'triangle', 0.025);
         if (state.mode === 'paused') renderPauseMenu();
-        if (state.mode === 'gameover') renderDeathMenu('System Crash');
+        if (state.mode === 'gameover') renderDeathMenu('Wiped Out');
       }
 
       function cycleTheme() {
@@ -652,7 +687,7 @@
         state.messageTimer = 70;
         beep(620, 0.06, 'triangle', 0.025);
         if (state.mode === 'paused') renderPauseMenu();
-        if (state.mode === 'gameover') renderDeathMenu('System Crash');
+        if (state.mode === 'gameover') renderDeathMenu('Wiped Out');
       }
 
       function toggleSound() {
@@ -747,16 +782,17 @@
 
         const newlyUnlocked = skins.find(s => oldBest < s.unlock && best >= s.unlock);
         state.unlockLine = newlyUnlocked ? `<p class="unlock">Unlocked skin: <strong>${newlyUnlocked.name}</strong></p>` : '';
-        renderDeathMenu('System Crash');
+        renderDeathMenu('Wiped Out');
 
         DeskArcadeLeaderboard.trySubmit('pixelglide', state.score, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
       }
 
-      function update() {
+      function update(dt) {
+        const step = clamp(dt / (1000 / TARGET_FPS), 0.5, 2.5);
         state.frame++;
 
         for (const star of state.stars) {
-          star.x -= state.speed * (0.12 + star.s * 0.08);
+          star.x -= state.speed * step * (0.12 + star.s * 0.08);
           if (star.x < -4) {
             star.x = W + 4;
             star.y = rand(0, H - groundH);
@@ -764,7 +800,7 @@
         }
 
         for (const cloud of state.clouds) {
-          cloud.x -= state.speed * 0.08;
+          cloud.x -= state.speed * step * 0.08;
           if (cloud.x < -cloud.w) {
             cloud.x = W + rand(20, 120);
             cloud.y = rand(55, H * 0.55);
@@ -773,67 +809,83 @@
 
         state.particles = state.particles.filter(p => p.life > 0);
         for (const p of state.particles) {
-          p.x += p.vx;
-          p.y += p.vy;
-          p.life--;
-          p.vy += 0.03;
+          p.x += p.vx * step;
+          p.y += p.vy * step;
+          p.life -= step;
+          p.vy += 0.03 * step;
         }
 
-        if (state.messageTimer > 0) state.messageTimer--;
-        if (state.comboTimer > 0) state.comboTimer--;
+        if (state.messageTimer > 0) state.messageTimer -= step;
+        if (state.comboTimer > 0) state.comboTimer -= step;
         else state.combo = 0;
 
         if (state.mode !== 'playing') return;
 
         state.speed = speedForScore();
-        if (state.score >= DESK_BREAK_SCORE || (performance.now() - sessionStart) / 1000 >= DESK_BREAK_SEC) {
+        const elapsedSec = (performance.now() - sessionStart) / 1000;
+        const timeLeft = DESK_BREAK_SEC - elapsedSec;
+        if (timeLeft <= 8 && timeLeft > 0 && Math.floor(timeLeft) !== state._lastWarn) {
+          state._lastWarn = Math.floor(timeLeft);
+          state.message = `${Math.ceil(timeLeft)}s left`;
+          state.messageTimer = 55;
+        }
+        if (state.score >= DESK_BREAK_SCORE - 3 && state.score < DESK_BREAK_SCORE) {
+          state.message = `${DESK_BREAK_SCORE - state.score} to finish`;
+          state.messageTimer = 45;
+        }
+        if (state.score >= DESK_BREAK_SCORE || elapsedSec >= DESK_BREAK_SEC) {
           endDeskBreak(state.score >= DESK_BREAK_SCORE ? 'Nice run — score target hit.' : 'Time\'s up — good desk break.');
           return;
         }
-        player.vy += player.gravity;
-        player.vy = Math.min(player.vy, 9.6);
-        player.y += player.vy;
+
+        player.vy += player.gravity * step;
+        player.vy = Math.min(player.vy, 9.2);
+        player.y += player.vy * step;
         player.rot = clamp(player.vy / 9, -0.55, 0.9);
 
-        if (player.y - player.r < 0) {
-          player.y = player.r;
+        if (player.y - player.hitR < 0) {
+          player.y = player.hitR;
           player.vy = 0;
         }
 
-        if (player.y + player.r > H - groundH) {
-          player.y = H - groundH - player.r;
+        const groundY = H - groundH - player.hitR - 2;
+        if (player.y > groundY) {
+          player.y = groundY;
           gameOver();
         }
 
+        const invincible = performance.now() < state.invincibleUntil;
+
         for (const gate of state.gates) {
-          gate.x -= state.speed;
-          gate.pulse += 0.05;
+          gate.x -= state.speed * step;
+          gate.pulse += 0.05 * step;
           if (gate.type === 'moving') {
-            gate.gapY = gate.baseGapY + Math.sin(state.frame * 0.035 + gate.phase) * gate.amp;
+            gate.gapY = gate.baseGapY + Math.sin(state.frame * 0.028 + gate.phase) * gate.amp;
           }
 
-          const withinX = player.x + player.r > gate.x && player.x - player.r < gate.x + gate.w;
-          const hitsTop = player.y - player.r < gate.gapY;
-          const hitsBottom = player.y + player.r > gate.gapY + gate.gapH;
+          if (!invincible && gateCollision(gate)) {
+            gameOver();
+            return;
+          }
 
-          if (withinX && (hitsTop || hitsBottom)) gameOver();
-
-          const closeToTop = Math.abs((player.y - player.r) - gate.gapY);
-          const closeToBottom = Math.abs((gate.gapY + gate.gapH) - (player.y + player.r));
-          if (withinX && !gate.near && Math.min(closeToTop, closeToBottom) < 12 && !hitsTop && !hitsBottom) {
+          const hr = player.hitR;
+          const withinX = player.x + hr > gate.x && player.x - hr < gate.x + gate.w;
+          const closeToTop = Math.abs((player.y - hr) - gate.gapY);
+          const closeToBottom = Math.abs((gate.gapY + gate.gapH) - (player.y + hr));
+          const hitsTop = player.y - hr < gate.gapY;
+          const hitsBottom = player.y + hr > gate.gapY + gate.gapH;
+          if (withinX && !gate.near && Math.min(closeToTop, closeToBottom) < 14 && !hitsTop && !hitsBottom) {
             gate.near = true;
             state.nearMisses++;
             state.combo++;
             state.runBestCombo = Math.max(state.runBestCombo, state.combo);
             state.comboTimer = 150;
-            state.score += Math.min(3, state.combo);
-            state.message = `NEAR MISS x${state.combo}`;
-            state.messageTimer = 65;
-            burst(player.x, player.y, 14, '#38bdf8');
-            beep(900 + state.combo * 60, 0.045, 'triangle', 0.03);
+            state.message = `CLOSE x${state.combo}`;
+            state.messageTimer = 55;
+            burst(player.x, player.y, 10, '#38bdf8');
           }
 
-          if (!gate.passed && gate.x + gate.w < player.x - player.r) {
+          if (!gate.passed && gate.x + gate.w < player.x - hr) {
             gate.passed = true;
             state.score++;
             burst(player.x - 24, player.y, 10, '#f59e0b');
@@ -841,17 +893,19 @@
             if (state.score % 10 === 0) {
               state.message = 'SPEED UP';
               state.messageTimer = 70;
-              state.shake = 5;
+              state.shake = 4;
             }
           }
         }
 
         state.gates = state.gates.filter(g => g.x + g.w > -20);
         const lastGate = state.gates[state.gates.length - 1];
-        if (!lastGate || lastGate.x < W - 200) spawnGate();
+        if (!lastGate || lastGate.x < W - 220) {
+          spawnGate(lastGate ? lastGate.x + MIN_GATE_SPACING : W + 50);
+        }
 
-        if (state.shake > 0) state.shake--;
-        if (state.flash > 0) state.flash--;
+        if (state.shake > 0) state.shake -= step;
+        if (state.flash > 0) state.flash -= step;
       }
 
       function drawBackground() {
@@ -1102,10 +1156,16 @@
         player.rot = Math.sin(state.frame * 0.04) * 0.12;
       }
 
-      function render() {
-        update();
+      function render(now) {
+        const dt = clamp(now - lastFrameTime, 8, 50);
+        lastFrameTime = now;
+        update(dt);
         ctx.save();
-        if (state.shake > 0) ctx.translate(rand(-state.shake, state.shake), rand(-state.shake, state.shake));
+        if (state.shake > 0) {
+          shakePhase += 0.9;
+          const s = state.shake * 0.35;
+          ctx.translate(Math.sin(shakePhase) * s, Math.cos(shakePhase * 1.3) * s);
+        }
         drawBackground();
         drawReadyGhost();
         drawGates();
@@ -1119,11 +1179,24 @@
           ctx.fillRect(0, 0, W, H);
         }
         ctx.restore();
+
+        if (state.mode === 'playing' && performance.now() < state.invincibleUntil) {
+          ctx.save();
+          ctx.globalAlpha = 0.35 + Math.sin(state.frame * 0.2) * 0.15;
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(player.x, player.y, player.hitR + 4, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
         requestAnimationFrame(render);
       }
 
       function handleKey(e) {
         if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) {
+          if (e.repeat) return;
           e.preventDefault();
           flap();
         }
@@ -1145,9 +1218,14 @@
       soundBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSound(); });
       pauseBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePause(); });
 
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && state.mode === 'playing') pause();
+        lastFrameTime = performance.now();
+      });
+
       resetSky();
       spawnGate(W + 260);
-      render();
+      requestAnimationFrame(render);
     })();
   </script>
 </body>
