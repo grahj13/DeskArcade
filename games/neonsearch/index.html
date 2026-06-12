@@ -368,14 +368,14 @@ button:hover {
 </div><script src="../../assets/leaderboard.js?v=5"></script>
 <script>
 const lbPanel = document.getElementById('leaderboard');
+const size = 12;
+let wordCount = 8;
 
 function getBoardKey(){
   return 'w' + wordCount;
 }
 
 DeskArcadeLeaderboard.mountPanel(lbPanel, 'neonsearch', getBoardKey());
-
-const size = 12;
 
 const bank = [...new Set([
   "ARCADE","NEON","PIXEL","LASER","CYBER","MATRIX","ROBOT","BINARY","SERVER","CODING","SCRIPT","VECTOR","PORTAL","TURBO","ENGINE","MEMORY","CIRCUIT","LOGIN","SYSTEM","SCREEN","BUTTON",
@@ -392,7 +392,6 @@ const bank = [...new Set([
 let grid=[], words=[], placed=[], found=[], foundPaths=[], clickFirst=null;
 let dragStart=null, dragActive=false, dragMoved=false;
 let startTime=0, timerId=null, elapsedMs=0, timerStarted=false;
-let wordCount=8;
 let bestMs=null;
 
 const gridEl=document.getElementById("grid");
