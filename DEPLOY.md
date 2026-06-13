@@ -145,7 +145,7 @@ Opening HTML files directly (`file://`) shows “Leaderboard offline” — expe
 
 ## 9. Word Forge dictionary
 
-Word Forge loads `games/wordforge/common-words.js` (~7k common words). Rebuild after editing word banks:
+Word Forge loads `games/wordforge/common-words.js` (~7.3k common words from Google 10k frequency list + game banks). Rebuild after editing word banks:
 
 ```bash
 node games/wordforge/build-common-words.mjs

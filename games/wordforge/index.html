@@ -125,6 +125,101 @@
       line-height: 1.5;
     }
 
+    .mode-best {
+      margin-top: 10px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--gold);
+    }
+
+    .timer-wrap {
+      margin-bottom: 4px;
+    }
+
+    .timer-bar {
+      height: 4px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .timer-bar-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--gold));
+      border-radius: 99px;
+      transition: width 0.95s linear;
+    }
+
+    .timer-bar-fill.urgent {
+      background: linear-gradient(90deg, #f59e0b, #ef4444);
+    }
+
+    .stat strong.warn {
+      color: #f59e0b;
+    }
+
+    .stat strong.danger-stat {
+      color: #ef4444;
+    }
+
+    .entry {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      align-items: stretch;
+    }
+
+    .entry-input-wrap {
+      flex: 1;
+      position: relative;
+    }
+
+    .entry-input-wrap input {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .clear-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 4px 10px;
+      font-size: 11px;
+      min-height: 0;
+      opacity: 0.7;
+    }
+
+    .milestone-flash {
+      position: fixed;
+      top: 18%;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      padding: 10px 18px;
+      border-radius: var(--radius-pill);
+      background: rgba(14, 14, 24, 0.92);
+      border: 1px solid var(--accent-border);
+      color: var(--gold);
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 50;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .milestone-flash.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .game-leaderboard {
+      margin-top: 8px;
+    }
+
     .credit {
       color: var(--muted);
       font-size: 0.85rem;
@@ -542,10 +637,13 @@
       }
       .game header, .main { grid-template-columns: 1fr; display: grid; }
       .stats { min-width: 0; grid-template-columns: repeat(2, 1fr); }
-      .letters { grid-template-columns: repeat(4, 1fr); }
+      .letters { grid-template-columns: repeat(4, 1fr); max-width: 280px; margin-inline: auto; }
       .entry { flex-direction: column; }
       .menu-card-wrap { grid-template-columns: 1fr; }
+      .screen { padding: 16px; }
+      .found-list { min-height: 180px; max-height: 220px; }
     }
+
   </style>
 </head>
 <body>
@@ -559,10 +657,12 @@
       <button id="startChallenge" class="mode-card" type="button">
         <h2>Challenge Mode</h2>
         <p>45 seconds on the clock. Push for the highest score before the forge goes cold.</p>
+        <div class="mode-best" id="menuBestChallenge">Best: 0</div>
       </button>
       <button id="startChill" class="mode-card" type="button">
         <h2>Chill Mode</h2>
-        <p>No timer. Take your time and find every word you can.</p>
+        <p>No timer. End when you're done — perfect for a relaxed desk break.</p>
+        <div class="mode-best" id="menuBestChill">Best: 0</div>
       </button>
     </div>
 
@@ -582,8 +682,8 @@
       <div class="stats">
         <div class="stat"><span>Score</span><strong id="score">0</strong></div>
         <div class="stat"><span>Words</span><strong id="wordCount">0</strong></div>
-        <div class="stat"><span>Left</span><strong id="availableCount">0</strong></div>
-        <div class="stat"><span>Time</span><strong id="timer">45</strong></div>
+        <div class="stat"><span>Found</span><strong id="foundPct">0%</strong></div>
+        <div class="stat timer-wrap"><span>Time</span><strong id="timer">45</strong><div class="timer-bar" id="timerBar"><div class="timer-bar-fill" id="timerBarFill"></div></div></div>
       </div>
     </header>
 
@@ -597,10 +697,13 @@
       <section class="panel">
         <div class="letters" id="letters"></div>
         <div class="entry">
-          <input id="wordInput" type="text" placeholder="Type a word..." autocomplete="off" />
+          <div class="entry-input-wrap">
+            <input id="wordInput" type="text" placeholder="Type a word..." autocomplete="off" maxlength="8" spellcheck="false" />
+            <button type="button" class="clear-btn" id="clearBtn">Clear</button>
+          </div>
           <button id="submitBtn" class="primary">Forge</button>
         </div>
-        <div id="message" class="message">Use only the letters shown. Minimum 3 letters.</div>
+        <div id="message" class="message">Tap letters or type. Minimum 3 letters. Enter to forge.</div>
         <div class="rules">
           Longer words score more. 8-letter words earn a full-forge bonus.
         </div>
@@ -614,7 +717,10 @@
         <div id="foundList" class="found-list"></div>
       </section>
     </div>
+    <div id="gameLeaderboard" class="game-leaderboard hidden"></div>
   </div>
+
+  <div id="milestoneFlash" class="milestone-flash" aria-live="polite"></div>
 
   <div id="overlay" class="overlay">
     <div class="modal">
@@ -628,6 +734,7 @@
   </div>  <script src="../../assets/leaderboard.js?v=6"></script>
   <script>
     const lbPanel = document.getElementById('leaderboard');
+    const gameLbPanel = document.getElementById('gameLeaderboard');
 
     const dictionary = [...new Set((window.forgeWords || []).map(word => String(word).trim().toLowerCase()).filter(word => word.length >= 3 && word.length <= 8 && /^[a-z]+$/.test(word)))];
 
@@ -639,12 +746,20 @@
       'BASEBALL', 'FOOTBALL', 'SWIMMING', 'CREATION', 'DOLPHINS', 'GARDENER', 'MARKETED',
       'TRAILERS', 'GOLDMINE', 'STREAMED', 'WONDERED', 'STANDARD', 'WORDPLAY',
       'BREAKOUT', 'PLAYTIME', 'TEACHING', 'STUDENTS', 'BUILDERS', 'PAINTING',
-      'GOLDFISH', 'HANDMADE', 'FORESTED', 'CREATORS', 'SANDWICH', 'BASEBALL'
+      'GOLDFISH', 'HANDMADE', 'FORESTED', 'CREATORS', 'ARCADEGO', 'DESKWORK', 'BREAKOUT'
     ].filter((set, i, arr) => set.length === 8 && arr.indexOf(set) === i);
 
     const vowels = ['A', 'E', 'I', 'O', 'U'];
     const minimumPossibleWords = 18;
     const CHALLENGE_SECONDS = 45;
+    let scoreSubmitPending = false;
+    let totalPossible = 0;
+    let milestonesHit = new Set();
+
+    function lbBlocksInput() {
+      return scoreSubmitPending ||
+        (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen());
+    }
 
     const state = {
       mode: 'challenge',
@@ -665,10 +780,13 @@
       gameSubtitle: document.getElementById('gameSubtitle'),
       score: document.getElementById('score'),
       wordCount: document.getElementById('wordCount'),
-      availableCount: document.getElementById('availableCount'),
+      availableCount: document.getElementById('foundPct'),
       timer: document.getElementById('timer'),
+      timerBarFill: document.getElementById('timerBarFill'),
+      timerBar: document.getElementById('timerBar'),
       letters: document.getElementById('letters'),
       input: document.getElementById('wordInput'),
+      clearBtn: document.getElementById('clearBtn'),
       message: document.getElementById('message'),
       foundList: document.getElementById('foundList'),
       newBtn: document.getElementById('newBtn'),
@@ -679,8 +797,39 @@
       finalText: document.getElementById('finalText'),
       playAgainBtn: document.getElementById('playAgainBtn'),
       menuBtn: document.getElementById('menuBtn'),
-      modeLabel: document.getElementById('modeLabel')
+      modeLabel: document.getElementById('modeLabel'),
+      menuBestChallenge: document.getElementById('menuBestChallenge'),
+      menuBestChill: document.getElementById('menuBestChill'),
+      milestoneFlash: document.getElementById('milestoneFlash')
     };
+
+    function updateMenuBests() {
+      els.menuBestChallenge.textContent = 'Best: ' + getBestScore('challenge');
+      els.menuBestChill.textContent = 'Best: ' + getBestScore('chill');
+    }
+
+    function showMilestone(text) {
+      els.milestoneFlash.textContent = text;
+      els.milestoneFlash.classList.add('show');
+      clearTimeout(showMilestone._t);
+      showMilestone._t = setTimeout(() => els.milestoneFlash.classList.remove('show'), 1400);
+    }
+
+    function checkMilestones() {
+      const pct = totalPossible ? Math.round((state.found.length / totalPossible) * 100) : 0;
+      if (state.found.length >= 5 && !milestonesHit.has('w5')) {
+        milestonesHit.add('w5');
+        showMilestone('5 words forged');
+      }
+      if (state.found.length >= 10 && !milestonesHit.has('w10')) {
+        milestonesHit.add('w10');
+        showMilestone('10 words forged');
+      }
+      if (pct >= 50 && !milestonesHit.has('p50')) {
+        milestonesHit.add('p50');
+        showMilestone('50% found');
+      }
+    }
 
     function shuffleArray(arr) {
       const copy = [...arr];
@@ -737,7 +886,7 @@
         }
       };
 
-      for (let i = 0; i < 80; i++) {
+      for (let i = 0; i < 120; i++) {
         const word = eightLetterWords[Math.floor(Math.random() * eightLetterWords.length)];
         if (!word) break;
         tryLetters(shuffleArray(word.toUpperCase().split('')));
@@ -813,8 +962,22 @@
     function render(highlightWord = '') {
       els.score.textContent = state.score;
       els.wordCount.textContent = state.found.length;
-      els.availableCount.textContent = getRemainingWords().length;
-      els.timer.textContent = state.mode === 'challenge' ? state.time : '∞';
+      const pct = totalPossible ? Math.round((state.found.length / totalPossible) * 100) : 0;
+      els.availableCount.textContent = pct + '%';
+      els.availableCount.className = pct >= 75 ? 'danger-stat' : pct >= 50 ? 'warn' : '';
+
+      if (state.mode === 'challenge') {
+        els.timer.textContent = state.time;
+        els.timer.className = state.time <= 10 ? 'danger-stat' : state.time <= 20 ? 'warn' : '';
+        const fillPct = (state.time / CHALLENGE_SECONDS) * 100;
+        els.timerBarFill.style.width = fillPct + '%';
+        els.timerBarFill.classList.toggle('urgent', state.time <= 10);
+        els.timerBar.style.display = '';
+      } else {
+        els.timer.textContent = '∞';
+        els.timer.className = '';
+        els.timerBar.style.display = 'none';
+      }
       els.modeLabel.textContent = state.mode === 'challenge' ? 'Challenge' : 'Chill';
       els.gameSubtitle.textContent = state.mode === 'challenge'
         ? `Challenge — ${CHALLENGE_SECONDS} seconds`
@@ -827,7 +990,7 @@
         tile.innerHTML = `<span class="tile-letter">${letter}</span>`;
         tile.dataset.index = index;
         tile.addEventListener('click', () => {
-          if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
+          if (lbBlocksInput()) return;
           addLetterFromTile(index);
         });
         els.letters.appendChild(tile);
@@ -865,18 +1028,27 @@
     function showGame() {
       els.menuScreen.classList.add('hidden');
       els.gameScreen.classList.remove('hidden');
+      gameLbPanel.classList.remove('hidden');
+      DeskArcadeLeaderboard.mountPanel(gameLbPanel, 'wordforge', state.mode);
     }
 
     function showMenu() {
       clearInterval(state.timerId);
       state.active = false;
+      scoreSubmitPending = false;
       els.overlay.classList.remove('show');
       els.gameScreen.classList.add('hidden');
+      gameLbPanel.classList.add('hidden');
       els.menuScreen.classList.remove('hidden');
+      updateMenuBests();
       DeskArcadeLeaderboard.mountPanel(lbPanel, 'wordforge', 'challenge');
     }
 
     function newRound(keepLetters = false) {
+      if (lbBlocksInput()) return;
+      if (!keepLetters && state.mode === 'challenge' && state.active && state.score > 0) {
+        if (!confirm('Start fresh letters? Your current score will reset.')) return;
+      }
       clearInterval(state.timerId);
       if (!keepLetters) {
         state.letters = pickGoodLetters();
@@ -885,10 +1057,12 @@
       state.score = 0;
       state.time = CHALLENGE_SECONDS;
       state.active = true;
+      milestonesHit = new Set();
+      totalPossible = getPossibleWords().length;
       els.overlay.classList.remove('show');
       els.input.value = '';
       els.input.disabled = false;
-      setMessage('Use only the letters shown. Minimum 3 letters.');
+      setMessage('Tap letters or type. Minimum 3 letters. Enter to forge.');
       render();
       startTimer();
       els.input.focus();
@@ -906,7 +1080,7 @@
     }
 
     function addLetterFromTile(index) {
-      if (!state.active) return;
+      if (!state.active || lbBlocksInput()) return;
       const letter = state.letters[index];
       const current = els.input.value.toUpperCase();
       const available = {};
@@ -943,7 +1117,7 @@
     }
 
     function submitWord() {
-      if (!state.active) return;
+      if (!state.active || lbBlocksInput()) return;
       const word = els.input.value.trim().toLowerCase();
       els.input.value = '';
 
@@ -971,15 +1145,16 @@
       const points = scoreWord(word);
       state.found.push(word);
       state.score += points;
-      const left = getRemainingWords().length;
+      const pctFound = totalPossible ? Math.round((state.found.length / totalPossible) * 100) : 0;
       setMessage(
         word.length === 8
-          ? `FULL FORGE! +${points} · ${left} left`
-          : `${word.toUpperCase()} +${points} · ${left} left`,
+          ? `FULL FORGE! +${points} · ${pctFound}% found`
+          : `${word.toUpperCase()} +${points} · ${pctFound}% found`,
         word.length === 8 ? 'gold' : 'good'
       );
       render(word);
       flashTiles(word.length === 8);
+      checkMilestones();
     }
 
     function getBestScore(mode) {
@@ -992,59 +1167,116 @@
       return Math.max(score, prev);
     }
 
+    async function submitRunScore() {
+      scoreSubmitPending = true;
+      try {
+        if (state.score > 0) {
+          await DeskArcadeLeaderboard.trySubmit('wordforge', state.score, { panel: gameLbPanel, boardKey: state.mode });
+        }
+        await DeskArcadeLeaderboard.refreshPanel(gameLbPanel);
+      } catch (_) {
+        await DeskArcadeLeaderboard.refreshPanel(gameLbPanel).catch(() => {});
+      } finally {
+        scoreSubmitPending = false;
+      }
+    }
+
     function endRound() {
+      if (!state.active && els.overlay.classList.contains('show')) return;
       clearInterval(state.timerId);
       state.active = false;
       els.input.disabled = true;
       const possibleWords = getPossibleWords();
-      const foundDisplay = formatWordList(state.found, 60);
+      const foundDisplay = formatWordList(state.found, 12);
+      const missed = possibleWords
+        .filter(word => !state.found.includes(word))
+        .sort((a, b) => scoreWord(b) - scoreWord(a) || b.length - a.length)
+        .slice(0, 12);
+      const missedDisplay = formatWordList(missed, 12);
       const best = saveBestScore(state.mode, state.score);
       const isRecord = state.score >= best && state.score > 0;
       const pct = possibleWords.length ? Math.round((state.found.length / possibleWords.length) * 100) : 0;
+      const left = possibleWords.length - state.found.length;
       els.finalText.innerHTML = `
         You forged <strong>${state.found.length}</strong> words for <strong>${state.score}</strong> points${isRecord ? ' — <strong>new best!</strong>' : ''}.<br>
         Best (${state.mode}): <strong>${best}</strong><br><br>
-        Best word: <strong>${getBestWord()}</strong><br>
-        Longest word: <strong>${getLongestWord()}</strong><br>
-        Common words found: <strong>${state.found.length}/${possibleWords.length}</strong> (${pct}%)
+        Best word: <strong>${getBestWord()}</strong> · Longest: <strong>${getLongestWord()}</strong><br>
+        Found <strong>${pct}%</strong> of common words (${left} still on the board)
         <div class="results-grid">
           <div class="results-box">
             <h3>Words Found</h3>
             <div class="results-words">${foundDisplay}</div>
           </div>
+          <div class="results-box">
+            <h3>Still on the Board</h3>
+            <div class="results-words">${missedDisplay}</div>
+          </div>
         </div>
+        <p style="margin-top:12px;font-size:0.82rem;color:var(--text-faint)">${scoreSubmitPending ? 'Saving score…' : 'Top-10 scores can be entered on the board below.'}</p>
       `;
       els.overlay.classList.add('show');
-
-      DeskArcadeLeaderboard.trySubmit('wordforge', state.score, { panel: lbPanel, boardKey: state.mode }).catch(() => {});
+      updateMenuBests();
+      void submitRunScore().then(() => {
+        if (!state.active) {
+          const note = els.finalText.querySelector('p');
+          if (note) note.textContent = 'Top-10 scores can be entered on the board below.';
+        }
+      });
     }
 
     els.startChallenge.addEventListener('click', () => startMode('challenge'));
     els.startChill.addEventListener('click', () => startMode('chill'));
     els.returnArcadeBtn.addEventListener('click', () => {
-	window.location.href = '../../index.html';
+      window.location.href = '../../index.html';
     });
     els.submitBtn.addEventListener('click', submitWord);
     els.input.addEventListener('keydown', e => {
-      if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
+      if (lbBlocksInput()) return;
       if (e.key === 'Enter') {
         e.preventDefault();
         submitWord();
       } else if (e.key === 'Backspace' || e.key === 'Delete') {
         setTimeout(updateTileUsage, 0);
+      } else if (e.key === 'Escape') {
+        els.input.value = '';
+        updateTileUsage();
       }
     });
-    els.input.addEventListener('input', updateTileUsage);
+    els.input.addEventListener('input', () => {
+      const cleaned = els.input.value.toUpperCase().replace(/[^A-Z]/g, '');
+      if (cleaned !== els.input.value) els.input.value = cleaned;
+      updateTileUsage();
+    });
+    els.clearBtn.addEventListener('click', () => {
+      if (!state.active || lbBlocksInput()) return;
+      els.input.value = '';
+      updateTileUsage();
+      els.input.focus();
+    });
     els.shuffleBtn.addEventListener('click', () => {
+      if (!state.active || lbBlocksInput()) return;
       state.letters = shuffleArray(state.letters);
       render();
       els.input.focus();
     });
     els.newBtn.addEventListener('click', () => newRound(false));
-    els.endBtn.addEventListener('click', endRound);
-    els.playAgainBtn.addEventListener('click', () => newRound(false));
-    els.menuBtn.addEventListener('click', showMenu);
+    els.endBtn.addEventListener('click', () => {
+      if (lbBlocksInput()) return;
+      if (state.mode === 'challenge' && state.active && state.time > 5) {
+        if (!confirm('End this round early?')) return;
+      }
+      endRound();
+    });
+    els.playAgainBtn.addEventListener('click', () => {
+      if (lbBlocksInput()) return;
+      newRound(false);
+    });
+    els.menuBtn.addEventListener('click', () => {
+      if (lbBlocksInput()) return;
+      showMenu();
+    });
 
+    updateMenuBests();
     DeskArcadeLeaderboard.mountPanel(lbPanel, 'wordforge', 'challenge');
   </script>
 </body>
