@@ -353,7 +353,7 @@ body {
 
   <div id="leaderboard"></div>
 
-</main><script src="../../assets/leaderboard.js?v=5"></script>
+</main><script src="../../assets/leaderboard.js?v=6"></script>
 <script>
 const lbPanel = document.getElementById('leaderboard');
 DeskArcadeLeaderboard.mountPanel(lbPanel, 'reacto', 'default');
@@ -495,9 +495,10 @@ function finishRound() {
     popScore(bestScore);
   }
 
-  DeskArcadeLeaderboard.trySubmit('reacto', Math.round(reactionTime * 1000), { panel: lbPanel, boardKey: 'default' }).catch(() => {});
-
   if (roundNum >= totalRounds) {
+    const sessionBestMs = Math.round(Math.min(...sessionTimes) * 1000);
+    DeskArcadeLeaderboard.trySubmit('reacto', sessionBestMs, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+
     const avg = sessionTimes.reduce((a, b) => a + b, 0) / totalRounds;
     avgScore.textContent = avg.toFixed(3) + "s";
     statusText.textContent = "Session complete — average " + avg.toFixed(3) + "s";
@@ -525,6 +526,8 @@ function finishRound() {
 }
 
 function handleAction() {
+  if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
+
   if (state === "idle") {
     if (roundNum === 0 && sessionTimes.length === 0) startSession();
     else startRound();
@@ -546,6 +549,8 @@ modeBtns.forEach(btn => {
 gameBtn.addEventListener("click", handleAction);
 
 document.addEventListener("keydown", (e) => {
+  if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
+
   if (e.code === "Space") {
     e.preventDefault();
     handleAction();

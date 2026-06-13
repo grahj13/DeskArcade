@@ -268,7 +268,7 @@
     </footer>
 
     <div id="leaderboard"></div>
-  </main>  <script src="../../assets/leaderboard.js?v=5"></script>
+  </main>  <script src="../../assets/leaderboard.js?v=6"></script>
   <script>
     const lbPanel = document.getElementById('leaderboard');
     DeskArcadeLeaderboard.mountPanel(lbPanel, 'runexe', 'default');
@@ -816,6 +816,11 @@
       ctx.font = "16px 'JetBrains Mono', monospace";
       ctx.fillText('RUNNING_PROCESS: ACTIVE', 24, 34);
       ctx.fillText(player.crouching ? 'MODE: CROUCH' : player.grounded ? 'MODE: GROUND' : 'MODE: AIRBORNE', 24, 58);
+      const remainingSec = Math.max(0, Math.ceil((SESSION_CAP_SEC * 1000 - (performance.now() - sessionStart)) / 1000));
+      ctx.textAlign = 'right';
+      ctx.fillStyle = remainingSec <= 10 ? 'rgba(244,63,94,0.85)' : 'rgba(155,155,176,0.65)';
+      ctx.fillText('TIME: ' + remainingSec + 's', W - 24, 34);
+      ctx.textAlign = 'left';
       ctx.restore();
     }
 
@@ -867,6 +872,8 @@
     }
 
     window.addEventListener('keydown', e => {
+      if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
+
       if (e.code === 'KeyP' || e.key === 'Escape') {
         if (state === 'running') {
           state = 'paused';

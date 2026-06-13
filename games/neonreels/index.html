@@ -872,7 +872,7 @@ body {
   </div>
 </div>
 
-<script src="../../assets/leaderboard.js?v=5"></script>
+<script src="../../assets/leaderboard.js?v=6"></script>
 <script>
 const lbPanel = document.getElementById('leaderboard');
 DeskArcadeLeaderboard.mountPanel(lbPanel, 'neonreels', 'default');
@@ -907,6 +907,7 @@ let peakBalance = 100;
 let biggestSingleWin = 0;
 let sessionSpins = 0;
 let sessionTotalWon = 0;
+let lbSubmitted = false;
 let jackpot = JACKPOT_SEED;
 let grid = [];
 let held = [false, false, false];
@@ -973,8 +974,9 @@ function forfeitNudges() {
 }
 
 function showSessionSummary() {
-  if (biggestSingleWin >= 1) {
-    DeskArcadeLeaderboard.trySubmit('neonreels', biggestSingleWin, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+  if (!lbSubmitted && biggestSingleWin >= 1) {
+    DeskArcadeLeaderboard.trySubmit('neonreels', biggestSingleWin, { panel: lbPanel, boardKey: 'default' })
+      .then(ok => { if (ok) lbSubmitted = true; }).catch(() => {});
   }
   sessionStats.innerHTML =
     `Spins: ${sessionSpins}<br>` +
@@ -1438,8 +1440,9 @@ async function nudgeCol(col) {
 
 function checkBust() {
   if (balance > 0) return;
-  if (biggestSingleWin >= 1) {
-    DeskArcadeLeaderboard.trySubmit('neonreels', biggestSingleWin, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+  if (!lbSubmitted && biggestSingleWin >= 1) {
+    DeskArcadeLeaderboard.trySubmit('neonreels', biggestSingleWin, { panel: lbPanel, boardKey: 'default' })
+      .then(ok => { if (ok) lbSubmitted = true; }).catch(() => {});
   }
   bustText.textContent = `Best single win this session: £${biggestSingleWin}`;
   bustOverlay.classList.add('open');
@@ -1451,6 +1454,7 @@ function fullReset(msg) {
   biggestSingleWin = 0;
   sessionSpins = 0;
   sessionTotalWon = 0;
+  lbSubmitted = false;
   jackpot = JACKPOT_SEED;
   held = [false, false, false];
   holdsAvailable = false;
@@ -1468,8 +1472,9 @@ function fullReset(msg) {
 }
 
 resetBtn.addEventListener('click', () => {
-  if (biggestSingleWin >= 1 && balance !== 100) {
-    DeskArcadeLeaderboard.trySubmit('neonreels', biggestSingleWin, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+  if (!lbSubmitted && biggestSingleWin >= 1 && balance !== 100) {
+    DeskArcadeLeaderboard.trySubmit('neonreels', biggestSingleWin, { panel: lbPanel, boardKey: 'default' })
+      .then(ok => { if (ok) lbSubmitted = true; }).catch(() => {});
   }
   fullReset('Reset. Fresh £100 credits.');
 });

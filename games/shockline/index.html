@@ -304,7 +304,7 @@ button.active{
 
 <div id="leaderboard"></div>
 
-</main><script src="../../assets/leaderboard.js?v=5"></script>
+</main><script src="../../assets/leaderboard.js?v=6"></script>
 <script>
 const lbPanel = document.getElementById('leaderboard');
 
@@ -580,7 +580,7 @@ function fail(text){
   }, 800);
 }
 
-function win(){
+async function win(){
   if(gameState !== "playing") return;
 
   gameState = "won";
@@ -602,9 +602,15 @@ function win(){
     messageEl.textContent = `Clear in ${elapsed.toFixed(2)}s — best is ${prev}s`;
   }
 
-  DeskArcadeLeaderboard.trySubmit('shockline', Math.round(elapsed * 1000), { panel: lbPanel, boardKey: difficulty }).catch(() => {});
+  const winAt = Date.now();
+  try {
+    await DeskArcadeLeaderboard.trySubmit('shockline', Math.round(elapsed * 1000), { panel: lbPanel, boardKey: difficulty });
+  } catch (_) {}
 
-  setTimeout(reset, 3000);
+  while (Date.now() - winAt < 3000 || (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen())) {
+    await new Promise(r => setTimeout(r, 100));
+  }
+  reset();
 }
 
 function triggerAnimation(element,className){

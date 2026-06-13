@@ -354,7 +354,7 @@ button:disabled{opacity:0.5;cursor:default;}
 <div id="leaderboard"></div>
 
 </div>
-</div><script src="../../assets/leaderboard.js?v=5"></script>
+</div><script src="../../assets/leaderboard.js?v=6"></script>
 <script>
 const lbPanel = document.getElementById('leaderboard');
 DeskArcadeLeaderboard.mountPanel(lbPanel, 'signalscan', 'default');
@@ -546,6 +546,7 @@ async function nextRound(){
 // ---------- SUBMIT ----------
 function submit(){
   if(!accepting) return;
+  if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
 
   accepting = false;
   const val = answerInput.value;
@@ -566,8 +567,6 @@ function submit(){
     }
 
     message.textContent = "✔ Correct — next round in 1s";
-
-    DeskArcadeLeaderboard.trySubmit('signalscan', best, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
 
     updateUI();
 
@@ -595,6 +594,7 @@ function submit(){
   } else {
     streak = 0;
     message.textContent = "✖ Incorrect";
+    DeskArcadeLeaderboard.trySubmit('signalscan', best, { panel: lbPanel, boardKey: 'default' }).catch(() => {});
   }
   round = 1;
 
@@ -648,6 +648,7 @@ answerInput.addEventListener("input", () => {
 
 answerInput.addEventListener("keydown", e => {
   if (e.key !== "Enter") return;
+  if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
   if (accepting) submit();
   else if (awaitingNext) {
     if (autoAdvanceTimeout) {
@@ -662,6 +663,7 @@ answerInput.addEventListener("keydown", e => {
 
 document.addEventListener("keydown", e => {
   if (e.key !== "Enter" || document.activeElement === answerInput) return;
+  if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
   if (!awaitingNext) return;
   if (autoAdvanceTimeout) {
     clearAutoAdvance();

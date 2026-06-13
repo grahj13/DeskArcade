@@ -625,7 +625,7 @@
         <button id="menuBtn">Main Menu</button>
       </div>
     </div>
-  </div>  <script src="../../assets/leaderboard.js?v=5"></script>
+  </div>  <script src="../../assets/leaderboard.js?v=6"></script>
   <script>
     const lbPanel = document.getElementById('leaderboard');
 
@@ -671,7 +671,6 @@
       input: document.getElementById('wordInput'),
       message: document.getElementById('message'),
       foundList: document.getElementById('foundList'),
-      restartBtn: document.getElementById('restartBtn'),
       newBtn: document.getElementById('newBtn'),
       shuffleBtn: document.getElementById('shuffleBtn'),
       submitBtn: document.getElementById('submitBtn'),
@@ -827,7 +826,10 @@
         tile.className = 'tile';
         tile.innerHTML = `<span class="tile-letter">${letter}</span>`;
         tile.dataset.index = index;
-        tile.addEventListener('click', () => addLetterFromTile(index));
+        tile.addEventListener('click', () => {
+          if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
+          addLetterFromTile(index);
+        });
         els.letters.appendChild(tile);
       });
       updateTileUsage();
@@ -871,6 +873,7 @@
       els.overlay.classList.remove('show');
       els.gameScreen.classList.add('hidden');
       els.menuScreen.classList.remove('hidden');
+      DeskArcadeLeaderboard.mountPanel(lbPanel, 'wordforge', 'challenge');
     }
 
     function newRound(keepLetters = false) {
@@ -1043,7 +1046,6 @@
     els.menuBtn.addEventListener('click', showMenu);
 
     DeskArcadeLeaderboard.mountPanel(lbPanel, 'wordforge', 'challenge');
-    startMode('challenge');
   </script>
 </body>
 </html>

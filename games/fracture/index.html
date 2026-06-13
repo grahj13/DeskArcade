@@ -317,6 +317,7 @@ canvas {
       <div class="hud-card"><span>Level</span><strong id="level">1</strong></div>
       <div class="hud-card"><span>Balls</span><strong id="balls">0</strong></div>
       <div class="hud-card"><span>Power</span><strong id="power">None</strong></div>
+      <div class="hud-card"><span>Mode</span><strong id="modeHud">Quick</strong></div>
     </div>
 
     <div class="canvas-wrap">
@@ -342,7 +343,7 @@ canvas {
     <div class="footer-note">Created by JGDev</div>
     <div id="leaderboard"></div>
   </div>
-</div><script src="../../assets/leaderboard.js?v=5"></script>
+</div><script src="../../assets/leaderboard.js?v=6"></script>
 <script>
 const lbPanel = document.getElementById('leaderboard');
 DeskArcadeLeaderboard.mountPanel(lbPanel, 'fracture', 'default');
@@ -356,6 +357,7 @@ const livesEl = document.getElementById("lives");
 const levelEl = document.getElementById("level");
 const ballsEl = document.getElementById("balls");
 const powerEl = document.getElementById("power");
+const modeHudEl = document.getElementById("modeHud");
 const messageEl = document.getElementById("message");
 
 const overlay = document.getElementById("overlay");
@@ -435,6 +437,8 @@ modeQuickBtn.addEventListener("click", () => setGameMode(true));
 modeFullBtn.addEventListener("click", () => setGameMode(false));
 
 document.addEventListener("keydown", e => {
+  if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
+
   if ((e.key === "p" || e.key === "P" || e.key === "Escape") && running && !levelReady) {
     paused = !paused;
     messageEl.textContent = paused ? "Paused — press P to resume" : "";
@@ -1212,6 +1216,7 @@ function updateHud() {
   if (powerState.multi) active.push("Multi");
 
   powerEl.textContent = active.length ? active.join("+") : "None";
+  modeHudEl.textContent = quickBreakMode ? "Quick" : "Full";
 }
 
 draw();

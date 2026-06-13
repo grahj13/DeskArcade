@@ -542,7 +542,7 @@
         <div id="leaderboard"></div>
       </aside>
     </section>
-  </main>  <script src="../../assets/leaderboard.js?v=5"></script>
+  </main>  <script src="../../assets/leaderboard.js?v=6"></script>
   <script>
     const lbPanel = document.getElementById('leaderboard');
 
@@ -1038,7 +1038,7 @@ const homeBtn = document.getElementById('homeBtn');
     }
 
     function changeDirection(newDir) {
-      if (!running || gameOver) return;
+      if (!running || gameOver || paused) return;
 
       const goingUp = direction.y === -1;
       const goingDown = direction.y === 1;

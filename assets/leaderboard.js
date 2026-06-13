@@ -39,6 +39,8 @@
 
   function formatBoardLabel(boardKey) {
     if (!boardKey || boardKey === 'default') return 'Arcade board';
+    const wordMatch = boardKey.match(/^w(\d+)$/);
+    if (wordMatch) return wordMatch[1] + ' words';
     return boardKey
       .split(/[-_]/)
       .map(part => part.charAt(0).toUpperCase() + part.slice(1))

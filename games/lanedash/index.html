@@ -385,7 +385,7 @@ button:hover {
 
   <div id="leaderboard"></div>
 
-</div><script src="../../assets/leaderboard.js?v=5"></script>
+</div><script src="../../assets/leaderboard.js?v=6"></script>
 <script>
 const lbPanel = document.getElementById('leaderboard');
 DeskArcadeLeaderboard.mountPanel(lbPanel, 'lanedash', 'default');
@@ -1223,6 +1223,7 @@ function draw() {
 }
 
 function togglePause() {
+  if (typeof DeskArcadeLeaderboard !== "undefined" && DeskArcadeLeaderboard.isModalOpen()) return;
   if (!gameRunning || deathFreeze) return;
   paused = !paused;
   if (paused) {

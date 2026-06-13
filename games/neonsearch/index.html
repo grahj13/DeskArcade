@@ -309,6 +309,19 @@ button:hover {
   animation:cellShake 0.25s ease;
 }
 
+@media (max-width: 760px) {
+  .main-game {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
+  .word-panel {
+    max-height: 140px;
+  }
+  .arcade-shell {
+    padding: 10px;
+  }
+}
+
 </style>
 </head>
 
@@ -365,7 +378,7 @@ button:hover {
     <button onclick="newGame()">New Game</button>
     <a class="da-back back-btn" href="../../index.html">Return</a>
   </div>
-</div><script src="../../assets/leaderboard.js?v=5"></script>
+</div><script src="../../assets/leaderboard.js?v=6"></script>
 <script>
 const lbPanel = document.getElementById('leaderboard');
 const size = 12;
@@ -669,6 +682,7 @@ function submitSelection(start,end){
 }
 
 function onPointerDown(e){
+  if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
   if(e.button!==0) return;
   const hit=cellFromPoint(e.clientX,e.clientY);
   if(!hit) return;
@@ -687,6 +701,7 @@ function onPointerDown(e){
 }
 
 function onPointerMove(e){
+  if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
   if(!dragActive || !dragStart) return;
   const hit=cellFromPoint(e.clientX,e.clientY);
   if(!hit) return;
@@ -712,6 +727,7 @@ function onPointerMove(e){
 }
 
 function onPointerUp(e){
+  if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
   if(!dragActive) return;
   dragActive=false;
   try{ gridEl.releasePointerCapture(e.pointerId); }catch(_){}
@@ -744,6 +760,12 @@ gridEl.addEventListener("pointerdown", onPointerDown);
 gridEl.addEventListener("pointermove", onPointerMove);
 gridEl.addEventListener("pointerup", onPointerUp);
 gridEl.addEventListener("pointercancel", onPointerUp);
+
+let resizeDrawTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeDrawTimer);
+  resizeDrawTimer = setTimeout(drawFoundPaths, 120);
+});
 
 function pathCells(a,b){
   const p=getPath(a,b);

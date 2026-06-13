@@ -764,6 +764,14 @@
 
     @media (max-width: 1200px) {
       #sidePanel {
+        position: static;
+        width: 100%;
+        max-width: 520px;
+        margin: 12px auto 0;
+        opacity: 1;
+      }
+
+      #sidePanel .side-section {
         display: none;
       }
     }
@@ -983,7 +991,7 @@
 
   <div id="gameOverScreen" class="screen">
     <div class="panel">
-      <h2>Game Over</h2>
+      <h2 id="gameOverTitle">Game Over</h2>
       <p id="finalStats"></p>
       <div class="button-row">
         <button id="restartButton">Play Again</button>
@@ -991,7 +999,7 @@
 		<button id="homeButton2" class="secondary">Return to Arcade</button>
       </div>
     </div>
-  </div>  <script src="../../assets/leaderboard.js?v=5"></script>
+  </div>  <script src="../../assets/leaderboard.js?v=6"></script>
   <script>
     const lbPanel = document.getElementById('leaderboard');
 
@@ -1015,6 +1023,7 @@
     const menuScreen = document.getElementById("menuScreen");
     const pauseScreen = document.getElementById("pauseScreen");
     const gameOverScreen = document.getElementById("gameOverScreen");
+    const gameOverTitleEl = document.getElementById("gameOverTitle");
     const finalStatsEl = document.getElementById("finalStats");
     const gameModeEl = document.getElementById("gameMode");
     const difficultyEl = document.getElementById("difficulty");
@@ -1591,6 +1600,7 @@
             enemies.splice(i, 1);
           } else {
             loseLife(i);
+            break;
           }
         }
       }
@@ -1739,6 +1749,7 @@
           : "";
 
       finalStatsEl.innerHTML = `Mode: <strong>${selectedMode.toUpperCase()}</strong><br>Difficulty: <strong>${selectedDifficulty.toUpperCase()}</strong><br>Run: <strong>${selectedRunLength === "quick" ? "QUICK" : "ENDLESS"}</strong><br>Final Score: <strong>${score}</strong><br>Wave Reached: <strong>${wave}</strong><br>Best Streak: <strong>${bestStreak}</strong><br>Accuracy: <strong>${accuracy}%</strong><br>High Score: <strong>${highScore}</strong>${runNote}`;
+      gameOverTitleEl.textContent = reason === "time" || reason === "waves" ? "Run Complete" : "Game Over";
       gameOverScreen.classList.add("active");
       updateHud();
       DeskArcadeLeaderboard.trySubmit('keystorm', score, { panel: lbPanel, boardKey: lbBoardKey(selectedMode, selectedDifficulty) }).catch(() => {});
@@ -1763,6 +1774,8 @@
     }
 
     document.addEventListener("keydown", (event) => {
+      if (typeof DeskArcadeLeaderboard !== "undefined" && DeskArcadeLeaderboard.isModalOpen()) return;
+
       const key = event.key.toLowerCase();
 
       if (event.key === "Escape") {

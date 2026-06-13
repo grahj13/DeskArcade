@@ -710,7 +710,7 @@
         <a class="da-back" href="../../index.html">Back to Arcade</a>
       </div>
     </div>
-  </div>  <script src="../../assets/leaderboard.js?v=5"></script>
+  </div>  <script src="../../assets/leaderboard.js?v=6"></script>
   <script>
     const lbPanel = document.getElementById('leaderboard');
 
@@ -869,7 +869,10 @@
         btn.className = 'key';
         btn.textContent = letter;
         btn.setAttribute('data-letter', letter);
-        btn.addEventListener('click', () => handleGuess(letter));
+        btn.addEventListener('click', () => {
+          if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
+          handleGuess(letter);
+        });
         keyboard.appendChild(btn);
       });
     }
@@ -952,6 +955,23 @@
       gameShell.classList.add('shake');
     }
 
+    function applyWinScore() {
+      const roundScore = calculateWinScore();
+      score += roundScore;
+      streak += 1;
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem(bestKey('score'), String(bestScore));
+        localStorage.setItem('wordtrapBestScore', String(bestScore));
+      }
+      if (streak > bestStreak) {
+        bestStreak = streak;
+        localStorage.setItem(bestKey('streak'), String(bestStreak));
+        localStorage.setItem('wordtrapBestStreak', String(bestStreak));
+      }
+      return roundScore;
+    }
+
     function showEndOverlay(won) {
       endOverlay.classList.add('show');
       endOverlay.setAttribute('aria-hidden', 'false');
@@ -960,19 +980,7 @@
       const sessionComplete = sessionMode === 'quick' && sessionWordsPlayed >= SESSION_QUICK_WORDS;
 
       if (won) {
-        const roundScore = calculateWinScore();
-        score += roundScore;
-        streak += 1;
-        if (score > bestScore) {
-          bestScore = score;
-          localStorage.setItem(bestKey('score'), String(bestScore));
-          localStorage.setItem('wordtrapBestScore', String(bestScore));
-        }
-        if (streak > bestStreak) {
-          bestStreak = streak;
-          localStorage.setItem(bestKey('streak'), String(bestStreak));
-          localStorage.setItem('wordtrapBestStreak', String(bestStreak));
-        }
+        const roundScore = applyWinScore();
         updateStats();
         endKicker.textContent = sessionComplete ? 'Session complete' : 'Word cracked';
         endTitle.textContent = sessionComplete ? 'Quick Run Done' : 'You Escaped';
@@ -981,7 +989,9 @@
           : `+${roundScore} points · Streak ${streak} · Total ${score} · Best ${bestScore}`;
         endWord.textContent = selectedWord;
 
-        DeskArcadeLeaderboard.trySubmit('wordtrap', score, { panel: lbPanel, boardKey: difficulty }).catch(() => {});
+        if (sessionComplete || sessionMode !== 'quick') {
+          DeskArcadeLeaderboard.trySubmit('wordtrap', score, { panel: lbPanel, boardKey: difficulty }).catch(() => {});
+        }
       } else {
         streak = 0;
         updateStats();
@@ -1013,6 +1023,14 @@
       renderWord();
 
       if (won) {
+        if (sessionMode === 'quick' && sessionWordsPlayed < SESSION_QUICK_WORDS) {
+          const roundScore = applyWinScore();
+          message.textContent = `+${roundScore} points · Word ${sessionWordsPlayed}/${SESSION_QUICK_WORDS} done`;
+          message.className = 'message win';
+          updateStats();
+          setTimeout(() => startGame(false), 480);
+          return;
+        }
         message.textContent = 'You Escaped!';
         message.className = 'message win';
         showEndOverlay(true);

@@ -423,7 +423,7 @@ body{
 
   <div class="footer">Created by JGDev</div>
 
-</main><script src="../../assets/leaderboard.js?v=5"></script>
+</main><script src="../../assets/leaderboard.js?v=6"></script>
 <script>
 const lbPanel = document.getElementById('leaderboard');
 DeskArcadeLeaderboard.mountPanel(lbPanel, 'perfect10', 'default');
@@ -489,6 +489,8 @@ btn.addEventListener("click", handleButton);
 resetBtn.addEventListener("click", resetGame);
 
 document.addEventListener("keydown", (e) => {
+  if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
+
   if (e.code === "Space") {
     e.preventDefault();
     handleButton();
@@ -559,6 +561,7 @@ function finishSessionSummary() {
 }
 
 function handleButton() {
+  if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return;
   if (locked) return;
 
   if (sessionMode === "best3" && sessionResults.length >= 3) {
@@ -652,6 +655,7 @@ function stopGame() {
   detail.textContent = `${message} — ${diff.toFixed(2)}s ${t < 10 ? "early" : "late"}`;
 
   let isNewBest = false;
+  const prevBestDiff = bestDiff;
 
   if (bestDiff === null || diff < bestDiff) {
     bestDiff = diff;
@@ -692,13 +696,17 @@ function stopGame() {
     if (sessionResults.length >= 3) {
       finishSessionSummary();
       btn.textContent = "NEW SESSION";
+      const sessionBestDiff = Math.min(...sessionResults.map(r => r.diff));
+      DeskArcadeLeaderboard.trySubmit('perfect10', Math.round(sessionBestDiff * 1000), { panel: lbPanel, boardKey: 'default' }).catch(() => {});
     } else {
       status.textContent = `Round ${sessionResults.length}/3 done — tap START for round ${sessionResults.length + 1}`;
       btn.textContent = "START";
     }
   }
 
-  DeskArcadeLeaderboard.trySubmit('perfect10', Math.round(diff * 1000), { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+  if (prevBestDiff === null || diff < prevBestDiff) {
+    DeskArcadeLeaderboard.trySubmit('perfect10', Math.round(diff * 1000), { panel: lbPanel, boardKey: 'default' }).catch(() => {});
+  }
 }
 
 function updateHistory() {
