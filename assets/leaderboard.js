@@ -60,11 +60,23 @@
     return !!(modal && modal.classList.contains('open'));
   }
 
+  const FETCH_TIMEOUT_MS = 8000;
+
+  function fetchTimeoutSignal() {
+    // Stops a stalled request from hanging callers forever.
+    try {
+      return AbortSignal.timeout(FETCH_TIMEOUT_MS);
+    } catch (_) {
+      return undefined;
+    }
+  }
+
   async function apiPost(body) {
     const res = await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      signal: fetchTimeoutSignal()
     });
     if (!res.ok) throw new Error('leaderboard request failed');
     return res.json();
@@ -87,7 +99,7 @@
       board: boardKey
     });
 
-    const res = await fetch(API + '?' + params.toString());
+    const res = await fetch(API + '?' + params.toString(), { signal: fetchTimeoutSignal() });
     if (!res.ok) throw new Error('leaderboard unavailable');
 
     const data = await res.json();

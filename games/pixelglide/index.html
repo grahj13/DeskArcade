@@ -348,7 +348,7 @@
           <img src="pixelglidelogo.png" alt="Pixel Glide" class="menu-logo">
           <h2>Ready?</h2>
           <p>Tap, click, or press <span class="kbd">Space</span> to glide upward.</p>
-          <p>Thread the gaps — desk break ends at 18 points or 75 seconds.</p>
+          <p>Thread the gaps — desk break ends at 100 points or 5 minutes.</p>
           <p class="tiny"><span class="kbd">P</span> pause · <span class="kbd">M</span> sound · <span class="kbd">S</span> skin · <span class="kbd">T</span> theme</p>
           <p class="pulse">Press to start</p>
         </div>
@@ -358,7 +358,7 @@
     <div class="footer"><span>Created by JGDev</span></div>
 
     <div id="leaderboard"></div>
-  </main>  <script src="../../assets/leaderboard.js?v=6"></script>
+  </main>  <script src="../../assets/leaderboard.js?v=7"></script>
   <script>
     (() => {
       const lbPanel = document.getElementById('leaderboard');
@@ -397,8 +397,8 @@
       let soundOn = localStorage.getItem(keys.sound) === 'on';
       let audioCtx = null;
 
-      const DESK_BREAK_SCORE = 18;
-      const DESK_BREAK_SEC = 75;
+      const DESK_BREAK_SCORE = 100;
+      const DESK_BREAK_SEC = 300;
       let sessionStart = 0;
 
       const skins = [
@@ -649,14 +649,19 @@
 
       let lastFlapAt = 0;
       let scoreSubmitPending = false;
+      let scoreSubmitStartedAt = 0;
+      // Never let a slow/hung leaderboard request lock the player out of
+      // restarting — cap the pending-submit input block.
+      const SUBMIT_BLOCK_MS = 4000;
 
       function lbBlocksInput() {
-        return scoreSubmitPending ||
-          (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen());
+        if (typeof DeskArcadeLeaderboard !== 'undefined' && DeskArcadeLeaderboard.isModalOpen()) return true;
+        return scoreSubmitPending && performance.now() - scoreSubmitStartedAt < SUBMIT_BLOCK_MS;
       }
 
       async function submitRunScore() {
         scoreSubmitPending = true;
+        scoreSubmitStartedAt = performance.now();
         try {
           if (state.score > 0) {
             await DeskArcadeLeaderboard.trySubmit('pixelglide', state.score, { panel: lbPanel, boardKey: 'default' });

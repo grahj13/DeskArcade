@@ -360,8 +360,8 @@ button:hover {
 
     <div class="target-hud" id="targetHud" aria-live="polite">
       <div class="target-hud-label">
-        <span id="targetLabel">Reach 50 hops</span>
-        <strong id="targetProgress">0 / 50</strong>
+        <span id="targetLabel">Reach 150 hops</span>
+        <strong id="targetProgress">0 / 150</strong>
       </div>
       <div class="target-bar"><div class="target-bar-fill" id="targetBarFill"></div></div>
     </div>
@@ -385,7 +385,7 @@ button:hover {
 
   <div id="leaderboard"></div>
 
-</div><script src="../../assets/leaderboard.js?v=6"></script>
+</div><script src="../../assets/leaderboard.js?v=7"></script>
 <script>
 const lbPanel = document.getElementById('leaderboard');
 DeskArcadeLeaderboard.mountPanel(lbPanel, 'lanedash', 'default');
@@ -408,7 +408,7 @@ const targetProgress = document.getElementById("targetProgress");
 const targetBarFill = document.getElementById("targetBarFill");
 
 const COLS = 11;
-const SCORE_TARGET_STEP = 50;
+const SCORE_TARGET_STEP = 150;
 const ROWS = 11;
 const TILE = canvas.width / COLS;
 const PLAYER_SCREEN_ROW = ROWS - 2;
@@ -442,6 +442,7 @@ let displayX = 0;
 let lastFrame = 0;
 let forwardStreak = 0;
 let scoreTarget = SCORE_TARGET_STEP;
+let maxWorldY = 0;
 
 bestEl.textContent = best;
 
@@ -604,6 +605,7 @@ function startGame() {
   invincibleUntil = 0;
   forwardStreak = 0;
   scoreTarget = SCORE_TARGET_STEP;
+  maxWorldY = 0;
   floaters = [];
   hopParticles = [];
   lastFrame = performance.now();
@@ -693,36 +695,43 @@ function executeMove(dx, dy) {
 
   if (dy === -1) {
     player.worldY++;
-    score++;
-    forwardStreak++;
     playerPop = 1.15;
     laneOffset = -TILE;
     invincibleUntil = performance.now() + INVINCIBLE_MS;
-    pulseScore();
     spawnHopDust(player.x, PLAYER_SCREEN_ROW);
-    spawnFloater("+1", player.x * TILE + TILE * 0.5, PLAYER_SCREEN_ROW * TILE + TILE * 0.35);
-    if (forwardStreak >= 5 && forwardStreak % 5 === 0) {
-      spawnFloater("STREAK " + forwardStreak, player.x * TILE + TILE * 0.5, PLAYER_SCREEN_ROW * TILE + TILE * 0.15, "#fbbf24");
-    }
 
-    const newLevel = 1 + Math.floor(score / 20);
-    if (newLevel > level) {
-      level = newLevel;
-      showFlash("LEVEL " + level);
-      screenShake = 4;
-    }
+    // Only new ground scores and scrolls the world window forward. Re-covering
+    // lanes after backing up must not call addNewLane(), otherwise the lane
+    // window drifts above the player until nothing is left on screen.
+    if (player.worldY > maxWorldY) {
+      maxWorldY = player.worldY;
+      score++;
+      forwardStreak++;
+      pulseScore();
+      spawnFloater("+1", player.x * TILE + TILE * 0.5, PLAYER_SCREEN_ROW * TILE + TILE * 0.35);
+      if (forwardStreak >= 5 && forwardStreak % 5 === 0) {
+        spawnFloater("STREAK " + forwardStreak, player.x * TILE + TILE * 0.5, PLAYER_SCREEN_ROW * TILE + TILE * 0.15, "#fbbf24");
+      }
 
-    if (score >= scoreTarget) {
-      showFlash("TARGET " + scoreTarget);
-      scoreTarget = nextScoreTarget(score);
-    }
+      const newLevel = 1 + Math.floor(score / 20);
+      if (newLevel > level) {
+        level = newLevel;
+        showFlash("LEVEL " + level);
+        screenShake = 4;
+      }
 
-    if (score > best) {
-      best = score;
-      localStorage.setItem("lanedashBest", best);
-    }
+      if (score >= scoreTarget) {
+        showFlash("TARGET " + scoreTarget);
+        scoreTarget = nextScoreTarget(score);
+      }
 
-    addNewLane();
+      if (score > best) {
+        best = score;
+        localStorage.setItem("lanedashBest", best);
+      }
+
+      addNewLane();
+    }
   }
 
   if (dy === 1) {

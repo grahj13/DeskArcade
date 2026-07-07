@@ -163,7 +163,7 @@ Games ship with short-session defaults where applicable:
 | KeyStorm | Quick — 60s or 3 waves |
 | NeonReels | 10 spins per session |
 | Run.exe | 90-second cap |
-| Pixel Glide | Desk break — 75s or 18 points |
+| Pixel Glide | Desk break — 5 min or 100 points |
 | Word Trap | Quick — 3 words |
 | Word Forge | Challenge — 45s (auto-starts) |
 | Fracture | Quick Break — levels 1–2 |
